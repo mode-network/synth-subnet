@@ -30,22 +30,22 @@ where:
 - $\beta = \frac{1}{1000}$ is the scaling factor
 - The negative sign ensures better forecasts (lower CRPS) receive higher scores
 ### Simple Moving Average (SMA) of Scores
-The SMA for miner $i$ on day $t$ is calculated as:
-$$
-SMA_{i,t} = \frac{1}{n_t}\sum_{k=0}^{n_t-1} S_{i,t-k}
-$$
+The SMA for miner $i$ on day $t$ is calculated as:  
+
+![Equation](docs/images/sma.png)  
+
 where:
 - $n_t = min(t,n)$ is the number of days included
 - $S_{i,t-k}$ is the normalized score of miner $i$ on day $t-k$
 ### Prize Distribution Based on SMA
-Adjusted Scores:
-$$
-AdjScore_{i,t} = (SMA_{i,t})^\alpha
-$$
-Prize Allocation:
-$$
-P_{i,t} = \frac{AdjScore_{i,t}}{\sum_j AdjScore_{j,t}} \times Total
-$$
+Adjusted Scores:  
+
+![Equation](docs/images/adjusted_score.png)  
+
+Prize Allocation:  
+
+![Equation](docs/images/prize_allocation.png)  
+
 ## 4. Simulating a Collection of Miners with Different Models
 ### Price Simulation Model
 Miners use a stochastic process, incorporating:
