@@ -5,7 +5,9 @@ The validator evaluates the miners' probabilistic forecasts using the Continuous
 ### Application of CRPS to Ensemble Forecasts
 In our setup, miners produce ensemble forecasts by generating a finite number of simulated price paths rather than providing an explicit continuous distribution. The CRPS can be calculated directly from these ensemble forecasts using an empirical formula suitable for finite samples.
 For a single observation $x$ and an ensemble forecast consisting of $N$ members $y_1, y_2, ..., y_N$, the CRPS is calculated as:
+
 ![Equation](docs/images/crps_equation.png)
+
 where:
 - $F$ is the empirical cumulative distribution function (CDF) represented by the ensemble forecasts
 - The first term measures the average absolute difference between the ensemble members and the observation
@@ -19,10 +21,10 @@ For each time increment:
 ## 3. Allocation of Prize Money
 Each day, a fixed amount of prize money (e.g., $1000) is distributed among miners based on their performance.
 ### Normalization Using Softmax Function
-After calculating the CRPS scores, the validator normalizes these scores daily. The normalized score $S_i$ for miner $i$ is calculated as:
-$$
-S_i = \frac{e^{-\beta \cdot CRPS_i}}{\sum_j e^{-\beta \cdot CRPS_j}}
-$$
+After calculating the CRPS scores, the validator normalizes these scores daily. The normalized score $S_i$ for miner $i$ is calculated as:  
+
+![Equation](docs/images/normalized_score.png)  
+
 where:
 - $CRPS_i$ is the total CRPS score for miner $i$ on that day
 - $\beta = \frac{1}{1000}$ is the scaling factor
