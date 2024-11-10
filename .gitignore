@@ -164,3 +164,6 @@ testing/
 # Editors
 .vscode/settings.json
 .idea/
+
+# Ignore macOS system files
+.DS_Store

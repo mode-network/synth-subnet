@@ -5,3 +5,5 @@ pytest>=8
 torch>=2
 numpy>=1
 setuptools>=68
+requests>=2
+properscoring>=0.1
