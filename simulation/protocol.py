@@ -73,7 +73,7 @@ class Simulation(bt.Synapse):
         Example:
         Assuming a Simulation instance has a simulation_output value of 5:
         >>> simulation_instance = Simulation(simulation_input=SimulationInput(time_increment=60, time_length=3600, num_simulations=10))
-        >>> simulation_instance.dummy_output = np.array([[1.1, 2.2], [3.3, 4.4]], dtype=np.float64)
+        >>> simulation_instance.simulation_output = np.array([[1.1, 2.2], [3.3, 4.4]], dtype=np.float64)
         >>> simulation_instance.deserialize()
         [[1.1 2.2]
         [3.3 4.4]]

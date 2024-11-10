@@ -17,28 +17,39 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 import numpy as np
-from typing import List
+from typing import List, Any
 import bittensor as bt
 
+from crps_calculation import calculate_crps_for_miner
+from simulation.simulation_input import SimulationInput
+from simulation.simulations.price_simulation import get_asset_price, generate_real_price_path
 
-def reward(query: int, response: int) -> float:
+
+def reward(response: np.ndarray[Any, np.dtype], miner_uid: int, simulation_input: SimulationInput, real_price_path):
     """
-    Reward the miner response to the dummy request. This method returns a reward
+    Reward the miner response to the simulation_input request. This method returns a reward
     value for the miner, which is used to update the miner's score.
 
     Returns:
     - float: The reward value for the miner.
     """
-    bt.logging.info(
-        f"In rewards, query val: {query}, response val: {response}, rewards val: {1.0 if response == query * 2 else 0}"
+
+    score = calculate_crps_for_miner(
+        miner_uid,
+        response,
+        real_price_path,
+        simulation_input.time_increment,
+        simulation_input.time_length
     )
-    return 1.0 if response == query * 2 else 0
+
+    return score
 
 
 def get_rewards(
     self,
-    query: int,
-    responses: List[float],
+    responses: List[np.ndarray[Any, np.dtype]],
+    simulation_input: SimulationInput,
+    miner_uids: List[int]
 ) -> np.ndarray:
     """
     Returns an array of rewards for the given query and responses.
@@ -50,6 +61,25 @@ def get_rewards(
     Returns:
     - np.ndarray: An array of rewards for the given query and responses.
     """
-    # Get all the reward results by iteratively calling your reward() function.
+    current_price = get_asset_price(simulation_input.asset)
+    time_increment = simulation_input.time_increment
+    time_length = simulation_input.time_length
+    sigma = simulation_input.sigma
 
-    return np.array([reward(query, response) for response in responses])
+    real_price_path = generate_real_price_path(
+        current_price, time_increment, time_length, sigma)
+
+    scores = []
+    for i, response in enumerate(responses):
+        scores.append(reward(response, miner_uids[i], simulation_input, real_price_path))
+
+    score_values = np.array(scores)
+
+    # --- Softmax Normalization ---
+    beta = -1 / 1000.0  # Negative beta to give higher weight to lower scores
+
+    # Compute softmax scores
+    exp_scores = np.exp(beta * score_values)
+    softmax_scores = exp_scores / np.sum(exp_scores)
+
+    return softmax_scores

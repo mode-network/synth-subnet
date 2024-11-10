@@ -7,3 +7,4 @@ numpy>=1
 setuptools>=68
 requests>=2
 properscoring>=0.1
+pandas>=2.2.3

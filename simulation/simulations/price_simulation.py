@@ -96,3 +96,21 @@ def calculate_cumulative_price_changes(price_paths):
     initial_prices = price_paths[:, [0]]  # Shape: (num_paths, 1)
     cumulative_changes = price_paths - initial_prices  # Broadcasting subtraction
     return cumulative_changes
+
+
+def calculate_price_changes_over_intervals(price_paths, interval_steps):
+    """
+    Calculate price changes over specified intervals.
+
+    Parameters:
+        price_paths (numpy.ndarray): Array of simulated price paths.
+        interval_steps (int): Number of steps that make up the interval.
+
+    Returns:
+        numpy.ndarray: Array of price changes over intervals.
+    """
+    # Get the prices at the interval points
+    interval_prices = price_paths[:, ::interval_steps]
+    # Calculate price changes over intervals
+    price_changes = np.diff(interval_prices, axis=1)
+    return price_changes
