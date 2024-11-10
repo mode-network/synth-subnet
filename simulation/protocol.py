@@ -68,7 +68,7 @@ class Simulation(bt.Synapse):
         as the output of the dendrite.query() call.
 
         Returns:
-        - int: The deserialized response, which in this case is the value of simulation_output.
+        - ndarray[Any, dtype]: The deserialized response, which in this case is the value of simulation_output.
 
         Example:
         Assuming a Simulation instance has a simulation_output value of 5:
