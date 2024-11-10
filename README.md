@@ -146,20 +146,3 @@ The system creates a competitive environment through:
 
 5. **Calculating Leaderboard Scores and Allocating Emissions**
    - Rewards consistent performance and encourages competition
-
-
-&nbsp;
-&nbsp;
-&nbsp;
-
-To Do:
--	How to change the choice of increment sizes when the checking prompt parameters are allowed to vary?
--	How to change the choice of beta with changing checking prompts?
--	Write a blog post based on experimenting with simulating miners with varying models, e.g. different standard deviation, kurtosis, time varying volatility etc, to demonstrate that this incentive structure can delineate good from bad models
--	Create a playground of historic checking prompts, along with simulated validator scoring, using real past data
--	Can leaderboard scores be extracted per request? Or can we only update the leaderboard daily based on emissions?
--	Integrate with Weights and Biases
--	Can this exponentially decaying moving average be applied like a Kalman filter, so the validators only need to store the most recent leaderboard score and time, as opposed to all the request scores so far
--	If validators need to store all scores so far, what if they lose that data? How can they catch up? Can they deduce the leaderboard from the emissions? Or should they access the leaderboard directly? If so, will the leaderboard score be sufficient? 
-
-
