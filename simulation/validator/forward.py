@@ -43,19 +43,31 @@ async def forward(self):
     # get_random_uids is an example method, but you can replace it with your own.
     miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
 
+    # input data
+    # give me prediction of BTC price for the next 1 day for every 5 min of time
     simulation_input = SimulationInput(
         asset="BTC",
         start_time=datetime.now(),
-        time_increment=60,
-        time_length=3600,
-        num_simulations=100
+        time_increment=60, # 5 mins
+        time_length=3600, # 1 day
+        num_simulations=1
     )
 
+    # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
+    # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
+    # prices for a chosen asset)
     synapse = simulation.protocol.Simulation(
         simulation_input=simulation_input
     )
 
-    # The dendrite client queries the network.
+    # The dendrite client queries the network:
+    # it is the actual call to all the miners from validator
+    # returns an array of responses (predictions) for each of the miners
+    # ======================================================
+    # miner has a unique uuid in the subnetwork
+    # ======================================================
+    # axon is a server application that accepts requests on the miner side
+    # ======================================================
     responses = await self.dendrite(
         # Send the query to selected miner axons in the network.
         axons=[self.metagraph.axons[uid] for uid in miner_uids],
@@ -63,6 +75,9 @@ async def forward(self):
         synapse=synapse,
         # All responses have the deserialize function called on them before returning.
         # You are encouraged to define your own deserialization function.
+        # ======================================================
+        # we are using numpy for the outputs now - do we need to write a function that deserializes from json to numpy?
+        # you can find that function in "simulation.protocol.Simulation"
         deserialize=False,
     )
 
@@ -70,6 +85,10 @@ async def forward(self):
     bt.logging.info(f"Received responses: {responses}")
 
     # Adjust the scores based on responses from miners.
+    # response[0] - miner_uuids[0]
+    # this is the function we need to implement for our incentives mechanism,
+    # it returns an array of floats that determines how good a particular miner was at price predictions:
+    # example: [0.2, 0.8, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
     rewards = get_rewards(self, responses=responses, simulation_input=simulation_input, miner_uids=miner_uids.tolist())
 
     bt.logging.info(f"Scored responses: {rewards}")

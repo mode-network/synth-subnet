@@ -21,6 +21,7 @@ from typing import List, Any
 import bittensor as bt
 
 from crps_calculation import calculate_crps_for_miner
+from simulation import simulation_input
 from simulation.simulation_input import SimulationInput
 from simulation.simulations.price_simulation import get_asset_price, generate_real_price_path
 
@@ -36,10 +37,10 @@ def reward(response: np.ndarray[Any, np.dtype], miner_uid: int, simulation_input
 
     score = calculate_crps_for_miner(
         miner_uid,
-        response,
-        real_price_path,
-        simulation_input.time_increment,
-        simulation_input.time_length
+        response, # pridiction results of a miner with uuid - "miner_uid"
+        real_price_path, # real prices data
+        simulation_input.time_increment, # we can hard-code it to 5 min
+        simulation_input.time_length # we can hard-code it to 1 day
     )
 
     return score
@@ -66,11 +67,14 @@ def get_rewards(
     time_length = simulation_input.time_length
     sigma = simulation_input.sigma
 
+    # write our own function
+    # think if we are ok with writing our own service that provides the historical prices
     real_price_path = generate_real_price_path(
         current_price, time_increment, time_length, sigma)
 
     scores = []
     for i, response in enumerate(responses):
+        # function that calculates a score for an individual miner
         scores.append(reward(response, miner_uids[i], simulation_input, real_price_path))
 
     score_values = np.array(scores)
