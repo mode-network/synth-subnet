@@ -18,15 +18,17 @@
 
 import sys
 import unittest
+from datetime import datetime
 
 import bittensor as bt
 import torch
 
 from neurons.validator import Validator
-from simulation.base import BaseValidatorNeuron
-from template.protocol import Dummy
+from simulation.base.validator import BaseValidatorNeuron
+from simulation.protocol import Simulation
 from simulation.utils.uids import get_random_uids
-from template.validator.reward import get_rewards
+from simulation.validator.reward import get_rewards
+from simulation.simulation_input import SimulationInput
 
 
 class TemplateValidatorNeuronTestCase(unittest.TestCase):
@@ -61,6 +63,13 @@ class TemplateValidatorNeuronTestCase(unittest.TestCase):
 
     def test_dummy_responses(self):
         # TODO: Test that the dummy responses are correctly constructed
+        simulation_input = SimulationInput(
+            asset="BTC",
+            start_time=datetime.now(),
+            time_increment=60, # default: 5 mins
+            time_length=3600, # default: 1 day
+            num_simulations=1 # default: 100
+        )
 
         responses = self.neuron.dendrite.query(
             # Send the query to miners in the network.
@@ -68,13 +77,13 @@ class TemplateValidatorNeuronTestCase(unittest.TestCase):
                 self.neuron.metagraph.axons[uid] for uid in self.miner_uids
             ],
             # Construct a dummy query.
-            synapse=Dummy(dummy_input=self.neuron.step),
+            synapse=Simulation(simulation_input=simulation_input),
             # All responses have the deserialize function called on them before returning.
             deserialize=True,
         )
 
         for i, response in enumerate(responses):
-            self.assertEqual(response, self.neuron.step * 2)
+            self.assertEqual(response, simulation_input)
 
     def test_reward(self):
         # TODO: Test that the reward function returns the correct value
@@ -82,7 +91,7 @@ class TemplateValidatorNeuronTestCase(unittest.TestCase):
             # Send the query to miners in the network.
             axons=[self.metagraph.axons[uid] for uid in self.miner_uids],
             # Construct a dummy query.
-            synapse=Dummy(dummy_input=self.neuron.step),
+            synapse=Simulation(dummy_input=self.neuron.step),
             # All responses have the deserialize function called on them before returning.
             deserialize=True,
         )
@@ -98,7 +107,7 @@ class TemplateValidatorNeuronTestCase(unittest.TestCase):
             # Send the query to miners in the network.
             axons=[self.metagraph.axons[uid] for uid in self.miner_uids],
             # Construct a dummy query.
-            synapse=Dummy(dummy_input=self.neuron.step),
+            synapse=Simulation(dummy_input=self.neuron.step),
             # All responses have the deserialize function called on them before returning.
             deserialize=True,
         )

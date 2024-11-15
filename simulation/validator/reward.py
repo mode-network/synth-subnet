@@ -37,7 +37,7 @@ def reward(response: np.ndarray[Any, np.dtype], miner_uid: int, simulation_input
 
     score = calculate_crps_for_miner(
         miner_uid,
-        response, # pridiction results of a miner with uuid - "miner_uid"
+        response, # prediction results of a miner with uuid - "miner_uid"
         real_price_path, # real prices data
         simulation_input.time_increment, # we can hard-code it to 5 min
         simulation_input.time_length # we can hard-code it to 1 day

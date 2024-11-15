@@ -42,6 +42,9 @@ class StreamPrompting(bt.StreamingSynapse):
     subclasses to further customize behavior for specific prompting scenarios or requirements.
     """
 
+    class Config:
+        arbitrary_types_allowed = True
+
     roles: List[str] = pydantic.Field(
         ...,
         title="Roles",

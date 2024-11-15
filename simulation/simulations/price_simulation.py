@@ -13,7 +13,7 @@ def get_asset_price(asset='BTC'):
     """
     if asset == 'BTC':
         btc_price_id = "btc-price-id"
-        endpoint = f"https://hermes.pyth.network/api/latest_price_feeds?ids[]={btc_price_id}"
+        endpoint = f"https://hermes.pyth.network/api/latest_price_feeds?ids[]={btc_price_id}" # TODO: this endpoint is deprecated
         try:
             response = requests.get(endpoint)
             response.raise_for_status()

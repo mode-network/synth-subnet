@@ -48,9 +48,9 @@ async def forward(self):
     simulation_input = SimulationInput(
         asset="BTC",
         start_time=datetime.now(),
-        time_increment=60, # 5 mins
-        time_length=3600, # 1 day
-        num_simulations=1
+        time_increment=60, # default: 5 mins
+        time_length=3600, # default: 1 day
+        num_simulations=1 # default: 100
     )
 
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case

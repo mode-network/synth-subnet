@@ -24,7 +24,7 @@ import time
 import bittensor as bt
 
 # import base validator class which takes care of most of the boilerplate
-from simulation.base import BaseValidatorNeuron
+from simulation.base.validator import BaseValidatorNeuron
 
 # Bittensor Validator Template:
 from simulation.validator import forward
