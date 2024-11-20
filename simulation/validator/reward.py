@@ -2,6 +2,7 @@
 # Copyright © 2023 Yuma Rao
 # TODO(developer): Set your name
 # Copyright © 2023 <your name>
+from datetime import datetime, timedelta
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -21,12 +22,15 @@ from typing import List, Any
 import bittensor as bt
 
 from simulation.validator.crps_calculation import calculate_crps_for_miner
-from simulation import simulation_input
 from simulation.simulation_input import SimulationInput
 from simulation.simulations.price_simulation import get_asset_price, generate_real_price_path
+from simulation.validator.price_data_provider import PriceDataProvider
+
+# Create a single shared instance
+provider = PriceDataProvider()
 
 
-def reward(response: np.ndarray[Any, np.dtype], miner_uid: int, simulation_input: SimulationInput, real_price_path):
+def reward(response: List[float], miner_uid: int, simulation_input: SimulationInput, real_price_path):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
     value for the miner, which is used to update the miner's score.
@@ -37,7 +41,7 @@ def reward(response: np.ndarray[Any, np.dtype], miner_uid: int, simulation_input
 
     score = calculate_crps_for_miner(
         miner_uid,
-        response, # prediction results of a miner with uuid - "miner_uid"
+        np.array(response), # prediction results of a miner with uuid - "miner_uid"
         real_price_path, # real prices data
         simulation_input.time_increment, # we can hard-code it to 5 min
         simulation_input.time_length # we can hard-code it to 1 day
@@ -48,7 +52,7 @@ def reward(response: np.ndarray[Any, np.dtype], miner_uid: int, simulation_input
 
 def get_rewards(
     self,
-    responses: List[np.ndarray[Any, np.dtype]],
+    responses: List[List[float]],
     simulation_input: SimulationInput,
     miner_uids: List[int]
 ) -> np.ndarray:
@@ -62,15 +66,18 @@ def get_rewards(
     Returns:
     - np.ndarray: An array of rewards for the given query and responses.
     """
-    current_price = get_asset_price(simulation_input.asset)
-    time_increment = simulation_input.time_increment
-    time_length = simulation_input.time_length
-    sigma = simulation_input.sigma
+    # current_price = get_asset_price(simulation_input.asset)
+    # time_increment = simulation_input.time_increment
+    # time_length = simulation_input.time_length
+    # sigma = simulation_input.sigma
 
     # write our own function
     # think if we are ok with writing our own service that provides the historical prices
-    real_price_path = generate_real_price_path(
-        current_price, time_increment, time_length, sigma)
+    # real_price_path = generate_real_price_path(
+    #     current_price, time_increment, time_length, sigma)
+    current_time = datetime.now().isoformat()
+    previous_date_time = (datetime.now() - timedelta(days=1)).isoformat()
+    real_price_path = provider.fetch_data(previous_date_time, current_time)
 
     scores = []
     for i, response in enumerate(responses):
