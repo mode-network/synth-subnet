@@ -36,4 +36,4 @@ class Miner:
             num_simulations=num_simulations,
             sigma=self.sigma
         )
-        return simulations
+        return simulations.tolist()

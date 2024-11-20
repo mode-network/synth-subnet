@@ -24,7 +24,7 @@ from abc import ABC, abstractmethod
 # Sync calls set weights and also resyncs the metagraph.
 from simulation.utils.config import check_config, add_args, config
 from simulation.utils.misc import ttl_get_block
-from template import __spec_version__ as spec_version
+from simulation import __spec_version__ as spec_version
 from simulation.mock import MockSubtensor, MockMetagraph
 
 
