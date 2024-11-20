@@ -27,7 +27,7 @@ class MinerDataHandler:
         if miner_id not in self.data:
             self.data[miner_id] = []
         self.data[miner_id].append({
-            "start_time": start_time.isoformat(),
+            "start_time": start_time,
             "values": values
         })
         self._save_data()
@@ -57,7 +57,9 @@ class MinerDataHandler:
             return []
 
         # Filter and return the values within the interval
-        values = [datetime.fromisoformat(v) for v in best_record["values"]]
-        filtered_values = [v.isoformat() for v in values if start_time <= v <= current_time]
+        filtered_values = [
+            entry for entry in best_record["values"]
+            if start_time <= datetime.fromisoformat(entry["time"]) <= current_time
+        ]
 
         return filtered_values
