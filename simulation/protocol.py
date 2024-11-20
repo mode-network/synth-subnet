@@ -59,9 +59,9 @@ class Simulation(bt.Synapse):
     simulation_input: SimulationInput
 
     # Optional request output, filled by receiving axon.
-    simulation_output: typing.Optional[ndarray[typing.Any, dtype]] = None
+    simulation_output: typing.Optional[typing.List[float]] = None
 
-    def deserialize(self) -> ndarray[Any, dtype] | None:
+    def deserialize(self) -> []:
         """
         Deserialize the simulation output. This method retrieves the response from
         the miner in the form of simulation_output, deserializes it and returns it

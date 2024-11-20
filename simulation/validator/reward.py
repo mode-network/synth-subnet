@@ -20,7 +20,7 @@ import numpy as np
 from typing import List, Any
 import bittensor as bt
 
-from crps_calculation import calculate_crps_for_miner
+from simulation.validator.crps_calculation import calculate_crps_for_miner
 from simulation import simulation_input
 from simulation.simulation_input import SimulationInput
 from simulation.simulations.price_simulation import get_asset_price, generate_real_price_path
