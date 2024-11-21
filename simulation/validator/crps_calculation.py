@@ -6,7 +6,7 @@ import os
 
 
 def calculate_crps_for_miner(
-        miner_id, simulation_runs, real_price_path, time_increment, time_length, day=1, output_dir='.'):
+        miner_id, simulation_runs, real_price_path, time_increment, day=1, output_dir='.'):
     """
     Calculate the total CRPS score for a miner's simulations over specified intervals,
     write the CRPS scores for every increment to a CSV file, and return the sum of the scores.
@@ -16,7 +16,6 @@ def calculate_crps_for_miner(
         simulation_runs (numpy.ndarray): Simulated price paths.
         real_price_path (numpy.ndarray): The real price path.
         time_increment (int): Time increment in seconds.
-        time_length (int): Total time length in seconds.
 
     Returns:
         float: Sum of total CRPS scores over the intervals.

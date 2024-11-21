@@ -30,7 +30,13 @@ from simulation.validator.price_data_provider import PriceDataProvider
 provider = PriceDataProvider()
 
 
-def reward(miner_data_handler: MinerDataHandler, miner_uid: int, simulation_input: SimulationInput, real_prices):
+def reward(
+        miner_data_handler: MinerDataHandler,
+        miner_uid: int,
+        simulation_input: SimulationInput,
+        real_prices,
+        validation_time: str,
+    ):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
     value for the miner, which is used to update the miner's score.
@@ -39,8 +45,7 @@ def reward(miner_data_handler: MinerDataHandler, miner_uid: int, simulation_inpu
     - float: The reward value for the miner.
     """
 
-    current_time = datetime.now().isoformat()
-    predictions = miner_data_handler.get_values(miner_uid, current_time)
+    predictions = miner_data_handler.get_values(miner_uid, validation_time)
 
     intersecting_predictions, intersecting_real_price = get_intersecting_arrays(predictions, real_prices)
 
@@ -51,8 +56,7 @@ def reward(miner_data_handler: MinerDataHandler, miner_uid: int, simulation_inpu
         miner_uid,
         np.array(predictions_path),
         np.array(real_price_path),
-        simulation_input.time_increment,
-        simulation_input.time_length
+        simulation_input.time_increment
     )
 
     return score
@@ -62,7 +66,8 @@ def get_rewards(
     self,
     miner_data_handler: MinerDataHandler,
     simulation_input: SimulationInput,
-    miner_uids: List[int]
+    miner_uids: List[int],
+    validation_time: str,
 ) -> np.ndarray:
     """
     Returns an array of rewards for the given query and responses.
@@ -83,9 +88,8 @@ def get_rewards(
     # think if we are ok with writing our own service that provides the historical prices
     # real_price_path = generate_real_price_path(
     #     current_price, time_increment, time_length, sigma)
-    current_time = datetime.now().isoformat()
     previous_date_time = (datetime.now() - timedelta(days=1)).isoformat()
-    real_prices = provider.fetch_data(previous_date_time, current_time)
+    real_prices = provider.fetch_data(previous_date_time, validation_time)
 
     scores = []
     for i, miner_id in enumerate(miner_uids):

@@ -98,7 +98,7 @@ async def forward(self):
     # this is the function we need to implement for our incentives mechanism,
     # it returns an array of floats that determines how good a particular miner was at price predictions:
     # example: [0.2, 0.8, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
-    rewards = get_rewards(self, miner_data_handler=miner_data_handler, simulation_input=simulation_input, miner_uids=miner_uids.tolist())
+    rewards = get_rewards(self, miner_data_handler=miner_data_handler, simulation_input=simulation_input, miner_uids=miner_uids.tolist(), validation_time=current_time)
 
     bt.logging.info(f"Scored responses: {rewards}")
 
