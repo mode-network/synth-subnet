@@ -18,19 +18,19 @@ from datetime import datetime, timedelta
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 import numpy as np
-from typing import List, Any
-import bittensor as bt
+from typing import List
 
+from simulation.utils.helpers import get_intersecting_arrays
 from simulation.validator.crps_calculation import calculate_crps_for_miner
 from simulation.simulation_input import SimulationInput
-from simulation.simulations.price_simulation import get_asset_price, generate_real_price_path
+from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
 
 # Create a single shared instance
 provider = PriceDataProvider()
 
 
-def reward(response: List[float], miner_uid: int, simulation_input: SimulationInput, real_price_path):
+def reward(miner_data_handler: MinerDataHandler, miner_uid: int, simulation_input: SimulationInput, real_prices):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
     value for the miner, which is used to update the miner's score.
@@ -39,12 +39,20 @@ def reward(response: List[float], miner_uid: int, simulation_input: SimulationIn
     - float: The reward value for the miner.
     """
 
+    current_time = datetime.now().isoformat()
+    predictions = miner_data_handler.get_values(miner_uid, current_time)
+
+    intersecting_predictions, intersecting_real_price = get_intersecting_arrays(predictions, real_prices)
+
+    predictions_path = [entry["price"] for entry in intersecting_predictions]
+    real_price_path = [entry["price"] for entry in intersecting_real_price]
+
     score = calculate_crps_for_miner(
         miner_uid,
-        np.array(response), # prediction results of a miner with uuid - "miner_uid"
-        real_price_path, # real prices data
-        simulation_input.time_increment, # we can hard-code it to 5 min
-        simulation_input.time_length # we can hard-code it to 1 day
+        np.array(predictions_path),
+        np.array(real_price_path),
+        simulation_input.time_increment,
+        simulation_input.time_length
     )
 
     return score
@@ -52,7 +60,7 @@ def reward(response: List[float], miner_uid: int, simulation_input: SimulationIn
 
 def get_rewards(
     self,
-    responses: List[List[float]],
+    miner_data_handler: MinerDataHandler,
     simulation_input: SimulationInput,
     miner_uids: List[int]
 ) -> np.ndarray:
@@ -77,12 +85,12 @@ def get_rewards(
     #     current_price, time_increment, time_length, sigma)
     current_time = datetime.now().isoformat()
     previous_date_time = (datetime.now() - timedelta(days=1)).isoformat()
-    real_price_path = provider.fetch_data(previous_date_time, current_time)
+    real_prices = provider.fetch_data(previous_date_time, current_time)
 
     scores = []
-    for i, response in enumerate(responses):
+    for i, miner_id in enumerate(miner_uids):
         # function that calculates a score for an individual miner
-        scores.append(reward(response, miner_uids[i], simulation_input, real_price_path))
+        scores.append(reward(miner_data_handler, miner_id, simulation_input, real_prices))
 
     score_values = np.array(scores)
 

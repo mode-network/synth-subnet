@@ -1,5 +1,5 @@
 from simulations.price_simulation import simulate_crypto_price_paths, get_asset_price
-from utils.helpers import get_current_time
+from utils.helpers import get_current_time, convert_prices_to_time_format
 
 
 class Miner:
@@ -8,7 +8,7 @@ class Miner:
         self.sigma = sigma
 
     def generate_simulations(
-            self, asset='BTC', start_time=None, time_increment=10, time_length=3600, num_simulations=50):
+            self, asset='BTC', start_time=None, time_increment=300, time_length=86400, num_simulations=1):
         """
         Generate simulated price paths.
 
@@ -36,4 +36,7 @@ class Miner:
             num_simulations=num_simulations,
             sigma=self.sigma
         )
-        return simulations.tolist()
+
+        predictions = convert_prices_to_time_format(simulations.tolist(), start_time, time_increment)
+
+        return predictions
