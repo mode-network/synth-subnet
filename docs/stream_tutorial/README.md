@@ -379,7 +379,7 @@ my_uid = 1
 axon = metagraph.axons[my_uid]
 
 # Create a Dendrite instance to handle client-side communication.
-dendrite = bt.dendrite(wallet=wallet)
+dendrite = bt.Dendrite(wallet=wallet)
 
 
 This is an async function so we can use the `await` keyword when querying the server with the dendrite object.
@@ -453,7 +453,7 @@ axon = metagraph.axons[62]
 axon
 
 # Create a Dendrite instance to handle client-side communication.
-d = bt.dendrite(wallet=wallet)
+d = bt.Dendrite(wallet=wallet)
 d
 
 

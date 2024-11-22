@@ -22,18 +22,18 @@ from datetime import datetime
 
 import bittensor as bt
 
-import simulation.protocol
 from simulation.protocol import Simulation
 from simulation.simulation_input import SimulationInput
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.reward import get_rewards
 from simulation.utils.uids import get_random_uids
+from simulation.base.validator import BaseValidatorNeuron
 
 
 miner_data_handler = MinerDataHandler("predictions_data.json")
 
 
-async def forward(self):
+async def forward(self: BaseValidatorNeuron):
     """
     The forward function is called by the validator every time step.
 
@@ -60,7 +60,7 @@ async def forward(self):
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
     # prices for a chosen asset)
-    synapse = simulation.protocol.Simulation(
+    synapse = Simulation(
         simulation_input=simulation_input
     )
 

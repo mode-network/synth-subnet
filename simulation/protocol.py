@@ -39,7 +39,7 @@ from simulation.simulation_input import SimulationInput
 
 # ---- validator ---
 # Example usage:
-#   dendrite = bt.dendrite()
+#   dendrite = bt.Dendrite()
 #   simulation_output = dendrite.query( Simulation( simulation_input = SimulationInput(time_increment=60, time_length=3600, num_simulations=10) ) )
 #   assert simulation_output == np.array([[1.1, 2.2], [3.3, 4.4]], dtype=np.float64)
 
