@@ -25,7 +25,7 @@ from abc import ABC, abstractmethod
 from simulation.utils.config import check_config, add_args, config
 from simulation.utils.misc import ttl_get_block
 from simulation import __spec_version__ as spec_version
-from simulation.mock import MockSubtensor, MockMetagraph
+from simulation.mock import MockSubtensor, MockMetagraph, MockWallet, MockHotkey
 
 
 class BaseNeuron(ABC):
@@ -79,7 +79,10 @@ class BaseNeuron(ABC):
 
         # The wallet holds the cryptographic key pairs for the miner.
         if self.config.mock:
-            self.wallet = bt.MockWallet(config=self.config)
+            hotkey = MockHotkey("5EemgxS7cmYbD34esCFoBgUZZC8JdnGtQvV5Qw3QFUCRRtGP")
+            coldkey = MockHotkey("5EemgxS7cmYbD34esCFoBgUZZC8JdnGtQvV5Qw3QFUCRRtGP")
+            coldkeypub = MockHotkey("5EemgxS7cmYbD34esCFoBgUZZC8JdnGtQvV5Qw3QFUCRRtGP")
+            self.wallet = MockWallet(hotkey, coldkey, coldkeypub)
             self.subtensor = MockSubtensor(
                 self.config.netuid, wallet=self.wallet
             )

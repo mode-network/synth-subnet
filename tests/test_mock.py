@@ -1,13 +1,20 @@
 import pytest
 import asyncio
+from datetime import datetime
 import bittensor as bt
-from prompting.mock import MockDendrite, MockMetagraph, MockSubtensor
-from prompting.protocol import PromptingSynapse
 
+
+from simulation.mock import MockDendrite, MockMetagraph, MockSubtensor, MockWallet, MockHotkey
+from simulation.protocol import Simulation, SimulationInput
+
+hotkey = MockHotkey("5EemgxS7cmYbD34esCFoBgUZZC8JdnGtQvV5Qw3QFUCRRtGP")
+coldkey = MockHotkey("5EemgxS7cmYbD34esCFoBgUZZC8JdnGtQvV5Qw3QFUCRRtGP")
+coldkeypub = MockHotkey("5EemgxS7cmYbD34esCFoBgUZZC8JdnGtQvV5Qw3QFUCRRtGP")
+mockWallet = MockWallet(hotkey, coldkey, coldkeypub)
 
 @pytest.mark.parametrize("netuid", [1, 2, 3])
 @pytest.mark.parametrize("n", [2, 4, 8, 16, 32, 64])
-@pytest.mark.parametrize("wallet", [bt.MockWallet(), None])
+@pytest.mark.parametrize("wallet", [mockWallet, None])
 def test_mock_subtensor(netuid, n, wallet):
     subtensor = MockSubtensor(netuid=netuid, n=n, wallet=wallet)
     neurons = subtensor.neurons(netuid=netuid)
@@ -69,8 +76,14 @@ def test_mock_dendrite_timings(timeout, min_time, max_time, n):
     async def run():
         return await mock_dendrite(
             axons,
-            synapse=PromptingSynapse(
-                roles=["user"], messages=["What is the capital of France?"]
+            synapse=Simulation(
+                simulation_input=SimulationInput(
+                    asset="BTC",
+                    start_time=datetime.now(),
+                    time_increment=60, # default: 5 mins
+                    time_length=3600, # default: 1 day
+                    num_simulations=1 # default: 100
+                )
             ),
             timeout=timeout,
         )
