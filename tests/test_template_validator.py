@@ -40,11 +40,11 @@ class TemplateValidatorNeuronTestCase(unittest.TestCase):
     """
 
     def setUp(self):
-        sys.argv = sys.argv
+        sys.argv = sys.argv[0] + ["--config", "tests/configs/validator.json"]
 
         config = BaseValidatorNeuron.config()
-        config.mock = True
         config.wallet._mock = True
+        config.metagraph._mock = True
         config.subtensor._mock = True
         self.neuron = Validator(config)
         self.miner_uids = get_random_uids(self, k=10)
@@ -62,7 +62,7 @@ class TemplateValidatorNeuronTestCase(unittest.TestCase):
         pass
 
     def test_dummy_responses(self):
-        # TODO: Test that the responses are correctly constructed
+        # TODO: Test that the dummy responses are correctly constructed
         simulation_input = SimulationInput(
             asset="BTC",
             start_time=datetime.now(),
@@ -76,12 +76,13 @@ class TemplateValidatorNeuronTestCase(unittest.TestCase):
             axons=[
                 self.neuron.metagraph.axons[uid] for uid in self.miner_uids
             ],
+            # Construct a dummy query.
             synapse=Simulation(simulation_input=simulation_input),
             # All responses have the deserialize function called on them before returning.
-            deserialize=False,
+            deserialize=True,
         )
 
-        for _, response in enumerate(responses):
+        for i, response in enumerate(responses):
             self.assertEqual(response, simulation_input)
 
     def test_reward(self):
@@ -92,7 +93,7 @@ class TemplateValidatorNeuronTestCase(unittest.TestCase):
             # Construct a dummy query.
             synapse=Simulation(dummy_input=self.neuron.step),
             # All responses have the deserialize function called on them before returning.
-            deserialize=False,
+            deserialize=True,
         )
 
         rewards = get_rewards(self.neuron, responses)
@@ -108,7 +109,7 @@ class TemplateValidatorNeuronTestCase(unittest.TestCase):
             # Construct a dummy query.
             synapse=Simulation(dummy_input=self.neuron.step),
             # All responses have the deserialize function called on them before returning.
-            deserialize=False,
+            deserialize=True,
         )
 
         rewards = get_rewards(self.neuron, responses)
