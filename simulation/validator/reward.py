@@ -54,7 +54,7 @@ def reward(
 
     score = calculate_crps_for_miner(
         miner_uid,
-        np.array(predictions_path),
+        np.array([predictions_path]),  # calculate_crps_for_miner is intended to work with multiple paths
         np.array(real_price_path),
         simulation_input.time_increment
     )
