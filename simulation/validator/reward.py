@@ -35,7 +35,7 @@ def reward(
         miner_uid: int,
         simulation_input: SimulationInput,
         real_prices,
-        validation_time: str,
+        validation_time: datetime,
     ):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
@@ -63,11 +63,10 @@ def reward(
 
 
 def get_rewards(
-    self,
     miner_data_handler: MinerDataHandler,
     simulation_input: SimulationInput,
     miner_uids: List[int],
-    validation_time: str,
+    validation_time: datetime,
 ) -> np.ndarray:
     """
     Returns an array of rewards for the given query and responses.
@@ -88,13 +87,13 @@ def get_rewards(
     # think if we are ok with writing our own service that provides the historical prices
     # real_price_path = generate_real_price_path(
     #     current_price, time_increment, time_length, sigma)
-    previous_date_time = (datetime.now() - timedelta(days=1)).isoformat()
+    previous_date_time = (validation_time - timedelta(days=1))
     real_prices = provider.fetch_data(previous_date_time, validation_time)
 
     scores = []
     for i, miner_id in enumerate(miner_uids):
         # function that calculates a score for an individual miner
-        scores.append(reward(miner_data_handler, miner_id, simulation_input, real_prices))
+        scores.append(reward(miner_data_handler, miner_id, simulation_input, real_prices, validation_time))
 
     score_values = np.array(scores)
 

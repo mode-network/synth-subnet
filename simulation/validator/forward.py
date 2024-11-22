@@ -88,7 +88,7 @@ async def forward(self: BaseValidatorNeuron):
     # Log the results for monitoring purposes.
     bt.logging.info(f"Received responses: {responses}")
 
-    current_time = datetime.now().isoformat()
+    current_time = datetime.now()
     for i, response in enumerate(responses):
         miner_id = miner_uids[i]
         miner_data_handler.set_values(miner_id, current_time, response)
@@ -98,7 +98,7 @@ async def forward(self: BaseValidatorNeuron):
     # this is the function we need to implement for our incentives mechanism,
     # it returns an array of floats that determines how good a particular miner was at price predictions:
     # example: [0.2, 0.8, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
-    rewards = get_rewards(self, miner_data_handler=miner_data_handler, simulation_input=simulation_input, miner_uids=miner_uids.tolist(), validation_time=current_time)
+    rewards = get_rewards(miner_data_handler=miner_data_handler, simulation_input=simulation_input, miner_uids=miner_uids.tolist(), validation_time=current_time)
 
     bt.logging.info(f"Scored responses: {rewards}")
 

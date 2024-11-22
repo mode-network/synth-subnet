@@ -20,22 +20,20 @@ class MinerDataHandler:
         with open(self.file_path, 'w') as f:
             json.dump(self.data, f, indent=4)
 
-    def set_values(self, miner_id, start_time, values):
+    def set_values(self, miner_id, start_time: datetime, values):
         """Set values for the given miner_id and start_time."""
 
         # Ensure miner_id exists and append the new record
         if miner_id not in self.data:
             self.data[miner_id] = []
         self.data[miner_id].append({
-            "start_time": start_time,
+            "start_time": start_time.isoformat(),
             "values": values
         })
         self._save_data()
 
-    def get_values(self, miner_id, current_time):
+    def get_values(self, miner_id, current_time: datetime):
         """Retrieve the record with the longest valid interval for the given miner_id."""
-        current_time = datetime.fromisoformat(current_time)
-
         if miner_id not in self.data:
             return []
 
