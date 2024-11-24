@@ -1,32 +1,66 @@
 import random
 from datetime import datetime, timedelta
 
+import requests
+
 
 class PriceDataProvider:
-    def __init__(self):
-        """Initialize the provider."""
-        pass
+    BASE_URL = "https://ref.mode.network/tokens/historical/rates"
 
-    def fetch_data(self, start_time: datetime, end_time: datetime):
+    TOKEN_MAP = {
+        "BTC": "pyth-btc",
+        "ETH": "pyth-eth"
+    }
+
+    def __init__(self, token, validation_time):
+        token = self._get_token_mapping(token)
+        self.params = {"token": token, "time": validation_time}
+
+    def fetch_data(self):
         """
-        Simulate fetching data from an external REST service.
-        Returns an array of time points with random prices.
+        Fetch real prices data from an external REST service.
+        Returns an array of time points with prices.
 
-        :param start_time: start time.
-        :param end_time: end time.
         :return: List of dictionaries with 'time' and 'price' keys.
         """
-        if end_time <= start_time:
-            raise ValueError("end_time must be greater than start_time")
 
-        # Generate time points at 5-minute intervals between start_time and end_time
-        data = []
-        current_time = start_time
-        while current_time <= end_time:
-            data.append({
-                "time": current_time.isoformat(),
-                "price": round(random.uniform(10, 100), 2)  # Random price
+        print(f"Fetching data from {self.BASE_URL} with params {self.params}")
+
+        response = requests.get(self.BASE_URL, params=self.params)
+        response.raise_for_status()
+
+        data = response.json()
+        transformed_data = self._transform_data(data)
+
+        return transformed_data
+
+    @staticmethod
+    def _transform_data(data):
+        transformed_data = []
+
+        for entry in data:
+            # Parse the updatedAt field and round it to the nearest minute
+            updated_at = datetime.strptime(entry["updatedAt"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            rounded_time = updated_at.replace(second=0, microsecond=0)
+
+            # Convert usdRate to a float
+            price = float(entry["usdRate"])
+
+            # Add the transformed entry to the result list
+            transformed_data.append({
+                "time": rounded_time.isoformat(),
+                "price": price
             })
-            current_time += timedelta(minutes=5)
 
-        return data
+        return transformed_data
+
+    @staticmethod
+    def _get_token_mapping(token: str) -> str:
+        """
+        Retrieve the mapped value for a given token.
+        If the token is not in the map, raise an exception or return None.
+        """
+        if token in PriceDataProvider.TOKEN_MAP:
+            return PriceDataProvider.TOKEN_MAP[token]
+        else:
+            raise ValueError(f"Token '{token}' is not supported.")

@@ -26,9 +26,6 @@ from simulation.simulation_input import SimulationInput
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
 
-# Create a single shared instance
-provider = PriceDataProvider()
-
 
 def reward(
         miner_data_handler: MinerDataHandler,
@@ -64,6 +61,7 @@ def reward(
 
 def get_rewards(
     miner_data_handler: MinerDataHandler,
+    price_data_provider: PriceDataProvider,
     simulation_input: SimulationInput,
     miner_uids: List[int],
     validation_time: datetime,
@@ -78,17 +76,7 @@ def get_rewards(
     Returns:
     - np.ndarray: An array of rewards for the given query and responses.
     """
-    # current_price = get_asset_price(simulation_input.asset)
-    # time_increment = simulation_input.time_increment
-    # time_length = simulation_input.time_length
-    # sigma = simulation_input.sigma
-
-    # write our own function
-    # think if we are ok with writing our own service that provides the historical prices
-    # real_price_path = generate_real_price_path(
-    #     current_price, time_increment, time_length, sigma)
-    previous_date_time = (validation_time - timedelta(days=1))
-    real_prices = provider.fetch_data(previous_date_time, validation_time)
+    real_prices = price_data_provider.fetch_data()
 
     scores = []
     for i, miner_id in enumerate(miner_uids):

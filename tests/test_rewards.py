@@ -4,6 +4,7 @@ from datetime import datetime
 
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.simulation_input import SimulationInput
+from simulation.validator.price_data_provider import PriceDataProvider
 from simulation.validator.reward import get_rewards
 from tests.utils import generate_values
 
@@ -13,6 +14,7 @@ class TestRewards(unittest.TestCase):
         """Set up a temporary file for testing."""
         self.test_file = "test_miner_data.json"
         self.handler = MinerDataHandler(self.test_file)
+        self.price_data_provider = PriceDataProvider("BTC", 1732379388)
 
     def tearDown(self):
         pass
@@ -27,6 +29,7 @@ class TestRewards(unittest.TestCase):
 
         softmax_scores = get_rewards(
             self.handler,
+            self.price_data_provider,
             SimulationInput(
                 asset="BTC",
                 start_time=start_time,

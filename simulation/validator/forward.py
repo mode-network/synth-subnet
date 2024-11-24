@@ -25,6 +25,7 @@ import bittensor as bt
 from simulation.protocol import Simulation
 from simulation.simulation_input import SimulationInput
 from simulation.validator.miner_data_handler import MinerDataHandler
+from simulation.validator.price_data_provider import PriceDataProvider
 from simulation.validator.reward import get_rewards
 from simulation.utils.uids import get_random_uids
 from simulation.base.validator import BaseValidatorNeuron
@@ -93,12 +94,20 @@ async def forward(self: BaseValidatorNeuron):
         miner_id = miner_uids[i]
         miner_data_handler.set_values(miner_id, current_time, response)
 
+    price_data_provider = PriceDataProvider("BTC", current_time)
+
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
     # this is the function we need to implement for our incentives mechanism,
     # it returns an array of floats that determines how good a particular miner was at price predictions:
     # example: [0.2, 0.8, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
-    rewards = get_rewards(miner_data_handler=miner_data_handler, simulation_input=simulation_input, miner_uids=miner_uids.tolist(), validation_time=current_time)
+    rewards = get_rewards(
+        miner_data_handler=miner_data_handler,
+        simulation_input=simulation_input,
+        miner_uids=miner_uids.tolist(),
+        validation_time=current_time,
+        price_data_provider=price_data_provider,
+    )
 
     bt.logging.info(f"Scored responses: {rewards}")
 
