@@ -5,7 +5,7 @@ from simulation.validator.price_data_provider import PriceDataProvider
 
 class TestPriceDataProvider(unittest.TestCase):
     def setUp(self):
-        self.dataProvider = PriceDataProvider("pyth-btc", 1732379388)
+        self.dataProvider = PriceDataProvider("BTC", 1732379388)
 
     def tearDown(self):
         pass
