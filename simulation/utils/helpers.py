@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 def get_current_time():
     # Get current date and time
     current_time = datetime.now()
-    return current_time
+    return current_time.isoformat()
 
 
 def convert_prices_to_time_format(prices, start_time, time_increment):
@@ -52,7 +52,10 @@ def get_intersecting_arrays(array1, array2):
     return filtered_array1, filtered_array2
 
 
-def round_time_to_minutes(dt, time_increment):
+def round_time_to_minutes(dt_str, time_increment):
+    # Convert string to datetime object
+    dt = datetime.fromisoformat(dt_str)
+
     # Define the rounding interval
     rounding_interval = timedelta(seconds=time_increment)
 

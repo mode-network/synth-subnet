@@ -57,11 +57,12 @@ class Miner(BaseMinerNeuron):
         The 'forward' function is a placeholder and should be overridden with logic that is appropriate for
         the miner's intended operation. This method demonstrates a basic transformation of input data.
         """
+        simulation_input = synapse.simulation_input
         bt.logging.info(
-            f"Received prediction request from: {synapse.dendrite.hotkey} for timestamp: {synapse.timestamp}"
+            f"Received prediction request from: {synapse.dendrite.hotkey} for timestamp: {simulation_input.start_time}"
         )
 
-        dt = synapse.timestamp
+        dt = simulation_input.start_time
         prediction = generate_simulations(start_time=dt)
         synapse.simulation_output = prediction
 

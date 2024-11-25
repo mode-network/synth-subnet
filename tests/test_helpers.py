@@ -53,8 +53,8 @@ class TestHelpers(unittest.TestCase):
     def test_round_time_to_minutes(self):
         time_increment = 300
 
-        dt_str_1 = datetime.fromisoformat("2024-11-25T19:01:59.940515")
-        dt_str_2 = datetime.fromisoformat("2024-11-25T19:03:59.940515")
+        dt_str_1 = "2024-11-25T19:01:59.940515"
+        dt_str_2 = "2024-11-25T19:03:59.940515"
 
         result_1 = round_time_to_minutes(dt_str_1, time_increment)
         result_2 = round_time_to_minutes(dt_str_2, time_increment)
