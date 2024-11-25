@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+import bittensor as bt
 
 
 class MinerDataHandler:
@@ -17,6 +18,7 @@ class MinerDataHandler:
 
     def _save_data(self):
         """Save data to the file."""
+        bt.logging.debug("data for saving in the file: " + str(self.data))
         with open(self.file_path, 'w') as f:
             json.dump(self.data, f, indent=4)
 

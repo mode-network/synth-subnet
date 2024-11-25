@@ -1,6 +1,7 @@
 import unittest
+from datetime import datetime
 
-from simulation.utils.helpers import convert_prices_to_time_format, get_intersecting_arrays
+from simulation.utils.helpers import convert_prices_to_time_format, get_intersecting_arrays, round_time_to_minutes
 
 
 class TestHelpers(unittest.TestCase):
@@ -48,3 +49,15 @@ class TestHelpers(unittest.TestCase):
             {"time": "2024-11-20T00:05:00", "price": 56.78},
             {"time": "2024-11-20T00:10:00", "price": 62.15}
         ])
+
+    def test_round_time_to_minutes(self):
+        time_increment = 300
+
+        dt_str_1 = datetime.fromisoformat("2024-11-25T19:01:59.940515")
+        dt_str_2 = datetime.fromisoformat("2024-11-25T19:03:59.940515")
+
+        result_1 = round_time_to_minutes(dt_str_1, time_increment)
+        result_2 = round_time_to_minutes(dt_str_2, time_increment)
+
+        self.assertEqual(result_1, "2024-11-25T19:05:00")
+        self.assertEqual(result_2, "2024-11-25T19:05:00")

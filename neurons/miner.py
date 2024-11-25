@@ -23,7 +23,9 @@ import bittensor as bt
 
 # import base miner class which takes care of most of the boilerplate
 from simulation.base.miner import BaseMinerNeuron
+from simulation.miner import generate_simulations
 from simulation.protocol import Simulation
+
 
 class Miner(BaseMinerNeuron):
     """
@@ -55,8 +57,14 @@ class Miner(BaseMinerNeuron):
         The 'forward' function is a placeholder and should be overridden with logic that is appropriate for
         the miner's intended operation. This method demonstrates a basic transformation of input data.
         """
-        # TODO(developer): Replace with actual implementation logic.
-        synapse.dummy_output = synapse.dummy_input * 2
+        bt.logging.info(
+            f"Received prediction request from: {synapse.dendrite.hotkey} for timestamp: {synapse.timestamp}"
+        )
+
+        dt = synapse.timestamp
+        prediction = generate_simulations(start_time=dt)
+        synapse.simulation_output = prediction
+
         return synapse
 
     async def blacklist(

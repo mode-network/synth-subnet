@@ -19,7 +19,7 @@ def convert_prices_to_time_format(prices, start_time, time_increment):
     start_time = datetime.fromisoformat(start_time)  # Convert start_time to a datetime object
     result = []
 
-    for i, price in enumerate(prices):
+    for i, price in enumerate(prices[0]):
         time_point = start_time + timedelta(seconds=i * time_increment)
         result.append({
             "time": time_point.isoformat(),
@@ -50,3 +50,19 @@ def get_intersecting_arrays(array1, array2):
     filtered_array2 = [entry for entry in array2 if entry["time"] in times_in_array1]
 
     return filtered_array1, filtered_array2
+
+
+def round_time_to_minutes(dt, time_increment):
+    # Define the rounding interval
+    rounding_interval = timedelta(seconds=time_increment)
+
+    # Calculate the number of seconds since the start of the day
+    seconds = (dt - dt.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
+
+    # Calculate the next multiple of time_increment in seconds
+    next_interval_seconds = ((seconds // rounding_interval.total_seconds()) + 1) * rounding_interval.total_seconds()
+
+    # Get the rounded-up datetime
+    rounded_time = dt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(seconds=next_interval_seconds)
+
+    return rounded_time.isoformat()
