@@ -32,7 +32,7 @@ def reward(
         miner_uid: int,
         simulation_input: SimulationInput,
         real_prices,
-        validation_time: datetime,
+        validation_time: str,
     ):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
@@ -43,6 +43,9 @@ def reward(
     """
 
     predictions = miner_data_handler.get_values(miner_uid, validation_time)
+
+    if predictions is None:
+        return 0
 
     intersecting_predictions, intersecting_real_price = get_intersecting_arrays(predictions, real_prices)
 
@@ -64,7 +67,7 @@ def get_rewards(
     price_data_provider: PriceDataProvider,
     simulation_input: SimulationInput,
     miner_uids: List[int],
-    validation_time: datetime,
+    validation_time: str,
 ) -> np.ndarray:
     """
     Returns an array of rewards for the given query and responses.

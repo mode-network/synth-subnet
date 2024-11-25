@@ -1,7 +1,10 @@
 import random
 from datetime import datetime, timedelta
+import bittensor as bt
 
 import requests
+
+from simulation.utils.helpers import from_iso_to_unix_time
 
 
 class PriceDataProvider:
@@ -12,8 +15,9 @@ class PriceDataProvider:
         "ETH": "pyth-eth"
     }
 
-    def __init__(self, token, validation_time):
+    def __init__(self, token, validation_time_str):
         token = self._get_token_mapping(token)
+        validation_time = from_iso_to_unix_time(validation_time_str)
         self.params = {"token": token, "time": validation_time}
 
     def fetch_data(self):
@@ -24,7 +28,7 @@ class PriceDataProvider:
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        print(f"Fetching data from {self.BASE_URL} with params {self.params}")
+        bt.logging.info(f"Fetching data from {self.BASE_URL} with params {self.params}")
 
         response = requests.get(self.BASE_URL, params=self.params)
         response.raise_for_status()

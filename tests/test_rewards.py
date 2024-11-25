@@ -14,17 +14,17 @@ class TestRewards(unittest.TestCase):
         """Set up a temporary file for testing."""
         self.test_file = "test_miner_data.json"
         self.handler = MinerDataHandler(self.test_file)
-        self.price_data_provider = PriceDataProvider("BTC", 1732379388)
+        self.price_data_provider = PriceDataProvider("BTC", "2024-11-25T00:00:00")
 
     def tearDown(self):
         pass
 
     def test_get_rewards(self):
-        miner_id = "miner_123"
-        start_time = datetime.fromisoformat("2024-11-20T00:00:00")
-        current_time = datetime.fromisoformat("2024-11-20T12:00:00")
+        miner_id = 0
+        start_time = "2024-11-20T00:00:00"
+        current_time = "2024-11-20T12:00:00"
 
-        values = generate_values(start_time)
+        values = generate_values(datetime.fromisoformat(start_time))
         self.handler.set_values(miner_id, start_time, values)
 
         softmax_scores = get_rewards(

@@ -12,6 +12,6 @@ class TestGenerateSimulation(unittest.TestCase):
         pass
 
     def test_generate_simulation(self):
-        prediction_result = generate_simulations(start_time=datetime.now())
+        prediction_result = generate_simulations(start_time=datetime.now().isoformat())
 
         print(prediction_result)

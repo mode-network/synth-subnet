@@ -1,9 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 def get_current_time():
     # Get current date and time
-    current_time = datetime.now()
+    current_time = datetime.now(timezone.utc)
     return current_time.isoformat()
 
 
@@ -19,7 +19,7 @@ def convert_prices_to_time_format(prices, start_time, time_increment):
     start_time = datetime.fromisoformat(start_time)  # Convert start_time to a datetime object
     result = []
 
-    for i, price in enumerate(prices[0]):
+    for i, price in enumerate(prices[0]):  # todo: think how we can process several simulation paths
         time_point = start_time + timedelta(seconds=i * time_increment)
         result.append({
             "time": time_point.isoformat(),
@@ -69,3 +69,13 @@ def round_time_to_minutes(dt_str, time_increment):
     rounded_time = dt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(seconds=next_interval_seconds)
 
     return rounded_time.isoformat()
+
+
+def from_iso_to_unix_time(iso_time):
+    # Convert to a datetime object
+    dt = datetime.fromisoformat(iso_time)
+
+    # Convert to Unix time
+    unix_time = int(dt.timestamp())
+
+    return unix_time

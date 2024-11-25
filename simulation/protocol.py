@@ -18,11 +18,10 @@
 # DEALINGS IN THE SOFTWARE.
 
 import typing
-from typing import Any
 
 import bittensor as bt
 import numpy as np
-from numpy import ndarray, dtype
+
 
 from simulation.simulation_input import SimulationInput
 
@@ -59,7 +58,7 @@ class Simulation(bt.Synapse):
     simulation_input: SimulationInput
 
     # Optional request output, filled by receiving axon.
-    simulation_output: typing.Optional[typing.List[float]] = None
+    simulation_output: typing.Optional[typing.List[typing.Dict[str, typing.Union[str, float]]]] = None
 
     def deserialize(self) -> []:
         """

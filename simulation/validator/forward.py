@@ -47,6 +47,9 @@ async def forward(self: BaseValidatorNeuron):
     # get_random_uids is an example method, but you can replace it with your own.
     # miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
 
+    # getting current validation time
+    current_time = datetime.now().isoformat()
+
     miner_uids = []
     for uid in range(len(self.metagraph.S)):
         uid_is_available = check_uid_availability(
@@ -59,7 +62,7 @@ async def forward(self: BaseValidatorNeuron):
     # give me prediction of BTC price for the next 1 day for every 5 min of time
     simulation_input = SimulationInput(
         asset="BTC",
-        start_time=datetime.now().isoformat(),
+        start_time=current_time,
         time_increment=300,
         time_length=86400,
         num_simulations=1
@@ -96,7 +99,6 @@ async def forward(self: BaseValidatorNeuron):
     # Log the results for monitoring purposes.
     bt.logging.info(f"Received responses: {responses}")
 
-    current_time = datetime.now()
     for i, response in enumerate(responses):
         miner_id = miner_uids[i]
         miner_data_handler.set_values(miner_id, current_time, response)
@@ -111,7 +113,7 @@ async def forward(self: BaseValidatorNeuron):
     rewards = get_rewards(
         miner_data_handler=miner_data_handler,
         simulation_input=simulation_input,
-        miner_uids=miner_uids.tolist(),
+        miner_uids=miner_uids,
         validation_time=current_time,
         price_data_provider=price_data_provider,
     )

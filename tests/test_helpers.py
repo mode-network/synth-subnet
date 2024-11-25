@@ -1,7 +1,8 @@
 import unittest
 from datetime import datetime
 
-from simulation.utils.helpers import convert_prices_to_time_format, get_intersecting_arrays, round_time_to_minutes
+from simulation.utils.helpers import convert_prices_to_time_format, get_intersecting_arrays, round_time_to_minutes, \
+    from_iso_to_unix_time
 
 
 class TestHelpers(unittest.TestCase):
@@ -12,7 +13,7 @@ class TestHelpers(unittest.TestCase):
         pass
 
     def test_convert_prices_to_time_format(self):
-        prices = [45.67, 56.78, 34.89, 62.15]
+        prices = [[45.67, 56.78, 34.89, 62.15]]
         start_time = "2024-11-20T00:00:00"
         time_increment = 300  # 5 minutes in seconds
 
@@ -61,3 +62,10 @@ class TestHelpers(unittest.TestCase):
 
         self.assertEqual(result_1, "2024-11-25T19:05:00")
         self.assertEqual(result_2, "2024-11-25T19:05:00")
+
+    def test_from_iso_to_unix_time(self):
+        iso_time = "2024-11-25T16:20:00"
+
+        unix_time = from_iso_to_unix_time(iso_time)
+
+        self.assertEqual(unix_time, 1732544400)
