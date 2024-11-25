@@ -22,14 +22,13 @@ from datetime import datetime
 
 import bittensor as bt
 
+from simulation.base.validator import BaseValidatorNeuron
 from simulation.protocol import Simulation
 from simulation.simulation_input import SimulationInput
+from simulation.utils.uids import check_uid_availability
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
 from simulation.validator.reward import get_rewards
-from simulation.utils.uids import get_random_uids
-from simulation.base.validator import BaseValidatorNeuron
-
 
 miner_data_handler = MinerDataHandler("predictions_data.json")
 
@@ -46,16 +45,24 @@ async def forward(self: BaseValidatorNeuron):
     """
     # TODO(developer): Define how the validator selects a miner to query, how often, etc.
     # get_random_uids is an example method, but you can replace it with your own.
-    miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
+    # miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
+
+    miner_uids = []
+    for uid in range(len(self.metagraph.S)):
+        uid_is_available = check_uid_availability(
+            self.metagraph, uid, self.config.neuron.vpermit_tao_limit
+        )
+        if uid_is_available:
+            miner_uids.append(uid)
 
     # input data
     # give me prediction of BTC price for the next 1 day for every 5 min of time
     simulation_input = SimulationInput(
         asset="BTC",
-        start_time=datetime.now(),
-        time_increment=60, # default: 5 mins
-        time_length=3600, # default: 1 day
-        num_simulations=1 # default: 100
+        start_time=datetime.now().isoformat(),
+        time_increment=300,
+        time_length=86400,
+        num_simulations=1
     )
 
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
