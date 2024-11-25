@@ -58,6 +58,9 @@ class MinerDataHandler:
         if not best_record:
             return []
 
+        if best_record["values"] is None:
+            return []
+
         # Filter and return the values within the interval
         filtered_values = [
             entry for entry in best_record["values"]

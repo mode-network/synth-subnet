@@ -93,7 +93,7 @@ async def forward(self: BaseValidatorNeuron):
         # ======================================================
         # we are using numpy for the outputs now - do we need to write a function that deserializes from json to numpy?
         # you can find that function in "simulation.protocol.Simulation"
-        deserialize=False,
+        deserialize=True,
     )
 
     # Log the results for monitoring purposes.
