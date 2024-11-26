@@ -44,8 +44,8 @@ def reward(
 
     predictions = miner_data_handler.get_values(miner_uid, validation_time)
 
-    if predictions is None:
-        return 0
+    if predictions is None or len(predictions) == 0:
+        return -1  # represents no prediction data from the miner
 
     intersecting_predictions, intersecting_real_price = get_intersecting_arrays(predictions, real_prices)
 
@@ -87,12 +87,24 @@ def get_rewards(
         scores.append(reward(miner_data_handler, miner_id, simulation_input, real_prices, validation_time))
 
     score_values = np.array(scores)
+    softmax_scores = compute_softmax(score_values)
+
+    return softmax_scores
+
+
+def compute_softmax(score_values: np.ndarray) -> np.ndarray:
+    # Mask out invalid scores (e.g., -1)
+    mask = score_values != -1  # True for values to include in computation
 
     # --- Softmax Normalization ---
     beta = -1 / 1000.0  # Negative beta to give higher weight to lower scores
 
-    # Compute softmax scores
-    exp_scores = np.exp(beta * score_values)
-    softmax_scores = exp_scores / np.sum(exp_scores)
+    # Compute softmax scores only for valid values
+    exp_scores = np.exp(beta * score_values[mask])
+    softmax_scores_valid = exp_scores / np.sum(exp_scores)
+
+    # Create final softmax_scores with 0 where scores were -1
+    softmax_scores = np.zeros_like(score_values, dtype=float)
+    softmax_scores[mask] = softmax_scores_valid
 
     return softmax_scores
