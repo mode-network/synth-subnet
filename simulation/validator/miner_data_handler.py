@@ -25,11 +25,13 @@ class MinerDataHandler:
     def set_values(self, miner_id, start_time: str, values):
         """Set values for the given miner_id and start_time."""
 
+        miner_id_str = str(miner_id)
+
         # Ensure miner_id exists and append the new record
         bt.logging.info("before: " + str(self.data))
-        if miner_id not in self.data:
-            self.data[miner_id] = []
-        self.data[miner_id].append({
+        if miner_id_str not in self.data:
+            self.data[miner_id_str] = []
+        self.data[miner_id_str].append({
             "start_time": start_time,
             "values": values
         })
@@ -38,7 +40,9 @@ class MinerDataHandler:
 
     def get_values(self, miner_id, current_time_str: str):
         """Retrieve the record with the longest valid interval for the given miner_id."""
-        if miner_id not in self.data:
+        miner_id_str = str(miner_id)
+
+        if miner_id_str not in self.data:
             return []
 
         current_time = datetime.fromisoformat(current_time_str)
@@ -46,10 +50,10 @@ class MinerDataHandler:
         best_record = None
         max_end_time = current_time - timedelta(days=5)
 
-        bt.logging.info("in get_values: miner_id is " + str(miner_id))
+        bt.logging.info("in get_values: miner_id is " + miner_id_str)
 
         # Find the record with the longest valid interval
-        for record in self.data[miner_id]:
+        for record in self.data[miner_id_str]:
             if record["values"] is None:
                 continue
 
