@@ -18,7 +18,7 @@ class MinerDataHandler:
 
     def _save_data(self):
         """Save data to the file."""
-        bt.logging.debug("data for saving in the file: " + str(self.data))
+        # bt.logging.debug("data for saving in the file: " + str(self.data))
         with open(self.file_path, 'w') as f:
             json.dump(self.data, f, indent=4)
 
@@ -44,15 +44,25 @@ class MinerDataHandler:
         best_record = None
         max_end_time = current_time - timedelta(days=5)
 
+        bt.logging.info("in get_values: miner_id is " + str(miner_id))
+
         # Find the record with the longest valid interval
         for record in self.data[miner_id]:
+            if record["values"] is None:
+                continue
+
             start_time = datetime.fromisoformat(record["start_time"])
             end_time = start_time + timedelta(days=1)
+
+            bt.logging.info("in get_values, first: " + record["values"][0]["time"])
+            bt.logging.info("in get_values, last: " + record["values"][len(record["values"]) - 1]["time"])
 
             if current_time > end_time:
                 if end_time > max_end_time:
                     max_end_time = end_time
                     best_record = record
+
+        bt.logging.info("in get_values: best_record is " + str(best_record))
 
         if not best_record:
             return []

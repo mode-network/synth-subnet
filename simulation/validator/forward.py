@@ -30,10 +30,11 @@ from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
 from simulation.validator.reward import get_rewards
 
-miner_data_handler = MinerDataHandler("predictions_data.json")
 
-
-async def forward(self: BaseValidatorNeuron):
+async def forward(
+        self: BaseValidatorNeuron,
+        miner_data_handler: MinerDataHandler,
+        price_data_provider: PriceDataProvider):
     """
     The forward function is called by the validator every time step.
 
@@ -41,6 +42,8 @@ async def forward(self: BaseValidatorNeuron):
 
     Args:
         self (:obj:`bittensor.neuron.Neuron`): The neuron object which contains all the necessary state for the validator.
+        miner_data_handler (:obj:`simulation.validator.MinerDataHandler`): The MinerDataHandler object which contains all the necessary state for the validator.
+        price_data_provider (:obj:`simulation.validator.PriceDataProvider`): The PriceDataProvider returns real prices data for a specific token.
 
     """
     # TODO(developer): Define how the validator selects a miner to query, how often, etc.
@@ -97,13 +100,11 @@ async def forward(self: BaseValidatorNeuron):
     )
 
     # Log the results for monitoring purposes.
-    bt.logging.info(f"Received responses: {responses}")
+    # bt.logging.info(f"Received responses: {responses}")
 
     for i, response in enumerate(responses):
         miner_id = miner_uids[i]
         miner_data_handler.set_values(miner_id, current_time, response)
-
-    price_data_provider = PriceDataProvider("BTC")
 
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]

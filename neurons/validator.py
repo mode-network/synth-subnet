@@ -28,6 +28,8 @@ from simulation.base.validator import BaseValidatorNeuron
 
 # Bittensor Validator Template:
 from simulation.validator import forward
+from simulation.validator.miner_data_handler import MinerDataHandler
+from simulation.validator.price_data_provider import PriceDataProvider
 
 
 class Validator(BaseValidatorNeuron):
@@ -45,6 +47,9 @@ class Validator(BaseValidatorNeuron):
         bt.logging.info("load_state()")
         self.load_state()
 
+        self.miner_data_handler = MinerDataHandler("predictions_data.json")
+        self.price_data_provider = PriceDataProvider("BTC")
+
         # TODO(developer): Anything specific to your use case you can do here
 
     async def forward(self):
@@ -57,7 +62,7 @@ class Validator(BaseValidatorNeuron):
         - Updating the scores
         """
         bt.logging.info("calling forward()")
-        return await forward(self)
+        return await forward(self, self.miner_data_handler, self.price_data_provider)
 
 
 # The main function parses the configuration and runs the validator.
