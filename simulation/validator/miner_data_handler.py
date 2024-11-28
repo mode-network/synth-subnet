@@ -57,8 +57,6 @@ class MinerDataHandler:
             if record["values"] is None:
                 continue
 
-            # start_time = datetime.fromisoformat(record["start_time"])
-            # end_time = start_time + timedelta(days=1)
             start_time = datetime.fromisoformat(record["values"][0]["time"])
             end_time = datetime.fromisoformat(record["values"][-1]["time"])
 
