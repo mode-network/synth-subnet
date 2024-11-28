@@ -2,7 +2,6 @@
 # Copyright © 2023 Yuma Rao
 # TODO(developer): Set your name
 # Copyright © 2023 <your name>
-from datetime import datetime, timedelta
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -12,26 +11,27 @@ from datetime import datetime, timedelta
 # The above copyright notice and this permission notice shall be included in all copies or substantial portions of
 # the Software.
 
+from typing import List
+
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
 # THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
 # THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 import numpy as np
-from typing import List
 
+from simulation.simulation_input import SimulationInput
 from simulation.utils.helpers import get_intersecting_arrays
 from simulation.validator.crps_calculation import calculate_crps_for_miner
-from simulation.simulation_input import SimulationInput
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
 
 
 def reward(
         miner_data_handler: MinerDataHandler,
+        price_data_provider: PriceDataProvider,
         miner_uid: int,
         simulation_input: SimulationInput,
-        real_prices,
         validation_time: str,
     ):
     """
@@ -47,6 +47,14 @@ def reward(
     if predictions is None or len(predictions) == 0:
         return -1  # represents no prediction data from the miner
 
+    # get last time in predictions
+    end_time = predictions[len(predictions) - 1]["time"]
+    real_prices = price_data_provider.fetch_data(end_time)
+
+    if len(real_prices) == 0:
+        return -1
+
+    # in case some of the time points is not overlapped
     intersecting_predictions, intersecting_real_price = get_intersecting_arrays(predictions, real_prices)
 
     predictions_path = [entry["price"] for entry in intersecting_predictions]
@@ -79,12 +87,19 @@ def get_rewards(
     Returns:
     - np.ndarray: An array of rewards for the given query and responses.
     """
-    real_prices = price_data_provider.fetch_data()
 
     scores = []
     for i, miner_id in enumerate(miner_uids):
         # function that calculates a score for an individual miner
-        scores.append(reward(miner_data_handler, miner_id, simulation_input, real_prices, validation_time))
+        scores.append(
+            reward(
+                miner_data_handler,
+                price_data_provider,
+                miner_id,
+                simulation_input,
+                validation_time
+            )
+        )
 
     score_values = np.array(scores)
     softmax_scores = compute_softmax(score_values)

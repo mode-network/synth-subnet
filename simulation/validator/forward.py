@@ -103,7 +103,7 @@ async def forward(self: BaseValidatorNeuron):
         miner_id = miner_uids[i]
         miner_data_handler.set_values(miner_id, current_time, response)
 
-    price_data_provider = PriceDataProvider("BTC", current_time)
+    price_data_provider = PriceDataProvider("BTC")
 
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]

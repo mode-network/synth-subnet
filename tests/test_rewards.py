@@ -17,7 +17,8 @@ class TestRewards(unittest.TestCase):
         """Set up a temporary file for testing."""
         self.test_file = "test_miner_data.json"
         self.handler = MinerDataHandler(self.test_file)
-        self.price_data_provider = PriceDataProvider("BTC", "2024-11-25T00:00:00")
+        # self.price_data_provider = PriceDataProvider("BTC", "2024-11-25T00:00:00")
+        self.price_data_provider = PriceDataProvider("BTC")
 
     def tearDown(self):
         pass
@@ -40,8 +41,8 @@ class TestRewards(unittest.TestCase):
 
     def test_get_rewards(self):
         miner_id = 0
-        start_time = "2024-11-20T00:00:00"
-        current_time = "2024-11-20T12:00:00"
+        start_time = "2024-11-26T00:00:00"
+        current_time = "2024-11-28T00:00:00"
 
         values = generate_values(datetime.fromisoformat(start_time))
         self.handler.set_values(miner_id, start_time, values)
@@ -51,7 +52,7 @@ class TestRewards(unittest.TestCase):
             self.price_data_provider,
             SimulationInput(
                 asset="BTC",
-                start_time=start_time,
+                start_time=current_time,
                 time_increment=60,  # default: 5 mins
                 time_length=3600,  # default: 1 day
                 num_simulations=1  # default: 100

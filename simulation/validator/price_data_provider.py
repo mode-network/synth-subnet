@@ -15,12 +15,10 @@ class PriceDataProvider:
         "ETH": "pyth-eth"
     }
 
-    def __init__(self, token, validation_time_str):
-        token = self._get_token_mapping(token)
-        validation_time = from_iso_to_unix_time(validation_time_str)
-        self.params = {"token": token, "time": validation_time}
+    def __init__(self, token):
+        self.token = self._get_token_mapping(token)
 
-    def fetch_data(self):
+    def fetch_data(self, time_point: str):
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
@@ -28,9 +26,16 @@ class PriceDataProvider:
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        bt.logging.info(f"Fetching data from {self.BASE_URL} with params {self.params}")
+        unix_time_point = from_iso_to_unix_time(time_point)
 
-        response = requests.get(self.BASE_URL, params=self.params)
+        params = {
+            "token": self.token,
+            "time": unix_time_point
+        }
+
+        bt.logging.info(f"Fetching data from {self.BASE_URL} with token {self.token} and time {unix_time_point}")
+
+        response = requests.get(self.BASE_URL, params=params)
         response.raise_for_status()
 
         data = response.json()
@@ -40,6 +45,9 @@ class PriceDataProvider:
 
     @staticmethod
     def _transform_data(data):
+        if data is None or len(data) == 0:
+            return []
+
         transformed_data = []
 
         for entry in data:

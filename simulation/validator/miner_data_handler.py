@@ -42,17 +42,16 @@ class MinerDataHandler:
         current_time = datetime.fromisoformat(current_time_str)
 
         best_record = None
-        max_interval = timedelta(0)
+        max_end_time = current_time - timedelta(days=5)
 
         # Find the record with the longest valid interval
         for record in self.data[miner_id]:
             start_time = datetime.fromisoformat(record["start_time"])
             end_time = start_time + timedelta(days=1)
 
-            if start_time <= current_time <= end_time:
-                interval = current_time - start_time
-                if interval > max_interval:
-                    max_interval = interval
+            if current_time > end_time:
+                if end_time > max_end_time:
+                    max_end_time = end_time
                     best_record = record
 
         if not best_record:
@@ -64,7 +63,6 @@ class MinerDataHandler:
         # Filter and return the values within the interval
         filtered_values = [
             entry for entry in best_record["values"]
-            if start_time <= datetime.fromisoformat(entry["time"]) <= current_time
         ]
 
         return filtered_values
