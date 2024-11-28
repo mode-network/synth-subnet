@@ -3,8 +3,9 @@ from unittest.mock import Mock
 from datetime import datetime
 
 import numpy as np
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_equal
 
+from simulation.validator.forward import remove_zero_rewards
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.simulation_input import SimulationInput
 from simulation.validator.price_data_provider import PriceDataProvider
@@ -17,7 +18,6 @@ class TestRewards(unittest.TestCase):
         """Set up a temporary file for testing."""
         self.test_file = "test_miner_data.json"
         self.handler = MinerDataHandler(self.test_file)
-        # self.price_data_provider = PriceDataProvider("BTC", "2024-11-25T00:00:00")
         self.price_data_provider = PriceDataProvider("BTC")
 
     def tearDown(self):
@@ -38,6 +38,17 @@ class TestRewards(unittest.TestCase):
         actual_score = compute_softmax(score_values)
 
         assert_almost_equal(actual_score, expected_score, decimal=3)
+
+    def test_remove_zero_rewards(self):
+        rewards = np.array([0.0, 5.0, 0.0, 10.0])
+        miner_uids = [0, 1, 2, 3]
+
+        filtered_rewards, filtered_miner_uids = remove_zero_rewards(rewards, miner_uids)
+
+        assert_equal(filtered_rewards, np.array([5.0, 10.0]))
+        self.assertEqual(len(filtered_miner_uids), 2)
+        self.assertEqual(1, filtered_miner_uids[0])
+        self.assertEqual(3, filtered_miner_uids[1])
 
     def test_get_rewards(self):
         miner_id = 0

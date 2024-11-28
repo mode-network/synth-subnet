@@ -121,5 +121,14 @@ async def forward(self: BaseValidatorNeuron):
     bt.logging.info(f"Scored responses: {rewards}")
 
     # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
-    self.update_scores(rewards, miner_uids)
-    time.sleep(5)
+    filtered_rewards, filtered_miner_uids = remove_zero_rewards(rewards, miner_uids)
+    self.update_scores(filtered_rewards, filtered_miner_uids)
+    time.sleep(15)
+
+
+def remove_zero_rewards(rewards, miner_uids):
+    mask = rewards != 0
+    filtered_rewards = rewards[mask]
+    filtered_miners_uid = [miner_uids[i] for i in range(len(mask)) if mask[i]]
+
+    return filtered_rewards, filtered_miners_uid
