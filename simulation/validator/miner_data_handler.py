@@ -57,11 +57,13 @@ class MinerDataHandler:
             if record["values"] is None:
                 continue
 
-            start_time = datetime.fromisoformat(record["start_time"])
-            end_time = start_time + timedelta(days=1)
+            # start_time = datetime.fromisoformat(record["start_time"])
+            # end_time = start_time + timedelta(days=1)
+            start_time = datetime.fromisoformat(record["values"][0]["time"])
+            end_time = datetime.fromisoformat(record["values"][-1]["time"])
 
-            bt.logging.info("in get_values, first: " + record["values"][0]["time"])
-            bt.logging.info("in get_values, last: " + record["values"][len(record["values"]) - 1]["time"])
+            bt.logging.info("in get_values, first: " + start_time.isoformat())
+            bt.logging.info("in get_values, last: " + end_time.isoformat())
 
             if current_time > end_time:
                 if end_time > max_end_time:
