@@ -26,12 +26,14 @@ class MinerDataHandler:
         """Set values for the given miner_id and start_time."""
 
         # Ensure miner_id exists and append the new record
+        bt.logging.info("before: " + str(self.data))
         if miner_id not in self.data:
             self.data[miner_id] = []
         self.data[miner_id].append({
             "start_time": start_time,
             "values": values
         })
+        bt.logging.info("after: " + str(self.data))
         self._save_data()
 
     def get_values(self, miner_id, current_time_str: str):
