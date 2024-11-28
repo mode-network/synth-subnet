@@ -63,7 +63,7 @@ class Miner(BaseMinerNeuron):
         )
 
         dt = simulation_input.start_time
-        prediction = generate_simulations(start_time=dt)
+        prediction = generate_simulations(start_time=dt, time_length=600)
         synapse.simulation_output = prediction
 
         return synapse
