@@ -23,7 +23,7 @@ import bittensor as bt
 
 # import base miner class which takes care of most of the boilerplate
 from simulation.base.miner import BaseMinerNeuron
-from simulation.miner import generate_simulations
+from simulation.miner import generate_simulations, generate_fixed_simulation
 from simulation.protocol import Simulation
 
 
@@ -63,7 +63,11 @@ class Miner(BaseMinerNeuron):
         )
 
         dt = simulation_input.start_time
-        prediction = generate_simulations(start_time=dt, time_length=600)
+        if self.config.miner_type == 'dummy':
+            prediction = generate_fixed_simulation(start_time=dt, time_length=600)
+        else:
+            prediction = generate_simulations(start_time=dt, time_length=600)
+
         synapse.simulation_output = prediction
 
         return synapse
