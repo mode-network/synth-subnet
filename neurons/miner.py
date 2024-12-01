@@ -62,7 +62,7 @@ class Miner(BaseMinerNeuron):
             f"Received prediction request from: {synapse.dendrite.hotkey} for timestamp: {simulation_input.start_time}"
         )
 
-        bt.logging.info(f"Miner triggered with type: {self.config.miner.type}")
+        bt.logging.info(f"Miner triggered with type: {self.config.miner_type}")
 
         dt = simulation_input.start_time
         if self.config.miner_type == 'dummy':

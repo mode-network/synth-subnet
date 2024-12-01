@@ -169,6 +169,13 @@ def add_miner_args(cls, parser):
         help="Wandb entity to log to.",
     )
 
+    parser.add_argument(
+        "--miner_type",
+        type=str,
+        default="default",
+        help="Miner type to choose different implementations"
+    )
+
 
 def add_validator_args(cls, parser):
     """Add validator specific arguments to the parser."""
