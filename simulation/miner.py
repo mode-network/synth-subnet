@@ -56,7 +56,7 @@ def generate_fixed_simulation(asset='BTC', start_time=None, time_increment=300, 
         numpy.ndarray: Simulated price paths.
     """
 
-    simulations = [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
+    simulations = [[1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]]
 
     predictions = convert_prices_to_time_format(simulations, start_time, time_increment)
 
