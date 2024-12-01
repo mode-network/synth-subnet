@@ -26,6 +26,8 @@ from simulation.validator.crps_calculation import calculate_crps_for_miner
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
 
+import bittensor as bt
+
 
 def reward(
         miner_data_handler: MinerDataHandler,
@@ -87,6 +89,8 @@ def get_rewards(
     Returns:
     - np.ndarray: An array of rewards for the given query and responses.
     """
+
+    bt.logging.info(f"In rewards, miner_uids={miner_uids}")
 
     scores = []
     for i, miner_id in enumerate(miner_uids):
