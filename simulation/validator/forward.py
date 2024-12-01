@@ -103,6 +103,7 @@ async def forward(
     # bt.logging.info(f"Received responses: {responses}")
 
     for i, response in enumerate(responses):
+        bt.logging.info(f"Miner {i} response: {response}")
         if response is None or len(response) == 0:
             continue
         miner_id = miner_uids[i]
