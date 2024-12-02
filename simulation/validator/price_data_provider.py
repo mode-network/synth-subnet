@@ -1,19 +1,18 @@
-import random
-from datetime import datetime, timedelta
-import bittensor as bt
-
 import requests
 
 from simulation.utils.helpers import from_iso_to_unix_time
+from datetime import datetime
 
 
 class PriceDataProvider:
-    BASE_URL = "https://ref.mode.network/tokens/historical/rates"
+    BASE_URL = "https://benchmarks.pyth.network/v1/shims/tradingview/history"
 
     TOKEN_MAP = {
-        "BTC": "pyth-btc",
-        "ETH": "pyth-eth"
+        "BTC": "Crypto.BTC/USD",
+        "ETH": "Crypto.ETH/USD"
     }
+
+    one_day_seconds = 24 * 60 * 60
 
     def __init__(self, token):
         self.token = self._get_token_mapping(token)
@@ -26,14 +25,15 @@ class PriceDataProvider:
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        unix_time_point = from_iso_to_unix_time(time_point)
+        end_time = from_iso_to_unix_time(time_point)
+        start_time = end_time - self.one_day_seconds
 
         params = {
-            "token": self.token,
-            "time": unix_time_point
+            "symbol": self.token,
+            "resolution": 1,
+            "from": start_time,
+            "to": end_time
         }
-
-        bt.logging.info(f"Fetching data from {self.BASE_URL} with token {self.token} and time {unix_time_point}")
 
         response = requests.get(self.BASE_URL, params=params)
         response.raise_for_status()
@@ -48,21 +48,16 @@ class PriceDataProvider:
         if data is None or len(data) == 0:
             return []
 
-        transformed_data = []
+        timestamps = data["t"]
+        close_prices = data["c"]
 
-        for entry in data:
-            # Parse the updatedAt field and round it to the nearest minute
-            updated_at = datetime.strptime(entry["updatedAt"], "%Y-%m-%dT%H:%M:%S.%fZ")
-            rounded_time = updated_at.replace(second=0, microsecond=0)
-
-            # Convert usdRate to a float
-            price = float(entry["usdRate"])
-
-            # Add the transformed entry to the result list
-            transformed_data.append({
-                "time": rounded_time.isoformat(),
-                "price": price
-            })
+        transformed_data = [
+            {
+                "time": datetime.utcfromtimestamp(timestamps[i]).isoformat(),
+                "price": float(close_prices[i])
+            }
+            for i in range(len(timestamps) - 1, -1, -5)
+        ][::-1]
 
         return transformed_data
 

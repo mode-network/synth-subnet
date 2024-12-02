@@ -21,7 +21,7 @@ def generate_simulations(
     if start_time is None:
         start_time = get_current_time()
 
-    start_time = round_time_to_minutes(start_time, time_increment)
+    start_time = round_time_to_minutes(start_time, 60)
 
     current_price = get_asset_price(asset)
     if current_price is None:

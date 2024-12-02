@@ -52,12 +52,12 @@ def get_intersecting_arrays(array1, array2):
     return filtered_array1, filtered_array2
 
 
-def round_time_to_minutes(dt_str, time_increment):
+def round_time_to_minutes(dt_str, in_seconds):
     # Convert string to datetime object
     dt = datetime.fromisoformat(dt_str)
 
     # Define the rounding interval
-    rounding_interval = timedelta(seconds=time_increment)
+    rounding_interval = timedelta(seconds=in_seconds)
 
     # Calculate the number of seconds since the start of the day
     seconds = (dt - dt.replace(hour=0, minute=0, second=0, microsecond=0)).total_seconds()
@@ -73,7 +73,7 @@ def round_time_to_minutes(dt_str, time_increment):
 
 def from_iso_to_unix_time(iso_time):
     # Convert to a datetime object
-    dt = datetime.fromisoformat(iso_time)
+    dt = datetime.fromisoformat(iso_time).replace(tzinfo=timezone.utc)
 
     # Convert to Unix time
     unix_time = int(dt.timestamp())
