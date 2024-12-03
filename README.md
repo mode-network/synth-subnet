@@ -158,18 +158,20 @@ The system creates a competitive environment through:
    - Rewards consistent performance and encourages competition
 
 
-## Environment setup
+## Environment Setup Instructions
 
-### Create a wallet
-You can create a single wallet or many wallet depending on how much miners or validators you're going to run.  
-There is no difference in wallets for miner or validator, and you can give it any name you want.
+### Step 1: Create a Wallet
+You can create a single wallet or multiple wallets, depending on how many miners or validators you intend to run.  
+There is no functional difference between wallets for miners or validators, and you can name them as you prefer.
 
-### Create a miner wallet
+#### Create a Miner Wallet
+create a coldkey
 ```
-# coldkey
 btcli wallet new_coldkey --wallet.name miner
+```
 
-# hotkey
+create a hotkey
+```
 btcli wallet new_hotkey --wallet.name miner --wallet.hotkey default
 ```
 
