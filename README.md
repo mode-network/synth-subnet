@@ -156,3 +156,140 @@ The system creates a competitive environment through:
 
 5. **Calculating Leaderboard Scores and Allocating Emissions**
    - Rewards consistent performance and encourages competition
+
+
+## Environment setup
+
+### Create a wallet
+You can create a single wallet or many wallet depending on how much miners or validators you're going to run.  
+There is no difference in wallets for miner or validator, and you can give it any name you want.
+
+### Create a miner wallet
+```
+# coldkey
+btcli wallet new_coldkey --wallet.name miner
+
+# hotkey
+btcli wallet new_hotkey --wallet.name miner --wallet.hotkey default
+```
+
+### Create a validator wallet
+```
+# coldkey
+btcli wallet new_coldkey --wallet.name validator
+
+# hotkey
+btcli wallet new_hotkey --wallet.name validator --wallet.hotkey default
+```
+
+### Register wallet in the subnet
+Before running a miner or a validator you have to acquire a slot in the subnet,  
+this way you connect your miner or validator application to the bittensor subnet:
+```
+# miner registration example
+btcli subnet register --wallet.name miner --wallet.hotkey default --subtensor.network test
+
+# validator registration example
+btcli subnet register --wallet.name validator --wallet.hotkey default --subtensor.network test
+```
+
+### Check the registration
+```
+# miner wallet details
+btcli wallet overview --wallet.name miner --subtensor.network test
+
+# validator wallet details
+btcli wallet overview --wallet.name validator --subtensor.network test
+```
+
+### Check the metagraph of the network
+```
+btcli subnet metagraph --netuid 247 --subtensor.network test
+```
+
+### Install PM2
+It is recommended to run miner and validator using "pm2":
+```
+sudo apt update
+sudo apt install nodejs npm
+sudo npm install pm2 -g
+```
+Verify installation:
+```
+pm2 --version
+```
+
+### Synth repository
+You'll have to clone the repository where you can find an example miner and validator.  
+You can update the code or implement your own, using the base template defined in the repository:
+```
+git clone https://github.com/mode-network/synth-subnet.git
+```
+
+### Python virtual environment and dependencies
+```
+# install python 3.9, do not uninstall or upgrade if you have the default 3.8 or any other in the system
+sudo apt install python3.9
+
+# install venv package
+sudo apt install python3.9-venv
+
+# activate virtual environment
+python3.9 -m venv bt_venv
+source bt_venv/bin/activate
+
+# install dependencies
+pip install -r requirements.txt
+
+# add the current directory to PYTHONPATH
+# we had an issue that modules in the root couldn't be found without it
+export PYTHONPATH="/home/{your-user}/synth-subnet:$PYTHONPATH"
+```
+
+### Running a Miner
+You can find *.config.js files in the root of repository. These are configuration files used to define and manage miner and validator applications.  
+They contain structured information about how an application should be started, run, and managed by PM2. They allow you to specify application details, environment variables, runtime configurations, and more.
+
+IMPORTANT: Make sure your have activated your virtual environment before running your miner.
+
+To run your miner:
+```
+pm2 start miner.config.js
+```
+
+You can find another file (this miner returns constant data and used for testing):
+```
+pm2 start miner-dummy.config.js
+```
+
+You can create your own configuration file for a miner and run it in the same way.
+
+Convenient commands for pm2:
+```
+# returns a list of currently running applications
+pm2 list
+
+# stop the application (you can stop an applicaion by name you can see in the previous command output)
+pm2 stop miner
+
+# start the application (you can also start the application by name if you run it before)
+# it is convenient if you had some changes in the code of this application
+pm2 start miner
+
+# look at the logs
+pm2 logs miner
+
+# if the last command output logs is not enough you can specify the amount like this
+pm2 logs miner --lines 100
+```
+
+### Running a Validator
+You can find *.config.js files in the root of repository. These are configuration files used to define and manage miner and validator applications.  
+They contain structured information about how an application should be started, run, and managed by PM2. They allow you to specify application details, environment variables, runtime configurations, and more.
+
+IMPORTANT: Make sure your have activated your virtual environment before running your miner.
+
+To run your validator:
+```
+pm2 start validator.config.js
+```
