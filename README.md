@@ -165,12 +165,12 @@ You can create a single wallet or multiple wallets, depending on how many miners
 There is no functional difference between wallets for miners or validators, and you can name them as you prefer.
 
 #### Create a Miner Wallet
-create a coldkey
+- create a coldkey
 ```
 btcli wallet new_coldkey --wallet.name miner
 ```
 
-create a hotkey
+- create a hotkey
 ```
 btcli wallet new_hotkey --wallet.name miner --wallet.hotkey default
 ```
