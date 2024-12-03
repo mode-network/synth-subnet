@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 
 from simulation.utils.helpers import convert_prices_to_time_format, get_intersecting_arrays, round_time_to_minutes, \
-    from_iso_to_unix_time
+    from_iso_to_unix_time, get_current_time
 
 
 class TestHelpers(unittest.TestCase):
@@ -11,6 +11,10 @@ class TestHelpers(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_get_current_time(self):
+        current_time = get_current_time()
+        print(current_time)
 
     def test_convert_prices_to_time_format(self):
         prices = [[45.67, 56.78, 34.89, 62.15]]

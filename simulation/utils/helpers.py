@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 
 def get_current_time():
     # Get current date and time
-    current_time = datetime.now(timezone.utc)
+    current_time = datetime.now(timezone.utc).replace(microsecond=0)
     return current_time.isoformat()
 
 
