@@ -8,8 +8,6 @@ import asyncio
 from simulation.simulation_input import SimulationInput
 from simulation.utils.helpers import get_current_time
 
-bt.debug()
-
 
 # Example usage
 async def test_prediction():
