@@ -182,10 +182,28 @@ class Miner(BaseMinerNeuron):
     def load_state(self):
         pass
 
+    def print_info(self):
+        metagraph = self.metagraph
+        self.uid = self.metagraph.hotkeys.index(
+            self.wallet.hotkey.ss58_address
+        )
+
+        log = (
+            "Miner | "
+            f"Step:{self.step} | "
+            f"UID:{self.uid} | "
+            f"Block:{self.block} | "
+            f"Stake:{metagraph.S[self.uid]:.4f} | "
+            f"Trust:{metagraph.T[self.uid]:.4f} | "
+            f"Incentive:{metagraph.I[self.uid]:.4f} | "
+            f"Emission:{metagraph.E[self.uid]:.4f}"
+        )
+        bt.logging.info(log)
+
 
 # This is the main function, which runs the miner.
 if __name__ == "__main__":
     with Miner() as miner:
         while True:
-            bt.logging.info(f"Miner running... {time.time()}")
+            miner.print_info()
             time.sleep(15)
