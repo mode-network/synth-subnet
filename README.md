@@ -165,23 +165,23 @@ You can create a single wallet or multiple wallets, depending on how many miners
 There is no functional difference between wallets for miners or validators, and you can name them as you prefer.
 
 #### Create a Miner Wallet
-Create a coldkey
+- create a coldkey
 ```
 btcli wallet new_coldkey --wallet.name miner
 ```
 
-Create a hotkey
+- create a hotkey
 ```
 btcli wallet new_hotkey --wallet.name miner --wallet.hotkey default
 ```
 
 #### Create a Validator Wallet
-Create a coldkey
+- create a coldkey
 ```
 btcli wallet new_coldkey --wallet.name validator
 ```
 
-Create a hotkey
+- create a hotkey
 ```
 btcli wallet new_hotkey --wallet.name validator --wallet.hotkey default
 ```
@@ -287,7 +287,7 @@ export PYTHONPATH="/home/{your-user}/synth-subnet:$PYTHONPATH"
 ### Step 8: Run a Miner
 Configuration files (`*.config.js`) in the repository define how to start and manage applications with PM2. They allow you to specify application details, environment variables, and runtime configurations.
 
-*IMPORTANT: Activate the virtual environment before running:*
+#### IMPORTANT: Activate the virtual environment before running:
 ```
 source bt_venv/bin/activate
 ```
@@ -304,7 +304,7 @@ pm2 start miner-dummy.config.js
 
 You can create and run your custom configuration file similarly.
 
-*PM2 Commands:*
+#### PM2 Commands:
 
 To return a list of currently running applications:
 ```
@@ -336,7 +336,7 @@ pm2 logs miner --lines 100
 ### Step 9: Run a Validator
 Similar to miners, validators also use `*.config.js` files for configuration.
 
-*IMPORTANT: Activate the virtual environment before running:*
+#### IMPORTANT: Activate the virtual environment before running:
 ```
 source bt_venv/bin/activate
 ```
