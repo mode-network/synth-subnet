@@ -17,28 +17,31 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+from typing import List, Union, Any, Dict
+
 import bittensor as bt
-from typing import List, Optional, Union, Any, Dict
-from simulation.protocol import Simulation
 from bittensor.subnets import SubnetsAPI
 
+from simulation.protocol import Simulation
+from simulation.simulation_input import SimulationInput
 
-class DummyAPI(SubnetsAPI):
+
+class SynthAPI(SubnetsAPI):
     def __init__(self, wallet: "bt.wallet"):
         super().__init__(wallet)
-        self.netuid = 33
-        self.name = "dummy"
+        self.netuid = 247
+        self.name = "synth"
 
-    def prepare_synapse(self, dummy_input: int) -> Simulation:
-        synapse.dummy_input = dummy_input
+    def prepare_synapse(self, simulation_input: SimulationInput) -> Simulation:
+        synapse = Simulation(simulation_input=simulation_input)
         return synapse
 
     def process_responses(
         self, responses: List[Union["bt.Synapse", Any]]
-    ) -> List[int]:
+    ) -> List[Dict[str, Union[str, float]]]:
         outputs = []
         for response in responses:
             if response.dendrite.status_code != 200:
                 continue
-            return outputs.append(response.dummy_output)
+            outputs.append(response.simulation_output)
         return outputs

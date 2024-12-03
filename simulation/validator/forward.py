@@ -25,6 +25,7 @@ import bittensor as bt
 from simulation.base.validator import BaseValidatorNeuron
 from simulation.protocol import Simulation
 from simulation.simulation_input import SimulationInput
+from simulation.utils.helpers import get_current_time
 from simulation.utils.uids import check_uid_availability
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
@@ -51,7 +52,7 @@ async def forward(
     # miner_uids = get_random_uids(self, k=self.config.neuron.sample_size)
 
     # getting current validation time
-    current_time = datetime.now().isoformat()
+    current_time = get_current_time()
 
     miner_uids = []
     for uid in range(len(self.metagraph.S)):

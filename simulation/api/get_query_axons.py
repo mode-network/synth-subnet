@@ -118,7 +118,7 @@ async def get_query_api_axons(
     dendrite = bt.Dendrite(wallet=wallet)
 
     if metagraph is None:
-        metagraph = bt.metagraph(netuid=21)
+        metagraph = bt.metagraph(netuid=247)
 
     if uids is not None:
         query_uids = [uids] if isinstance(uids, int) else uids
