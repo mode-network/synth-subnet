@@ -175,16 +175,20 @@ btcli wallet new_coldkey --wallet.name miner
 btcli wallet new_hotkey --wallet.name miner --wallet.hotkey default
 ```
 
-### Create a validator wallet
+#### Create a Validator Wallet
+- create a coldkey
 ```
-# coldkey
 btcli wallet new_coldkey --wallet.name validator
+```
 
-# hotkey
+- create a hotkey
+```
 btcli wallet new_hotkey --wallet.name validator --wallet.hotkey default
 ```
 
-### Register wallet in the subnet
+-----
+
+### Step 2: Register Wallet in the Subnet
 Before running a miner or a validator you have to acquire a slot in the subnet,  
 this way you connect your miner or validator application to the bittensor subnet:
 ```
