@@ -186,7 +186,7 @@ btcli wallet new_coldkey --wallet.name validator
 btcli wallet new_hotkey --wallet.name validator --wallet.hotkey default
 ```
 
------
+---
 
 ### Step 2: Register Wallet in the Subnet
 Before running a miner or a validator you have to acquire a slot in the subnet,  
