@@ -253,6 +253,13 @@ def add_validator_args(cls, parser):
         default="opentensor-dev",
     )
 
+    parser.add_argument(
+        "--prediction_history_file",
+        type=str,
+        default="prediction_history.json",
+        help="The file where the history of predictions is stored.",
+    )
+
 
 def config(cls):
     """

@@ -47,7 +47,11 @@ class Validator(BaseValidatorNeuron):
         bt.logging.info("load_state()")
         self.load_state()
 
-        self.miner_data_handler = MinerDataHandler("predictions_data.json")
+        prediction_history_file = "prediction_history.json"
+        if self.config.prediction_history_file is not None:
+            prediction_history_file = self.config.prediction_history_file
+
+        self.miner_data_handler = MinerDataHandler(prediction_history_file)
         self.price_data_provider = PriceDataProvider("BTC")
 
         # TODO(developer): Anything specific to your use case you can do here
