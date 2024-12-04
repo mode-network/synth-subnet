@@ -299,7 +299,7 @@ pm2 start miner.config.js
 
 Alternatively, use the dummy miner for testing:
 ```
-pm2 start miner-dummy.config.js
+pm2 start miner-dummy.local.config.js
 ```
 
 You can create and run your custom configuration file similarly.
