@@ -170,3 +170,6 @@ testing/
 
 # Ignore macOS system files
 .DS_Store
+
+# History files
+prediction*.json
