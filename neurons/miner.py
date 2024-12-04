@@ -66,9 +66,9 @@ class Miner(BaseMinerNeuron):
 
         dt = simulation_input.start_time
         if self.config.miner_type == 'dummy':
-            prediction = generate_fixed_simulation(start_time=dt, time_length=600)
+            prediction = generate_fixed_simulation(start_time=dt, time_length=86400)
         else:
-            prediction = generate_simulations(start_time=dt, time_length=600)
+            prediction = generate_simulations(start_time=dt, time_length=86400)
 
         synapse.simulation_output = prediction
 
