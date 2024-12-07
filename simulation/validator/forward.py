@@ -127,10 +127,11 @@ async def forward(
 
     bt.logging.info(f"Scored responses: {rewards}")
 
-    # Update the scores based on the rewards. You may want to define your own update_scores function for custom behavior.
+    # Update the scores based on the rewards.
+    # You may want to define your own update_scores function for custom behavior.
     filtered_rewards, filtered_miner_uids = remove_zero_rewards(rewards, miner_uids)
     self.update_scores(filtered_rewards, filtered_miner_uids)
-    time.sleep(120)
+    time.sleep(3600)  # wait for an hour
 
 
 def remove_zero_rewards(rewards, miner_uids):
