@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 import bittensor as bt
+from sqlalchemy import select
 
 from simulation.db.models import engine, miner_predictions
 
@@ -61,27 +62,39 @@ class MinerDataHandler:
         # bt.logging.info("after: " + str(self.data))
         # self._save_data()
 
-    def get_values(self, miner_id, current_time_str: str):
+    @staticmethod
+    def get_values(miner_id: int, current_time_str: str):
         """Retrieve the record with the longest valid interval for the given miner_id."""
-        miner_id_str = str(miner_id)
-
-        if miner_id_str not in self.data:
-            return []
+        # miner_id_str = str(miner_id)
+        #
+        # if miner_id_str not in self.data:
+        #     return []
 
         current_time = datetime.fromisoformat(current_time_str)
 
         best_record = None
         max_end_time = current_time - timedelta(days=5)
 
-        bt.logging.info("in get_values: miner_id is " + miner_id_str)
+        with engine.connect() as connection:
+            query = select(miner_predictions.c.prediction).where(
+                miner_predictions.c.start_time >= max_end_time,
+                miner_predictions.c.start_time <= current_time,
+                miner_predictions.c.miner_uid == miner_id
+            )
+            result = connection.execute(query)
+
+            # Fetch all results
+            predictions = [row.prediction for row in result]
+
+        bt.logging.info("in get_values: predictions " + str(predictions))
 
         # Find the record with the longest valid interval
-        for record in self.data[miner_id_str]:
-            if record["values"] is None:
+        for prediction in predictions:
+            if prediction is None:
                 continue
 
-            start_time = datetime.fromisoformat(record["values"][0]["time"])
-            end_time = datetime.fromisoformat(record["values"][-1]["time"])
+            start_time = datetime.fromisoformat(prediction[0]["time"])
+            end_time = datetime.fromisoformat(prediction[-1]["time"])
 
             bt.logging.info("in get_values, first: " + start_time.isoformat())
             bt.logging.info("in get_values, last: " + end_time.isoformat())
@@ -89,19 +102,11 @@ class MinerDataHandler:
             if current_time > end_time:
                 if end_time > max_end_time:
                     max_end_time = end_time
-                    best_record = record
+                    best_record = prediction
 
         bt.logging.info("in get_values: best_record is " + str(best_record))
 
         if not best_record:
             return []
 
-        if best_record["values"] is None:
-            return []
-
-        # Filter and return the values within the interval
-        filtered_values = [
-            entry for entry in best_record["values"]
-        ]
-
-        return filtered_values
+        return best_record
