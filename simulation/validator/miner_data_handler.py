@@ -2,6 +2,8 @@ import json
 from datetime import datetime, timedelta
 import bittensor as bt
 
+from simulation.db.models import engine, miner_predictions
+
 
 class MinerDataHandler:
     def __init__(self, file_path):
@@ -22,21 +24,36 @@ class MinerDataHandler:
         with open(self.file_path, 'w') as f:
             json.dump(self.data, f, indent=4)
 
-    def set_values(self, miner_id, start_time: str, values):
+    @staticmethod
+    def set_values(miner_id, start_time: str, values):
         """Set values for the given miner_id and start_time."""
 
-        miner_id_str = str(miner_id)
+        data = {
+            "miner_uid": miner_id,
+            "start_time": start_time,
+            "prediction": values
+        }
+
+        with engine.connect() as connection:
+            insert_stmt = miner_predictions.insert().values(
+                miner_uid=data["miner_uid"],
+                start_time=data["start_time"],
+                prediction=data["prediction"]
+            )
+            connection.execute(insert_stmt)
+
+        # miner_id_str = str(miner_id)
 
         # Ensure miner_id exists and append the new record
-        bt.logging.info("before: " + str(self.data))
-        if miner_id_str not in self.data:
-            self.data[miner_id_str] = []
-        self.data[miner_id_str].append({
-            "start_time": start_time,
-            "values": values
-        })
-        bt.logging.info("after: " + str(self.data))
-        self._save_data()
+        # bt.logging.info("before: " + str(self.data))
+        # if miner_id_str not in self.data:
+        #     self.data[miner_id_str] = []
+        # self.data[miner_id_str].append({
+        #     "start_time": start_time,
+        #     "values": values
+        # })
+        # bt.logging.info("after: " + str(self.data))
+        # self._save_data()
 
     def get_values(self, miner_id, current_time_str: str):
         """Retrieve the record with the longest valid interval for the given miner_id."""
