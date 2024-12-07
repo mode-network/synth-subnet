@@ -34,6 +34,8 @@ class MinerDataHandler:
             "prediction": values
         }
 
+        bt.logging.info("in set_values: " + str(data))
+
         with engine.connect() as connection:
             insert_stmt = miner_predictions.insert().values(
                 miner_uid=data["miner_uid"],
