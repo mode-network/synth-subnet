@@ -36,13 +36,17 @@ class MinerDataHandler:
 
         bt.logging.info("in set_values: " + str(data))
 
-        with engine.connect() as connection:
-            insert_stmt = miner_predictions.insert().values(
-                miner_uid=data["miner_uid"],
-                start_time=data["start_time"],
-                prediction=data["prediction"]
-            )
-            connection.execute(insert_stmt)
+        try:
+            with engine.connect() as connection:
+                with connection.begin():  # Begin a transaction
+                    insert_stmt = miner_predictions.insert().values(
+                        miner_uid=data["miner_uid"],
+                        start_time=data["start_time"],
+                        prediction=data["prediction"]
+                    )
+                    connection.execute(insert_stmt)
+        except Exception as e:
+            bt.logging.info("in set_values (got an exception): " + str(e))
 
         # miner_id_str = str(miner_id)
 
