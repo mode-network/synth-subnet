@@ -7,23 +7,6 @@ from simulation.db.models import engine, miner_predictions
 
 
 class MinerDataHandler:
-    def __init__(self, file_path):
-        self.file_path = file_path
-        self.data = self._load_data()
-
-    def _load_data(self):
-        """Load data from the file if it exists, otherwise return an empty dictionary."""
-        try:
-            with open(self.file_path, 'r') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {}
-
-    def _save_data(self):
-        """Save data to the file."""
-        # bt.logging.debug("data for saving in the file: " + str(self.data))
-        with open(self.file_path, 'w') as f:
-            json.dump(self.data, f, indent=4)
 
     @staticmethod
     def set_values(miner_id, start_time: str, values):
@@ -49,27 +32,9 @@ class MinerDataHandler:
         except Exception as e:
             bt.logging.info("in set_values (got an exception): " + str(e))
 
-        # miner_id_str = str(miner_id)
-
-        # Ensure miner_id exists and append the new record
-        # bt.logging.info("before: " + str(self.data))
-        # if miner_id_str not in self.data:
-        #     self.data[miner_id_str] = []
-        # self.data[miner_id_str].append({
-        #     "start_time": start_time,
-        #     "values": values
-        # })
-        # bt.logging.info("after: " + str(self.data))
-        # self._save_data()
-
     @staticmethod
     def get_values(miner_id: int, current_time_str: str):
         """Retrieve the record with the longest valid interval for the given miner_id."""
-        # miner_id_str = str(miner_id)
-        #
-        # if miner_id_str not in self.data:
-        #     return []
-
         current_time = datetime.fromisoformat(current_time_str)
 
         best_record = None
