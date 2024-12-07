@@ -25,7 +25,7 @@ import bittensor as bt
 from simulation.base.validator import BaseValidatorNeuron
 from simulation.protocol import Simulation
 from simulation.simulation_input import SimulationInput
-from simulation.utils.helpers import get_current_time
+from simulation.utils.helpers import get_current_time, round_time_to_minutes
 from simulation.utils.uids import check_uid_availability
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
@@ -54,6 +54,9 @@ async def forward(
     # getting current validation time
     current_time = get_current_time()
 
+    # round validation time to the closest minute and add 1 extra minute
+    validation_time = round_time_to_minutes(current_time, 60, 60)
+
     miner_uids = []
     for uid in range(len(self.metagraph.S)):
         uid_is_available = check_uid_availability(
@@ -66,7 +69,7 @@ async def forward(
     # give me prediction of BTC price for the next 1 day for every 5 min of time
     simulation_input = SimulationInput(
         asset="BTC",
-        start_time=current_time,
+        start_time=validation_time,
         time_increment=300,
         time_length=86400,
         num_simulations=1
@@ -107,7 +110,7 @@ async def forward(
         if response is None or len(response) == 0:
             continue
         miner_id = miner_uids[i]
-        miner_data_handler.set_values(miner_id, current_time, response)
+        miner_data_handler.set_values(miner_id, validation_time, response)
 
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
@@ -118,7 +121,7 @@ async def forward(
         miner_data_handler=miner_data_handler,
         simulation_input=simulation_input,
         miner_uids=miner_uids,
-        validation_time=current_time,
+        validation_time=validation_time,
         price_data_provider=price_data_provider,
     )
 

@@ -19,9 +19,7 @@ def generate_simulations(
         numpy.ndarray: Simulated price paths.
     """
     if start_time is None:
-        start_time = get_current_time()
-
-    start_time = round_time_to_minutes(start_time, 60)
+        raise ValueError("Start time must be provided.")
 
     current_price = get_asset_price(asset)
     if current_price is None:

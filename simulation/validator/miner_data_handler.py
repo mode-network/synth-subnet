@@ -18,8 +18,6 @@ class MinerDataHandler:
             "prediction": values
         }
 
-        bt.logging.info("in set_values: " + str(data))
-
         try:
             with engine.connect() as connection:
                 with connection.begin():  # Begin a transaction

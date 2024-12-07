@@ -52,7 +52,7 @@ def get_intersecting_arrays(array1, array2):
     return filtered_array1, filtered_array2
 
 
-def round_time_to_minutes(dt_str, in_seconds):
+def round_time_to_minutes(dt_str, in_seconds, extra_seconds=0):
     # Convert string to datetime object
     dt = datetime.fromisoformat(dt_str)
 
@@ -66,7 +66,7 @@ def round_time_to_minutes(dt_str, in_seconds):
     next_interval_seconds = ((seconds // rounding_interval.total_seconds()) + 1) * rounding_interval.total_seconds()
 
     # Get the rounded-up datetime
-    rounded_time = dt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(seconds=next_interval_seconds)
+    rounded_time = dt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(seconds=next_interval_seconds) + timedelta(seconds=extra_seconds)
 
     return rounded_time.isoformat()
 
