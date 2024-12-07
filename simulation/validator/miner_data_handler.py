@@ -51,7 +51,7 @@ class MinerDataHandler:
             # Fetch all results
             predictions = [row.prediction for row in result]
 
-        bt.logging.info("in get_values: predictions " + str(predictions))
+        bt.logging.info("in get_values, predictions length:" + str(len(predictions)))
 
         # Find the record with the longest valid interval
         for prediction in predictions:
@@ -68,8 +68,6 @@ class MinerDataHandler:
                 if end_time > max_end_time:
                     max_end_time = end_time
                     best_record = prediction
-
-        bt.logging.info("in get_values: best_record is " + str(best_record))
 
         if not best_record:
             return []
