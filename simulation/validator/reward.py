@@ -120,7 +120,7 @@ def get_rewards(
             "miner_uid": miner_uid,
             "score": score,
             "crps_data": clean_numpy_in_crps_data(crps_data),
-            "softmax_score": softmax_score,
+            "softmax_score": float(softmax_score),
             "real_prices": real_prices,
             "predictions": predictions,
         }
