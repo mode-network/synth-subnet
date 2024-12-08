@@ -35,7 +35,7 @@ def reward(
         miner_uid: int,
         simulation_input: SimulationInput,
         validation_time: str,
-    ):
+):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
     value for the miner, which is used to update the miner's score.
@@ -47,14 +47,14 @@ def reward(
     predictions = miner_data_handler.get_values(miner_uid, validation_time)
 
     if predictions is None or len(predictions) == 0:
-        return -1  # represents no prediction data from the miner
+        return -1, [], []  # represents no prediction data from the miner
 
     # get last time in predictions
     end_time = predictions[len(predictions) - 1]["time"]
     real_prices = price_data_provider.fetch_data(end_time)
 
     if len(real_prices) == 0:
-        return -1
+        return -1, [], []
 
     # in case some of the time points is not overlapped
     intersecting_predictions, intersecting_real_price = get_intersecting_arrays(predictions, real_prices)
@@ -62,23 +62,23 @@ def reward(
     predictions_path = [entry["price"] for entry in intersecting_predictions]
     real_price_path = [entry["price"] for entry in intersecting_real_price]
 
-    score = calculate_crps_for_miner(
+    score, detailed_crps_data = calculate_crps_for_miner(
         miner_uid,
         np.array([predictions_path]),  # calculate_crps_for_miner is intended to work with multiple paths
         np.array(real_price_path),
         simulation_input.time_increment
     )
 
-    return score
+    return score, detailed_crps_data, real_prices
 
 
 def get_rewards(
-    miner_data_handler: MinerDataHandler,
-    price_data_provider: PriceDataProvider,
-    simulation_input: SimulationInput,
-    miner_uids: List[int],
-    validation_time: str,
-) -> np.ndarray:
+        miner_data_handler: MinerDataHandler,
+        price_data_provider: PriceDataProvider,
+        simulation_input: SimulationInput,
+        miner_uids: List[int],
+        validation_time: str,
+) -> (np.ndarray, []):
     """
     Returns an array of rewards for the given query and responses.
 
@@ -93,22 +93,39 @@ def get_rewards(
     bt.logging.info(f"In rewards, miner_uids={miner_uids}")
 
     scores = []
+    detailed_crps_data_list = []
+    real_prices_list = []
     for i, miner_id in enumerate(miner_uids):
         # function that calculates a score for an individual miner
-        scores.append(
-            reward(
+        score, detailed_crps_data, real_prices = reward(
                 miner_data_handler,
                 price_data_provider,
                 miner_id,
                 simulation_input,
                 validation_time
             )
-        )
+        scores.append(score)
+        detailed_crps_data_list.append(detailed_crps_data)
+        real_prices_list.append(real_prices)
 
     score_values = np.array(scores)
     softmax_scores = compute_softmax(score_values)
 
-    return softmax_scores
+    # gather all the detailed information
+    # for log and debug purposes
+    detailed_info = [
+        {
+            "miner_uid": miner_uid,
+            "score": score,
+            "crps_data": crps_data,
+            "softmax_score": softmax_score,
+            "real_prices": real_prices,
+        }
+        for miner_uid, score, crps_data, softmax_score, real_prices in
+        zip(miner_uids, scores, detailed_crps_data_list, softmax_scores, real_prices_list)
+    ]
+
+    return softmax_scores, detailed_info
 
 
 def compute_softmax(score_values: np.ndarray) -> np.ndarray:

@@ -1,4 +1,4 @@
-starlette>=0.30.0
+starlette>=0.40.0
 pydantic>=2
 rich>=13
 pytest>=8

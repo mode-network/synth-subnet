@@ -1,7 +1,7 @@
 import os
 
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, MetaData, Table, Column, Integer, DateTime, JSON
+from sqlalchemy import create_engine, MetaData, Table, Column, Integer, DateTime, JSON, Float
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -22,4 +22,17 @@ miner_predictions = Table(
     Column("miner_uid", Integer, nullable=False),
     Column("start_time", DateTime(timezone=True), nullable=False),
     Column("prediction", JSONB, nullable=False),
+)
+
+# Define the table
+miner_rewards = Table(
+    "miner_rewards",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("miner_uid", Integer, nullable=False),
+    Column("validation_time", DateTime(timezone=True), nullable=False),
+    Column("start_time", DateTime(timezone=True), nullable=False),
+    Column("reward_details", JSONB, nullable=False),
+    Column("reward", Float, nullable=False),
+    Column("real_prices", JSON, nullable=False),
 )

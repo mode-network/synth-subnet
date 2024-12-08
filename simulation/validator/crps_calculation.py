@@ -89,4 +89,4 @@ def calculate_crps_for_miner(
     df_detailed_scores.to_csv(file_path, index=False)
 
     # Return the sum of all scores
-    return sum_all_scores
+    return sum_all_scores, detailed_crps_data

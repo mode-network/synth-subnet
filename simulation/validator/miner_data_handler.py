@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import bittensor as bt
 from sqlalchemy import select
 
-from simulation.db.models import engine, miner_predictions
+from simulation.db.models import engine, miner_predictions, miner_rewards
 
 
 class MinerDataHandler:
@@ -28,7 +28,32 @@ class MinerDataHandler:
                     )
                     connection.execute(insert_stmt)
         except Exception as e:
-            bt.logging.info("in set_values (got an exception): " + str(e))
+            bt.logging.info(f"in set_values (got an exception): {e}")
+
+    @staticmethod
+    def set_reward_details(reward_details: [], validation_time: str, start_time: str):
+        rows_to_insert = [
+            {
+                "miner_uid": row["miner_uid"],
+                "validation_time": validation_time,
+                "start_time": start_time,
+                "reward_details": {
+                    "score": row["score"],
+                    "softmax_score": row["softmax_score"],
+                    "crps_data": row["crps_data"]
+                },
+                "real_prices": row["real_prices"],
+            }
+            for row in reward_details
+        ]
+
+        with engine.begin() as connection:
+            try:
+                insert_stmt = miner_rewards.insert().values(rows_to_insert)
+                connection.execute(insert_stmt)
+            except Exception as e:
+                connection.rollback()
+                bt.logging.info(f"in set_reward_details (got an exception): {e}")
 
     @staticmethod
     def get_values(miner_id: int, current_time_str: str):
@@ -56,11 +81,7 @@ class MinerDataHandler:
             if prediction is None:
                 continue
 
-            start_time = datetime.fromisoformat(prediction[0]["time"])
             end_time = datetime.fromisoformat(prediction[-1]["time"])
-
-            bt.logging.info("in get_values, first: " + start_time.isoformat())
-            bt.logging.info("in get_values, last: " + end_time.isoformat())
 
             if current_time > end_time:
                 if end_time > max_end_time:
