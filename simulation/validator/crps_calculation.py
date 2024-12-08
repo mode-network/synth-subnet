@@ -78,15 +78,5 @@ def calculate_crps_for_miner(
         'CRPS': sum_all_scores
     })
 
-    # Create a DataFrame to display the detailed results
-    df_detailed_scores = pd.DataFrame(detailed_crps_data)
-
-    # Create the output file path
-    file_name = f'crps_scores_{miner_id}_day{day}.csv'
-    file_path = os.path.join(output_dir, file_name)
-
-    # Write the DataFrame to a CSV file
-    df_detailed_scores.to_csv(file_path, index=False)
-
     # Return the sum of all scores
     return sum_all_scores, detailed_crps_data

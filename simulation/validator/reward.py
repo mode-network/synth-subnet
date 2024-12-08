@@ -117,7 +117,7 @@ def get_rewards(
         {
             "miner_uid": miner_uid,
             "score": score,
-            "crps_data": crps_data,
+            "crps_data": clean_numpy_in_crps_data(crps_data),
             "softmax_score": softmax_score,
             "real_prices": real_prices,
         }
@@ -144,3 +144,10 @@ def compute_softmax(score_values: np.ndarray) -> np.ndarray:
     softmax_scores[mask] = softmax_scores_valid
 
     return softmax_scores
+
+
+def clean_numpy_in_crps_data(crps_data: []) -> []:
+    cleaned_crps_data = [
+        {key: (float(value) if isinstance(value, np.float64) else value) for key, value in item.items()}
+        for item in crps_data
+    ]
