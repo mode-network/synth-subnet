@@ -23,7 +23,7 @@ class MinerDataHandler:
                 with connection.begin():  # Begin a transaction
                     insert_stmt = miner_predictions.insert().values(
                         miner_uid=data["miner_uid"],
-                        start_time=data["start_time"],
+                        validation_time=data["validation_time"],
                         prediction=data["prediction"]
                     )
                     connection.execute(insert_stmt)
