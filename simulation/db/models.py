@@ -35,4 +35,5 @@ miner_rewards = Table(
     Column("reward_details", JSONB, nullable=False),
     Column("reward", Float, nullable=False),
     Column("real_prices", JSON, nullable=False),
+    Column("prediction", JSON, nullable=False),
 )

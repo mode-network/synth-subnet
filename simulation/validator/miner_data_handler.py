@@ -44,6 +44,7 @@ class MinerDataHandler:
                 },
                 "reward": row["softmax_score"],
                 "real_prices": row["real_prices"],
+                "prediction": row["predictions"]
             }
             for row in reward_details
         ]

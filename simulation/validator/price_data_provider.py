@@ -1,7 +1,7 @@
 import requests
 
 from simulation.utils.helpers import from_iso_to_unix_time
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class PriceDataProvider:
@@ -53,7 +53,7 @@ class PriceDataProvider:
 
         transformed_data = [
             {
-                "time": datetime.utcfromtimestamp(timestamps[i]).isoformat(),
+                "time": datetime.fromtimestamp(timestamps[i], timezone.utc).isoformat(),
                 "price": float(close_prices[i])
             }
             for i in range(len(timestamps) - 1, -1, -5)

@@ -47,14 +47,14 @@ def reward(
     predictions = miner_data_handler.get_values(miner_uid, validation_time)
 
     if predictions is None or len(predictions) == 0:
-        return -1, [], []  # represents no prediction data from the miner
+        return -1, [], [], []  # represents no prediction data from the miner
 
     # get last time in predictions
     end_time = predictions[len(predictions) - 1]["time"]
     real_prices = price_data_provider.fetch_data(end_time)
 
     if len(real_prices) == 0:
-        return -1, [], []
+        return -1, [], [], predictions
 
     # in case some of the time points is not overlapped
     intersecting_predictions, intersecting_real_price = get_intersecting_arrays(predictions, real_prices)
@@ -69,7 +69,7 @@ def reward(
         simulation_input.time_increment
     )
 
-    return score, detailed_crps_data, real_prices
+    return score, detailed_crps_data, real_prices, predictions
 
 
 def get_rewards(
@@ -95,9 +95,10 @@ def get_rewards(
     scores = []
     detailed_crps_data_list = []
     real_prices_list = []
+    predictions_list = []
     for i, miner_id in enumerate(miner_uids):
         # function that calculates a score for an individual miner
-        score, detailed_crps_data, real_prices = reward(
+        score, detailed_crps_data, real_prices, predictions = reward(
                 miner_data_handler,
                 price_data_provider,
                 miner_id,
@@ -107,6 +108,7 @@ def get_rewards(
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
         real_prices_list.append(real_prices)
+        predictions_list.append(predictions)
 
     score_values = np.array(scores)
     softmax_scores = compute_softmax(score_values)
@@ -120,9 +122,10 @@ def get_rewards(
             "crps_data": clean_numpy_in_crps_data(crps_data),
             "softmax_score": softmax_score,
             "real_prices": real_prices,
+            "predictions": predictions,
         }
-        for miner_uid, score, crps_data, softmax_score, real_prices in
-        zip(miner_uids, scores, detailed_crps_data_list, softmax_scores, real_prices_list)
+        for miner_uid, score, crps_data, softmax_score, real_prices, predictions in
+        zip(miner_uids, scores, detailed_crps_data_list, softmax_scores, real_prices_list, predictions_list)
     ]
 
     return softmax_scores, detailed_info
@@ -151,3 +154,4 @@ def clean_numpy_in_crps_data(crps_data: []) -> []:
         {key: (float(value) if isinstance(value, np.float64) else value) for key, value in item.items()}
         for item in crps_data
     ]
+    return cleaned_crps_data
