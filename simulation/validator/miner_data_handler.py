@@ -9,12 +9,12 @@ from simulation.db.models import engine, miner_predictions, miner_rewards
 class MinerDataHandler:
 
     @staticmethod
-    def set_values(miner_id, start_time: str, values):
-        """Set values for the given miner_id and start_time."""
+    def set_values(miner_uid, validation_time: str, values):
+        """Set values for the given miner_id and validation_time."""
 
         data = {
-            "miner_uid": miner_id,
-            "start_time": start_time,
+            "miner_uid": miner_uid,
+            "validation_time": validation_time,
             "prediction": values
         }
 
@@ -58,7 +58,7 @@ class MinerDataHandler:
                 bt.logging.info(f"in set_reward_details (got an exception): {e}")
 
     @staticmethod
-    def get_values(miner_id: int, current_time_str: str):
+    def get_values(miner_uid: int, current_time_str: str):
         """Retrieve the record with the longest valid interval for the given miner_id."""
         current_time = datetime.fromisoformat(current_time_str)
 
@@ -69,7 +69,7 @@ class MinerDataHandler:
             query = select(miner_predictions.c.prediction).where(
                 miner_predictions.c.start_time >= max_end_time,
                 miner_predictions.c.start_time <= current_time,
-                miner_predictions.c.miner_uid == miner_id
+                miner_predictions.c.miner_uid == miner_uid
             )
             result = connection.execute(query)
 
