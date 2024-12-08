@@ -20,7 +20,7 @@ miner_predictions = Table(
     metadata,
     Column("id", Integer, primary_key=True),
     Column("miner_uid", Integer, nullable=False),
-    Column("start_time", DateTime(timezone=True), nullable=False),
+    Column("validation_time", DateTime(timezone=True), nullable=False),
     Column("prediction", JSONB, nullable=False),
 )
 
