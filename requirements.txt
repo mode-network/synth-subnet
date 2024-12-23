@@ -1,8 +1,7 @@
-starlette>=0.40.0
+starlette>=0.37.2
 pydantic>=2
 rich>=13
 pytest>=8
-torch>=2
 numpy>=1
 setuptools>=68
 requests>=2
