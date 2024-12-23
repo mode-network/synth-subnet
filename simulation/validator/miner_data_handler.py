@@ -66,8 +66,8 @@ class MinerDataHandler:
 
         with engine.connect() as connection:
             query = select(miner_predictions.c.prediction).where(
-                miner_predictions.c.validation_time >= max_end_time,
-                miner_predictions.c.validation_time <= current_time,
+                miner_predictions.c.start_time >= max_end_time,
+                miner_predictions.c.start_time <= current_time,
                 miner_predictions.c.miner_uid == miner_uid
             )
             result = connection.execute(query)
