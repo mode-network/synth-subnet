@@ -9,12 +9,12 @@ from simulation.db.models import engine, miner_predictions, miner_rewards
 class MinerDataHandler:
 
     @staticmethod
-    def set_values(miner_uid, validation_time: str, values):
+    def set_values(miner_uid, start_time: str, values):
         """Set values for the given miner_id and validation_time."""
 
         data = {
             "miner_uid": miner_uid,
-            "validation_time": validation_time,
+            "start_time": start_time,
             "prediction": values
         }
 
@@ -23,7 +23,7 @@ class MinerDataHandler:
                 with connection.begin():  # Begin a transaction
                     insert_stmt = miner_predictions.insert().values(
                         miner_uid=data["miner_uid"],
-                        validation_time=data["validation_time"],
+                        start_time=data["start_time"],
                         prediction=data["prediction"]
                     )
                     connection.execute(insert_stmt)
@@ -31,11 +31,10 @@ class MinerDataHandler:
             bt.logging.info(f"in set_values (got an exception): {e}")
 
     @staticmethod
-    def set_reward_details(reward_details: [], validation_time: str, start_time: str):
+    def set_reward_details(reward_details: [], start_time: str):
         rows_to_insert = [
             {
                 "miner_uid": row["miner_uid"],
-                "validation_time": validation_time,
                 "start_time": start_time,
                 "reward_details": {
                     "score": row["score"],

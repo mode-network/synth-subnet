@@ -55,7 +55,7 @@ async def forward(
     current_time = get_current_time()
 
     # round validation time to the closest minute and add 1 extra minute
-    validation_time = round_time_to_minutes(current_time, 60, 60)
+    start_time = round_time_to_minutes(current_time, 60, 60)
 
     miner_uids = []
     for uid in range(len(self.metagraph.S)):
@@ -69,7 +69,7 @@ async def forward(
     # give me prediction of BTC price for the next 1 day for every 5 min of time
     simulation_input = SimulationInput(
         asset="BTC",
-        start_time=validation_time,
+        start_time=start_time,
         time_increment=300,
         time_length=86400,
         num_simulations=1
@@ -110,7 +110,7 @@ async def forward(
         if response is None or len(response) == 0:
             continue
         miner_id = miner_uids[i]
-        miner_data_handler.set_values(miner_id, validation_time, response)
+        miner_data_handler.set_values(miner_id, start_time, response)
 
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
@@ -121,12 +121,12 @@ async def forward(
         miner_data_handler=miner_data_handler,
         simulation_input=simulation_input,
         miner_uids=miner_uids,
-        validation_time=validation_time,
+        validation_time=start_time,
         price_data_provider=price_data_provider,
     )
 
     bt.logging.info(f"Scored responses: {rewards}")
-    miner_data_handler.set_reward_details(rewards_detailed_info, validation_time, current_time)
+    miner_data_handler.set_reward_details(rewards_detailed_info, start_time)
 
     # Update the scores based on the rewards.
     # You may want to define your own update_scores function for custom behavior.

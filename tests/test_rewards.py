@@ -135,7 +135,7 @@ class TestRewards(unittest.TestCase):
             price_data_provider=mock_price_data_provider,
             simulation_input=simulation_input,
             miner_uids=miner_uids,
-            validation_time=validation_time,
+            start_time=validation_time,
         )
 
         print(result)
@@ -194,7 +194,7 @@ class TestRewards(unittest.TestCase):
             price_data_provider=mock_price_data_provider,
             simulation_input=simulation_input,
             miner_uids=miner_uids,
-            validation_time=validation_time,
+            start_time=validation_time,
         )
 
         print(result)

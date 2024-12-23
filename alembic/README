@@ -1,1 +1,11 @@
 Generic single-database configuration.
+
+### Create a new migration
+```
+alembic revision -m "message that describes a new migration"
+```
+
+### Run migrations
+```
+alembic upgrade head
+```
