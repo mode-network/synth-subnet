@@ -9,7 +9,6 @@ class SimulationInput(BaseModel):
     time_increment: int = Field(default=300, description="Time increment in seconds.")
     time_length: int = Field(default=86400, description="Total time length in seconds.")
     num_simulations: int = Field(default=1, description="Number of simulation runs.")
-    sigma: float = Field(default=0.01, description="Standard deviation of the simulation.")
 
     class Config:
         arbitrary_types_allowed = True

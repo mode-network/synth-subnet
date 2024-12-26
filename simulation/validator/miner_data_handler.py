@@ -4,28 +4,29 @@ import bittensor as bt
 from sqlalchemy import select
 
 from simulation.db.models import engine, miner_predictions, miner_rewards
+from simulation.simulation_input import SimulationInput
 
 
 class MinerDataHandler:
 
     @staticmethod
-    def set_values(miner_uid, start_time: str, values):
+    def set_values(miner_uid, values, simulation_input: SimulationInput):
         """Set values for the given miner_id and validation_time."""
 
-        data = {
+        row_to_insert = {
             "miner_uid": miner_uid,
-            "start_time": start_time,
+            "start_time": simulation_input.start_time,
+            "asset": simulation_input.asset,
+            "time_increment": simulation_input.time_increment,
+            "time_length": simulation_input.time_length,
+            "num_simulations": simulation_input.num_simulations,
             "prediction": values
         }
 
         try:
             with engine.connect() as connection:
                 with connection.begin():  # Begin a transaction
-                    insert_stmt = miner_predictions.insert().values(
-                        miner_uid=data["miner_uid"],
-                        start_time=data["start_time"],
-                        prediction=data["prediction"]
-                    )
+                    insert_stmt = miner_predictions.insert().values(row_to_insert)
                     connection.execute(insert_stmt)
         except Exception as e:
             bt.logging.info(f"in set_values (got an exception): {e}")

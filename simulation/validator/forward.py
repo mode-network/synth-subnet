@@ -110,7 +110,7 @@ async def forward(
         if response is None or len(response) == 0:
             continue
         miner_id = miner_uids[i]
-        miner_data_handler.set_values(miner_id, start_time, response)
+        miner_data_handler.set_values(miner_id, response, simulation_input)
 
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
