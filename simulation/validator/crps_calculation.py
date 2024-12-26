@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 from properscoring import crps_ensemble
-from simulation.simulations.price_simulation import calculate_price_changes_over_intervals
+from simulation.simulations.price_simulation import (
+    calculate_price_changes_over_intervals,
+)
 import os
 
 
@@ -20,10 +22,10 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
     """
     # Define scoring intervals in seconds
     scoring_intervals = {
-        '5min': 300,       # 5 minutes
-        '30min': 1800,     # 30 minutes
-        '3hour': 10800,    # 3 hours
-        '24hour': 86400    # 24 hours
+        "5min": 300,  # 5 minutes
+        "30min": 1800,  # 30 minutes
+        "3hour": 10800,  # 3 hours
+        "24hour": 86400,  # 24 hours
     }
 
     # Function to calculate interval steps
@@ -40,8 +42,12 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
         interval_steps = get_interval_steps(interval_seconds, time_increment)
 
         # Calculate price changes over intervals
-        simulated_changes = calculate_price_changes_over_intervals(simulation_runs, interval_steps)
-        real_changes = calculate_price_changes_over_intervals(real_price_path.reshape(1, -1), interval_steps)[0]
+        simulated_changes = calculate_price_changes_over_intervals(
+            simulation_runs, interval_steps
+        )
+        real_changes = calculate_price_changes_over_intervals(
+            real_price_path.reshape(1, -1), interval_steps
+        )[0]
 
         # Calculate CRPS over intervals
         num_intervals = simulated_changes.shape[1]
@@ -52,29 +58,31 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
             crps_values[t] = crps_ensemble(observation, forecasts)
 
             # Append detailed data for this increment
-            detailed_crps_data.append({
-                'Interval': interval_name,
-                'Increment': t + 1,
-                'CRPS': crps_values[t]
-            })
+            detailed_crps_data.append(
+                {
+                    "Interval": interval_name,
+                    "Increment": t + 1,
+                    "CRPS": crps_values[t],
+                }
+            )
 
         # Total CRPS for this interval
         total_crps_interval = np.sum(crps_values)
         sum_all_scores += total_crps_interval
 
         # Append total CRPS for this interval to detailed data
-        detailed_crps_data.append({
-            'Interval': interval_name,
-            'Increment': 'Total',
-            'CRPS': total_crps_interval
-        })
+        detailed_crps_data.append(
+            {
+                "Interval": interval_name,
+                "Increment": "Total",
+                "CRPS": total_crps_interval,
+            }
+        )
 
     # Append overall total CRPS to detailed data
-    detailed_crps_data.append({
-        'Interval': 'Overall',
-        'Increment': 'Total',
-        'CRPS': sum_all_scores
-    })
+    detailed_crps_data.append(
+        {"Interval": "Overall", "Increment": "Total", "CRPS": sum_all_scores}
+    )
 
     # Return the sum of all scores
     return sum_all_scores, detailed_crps_data

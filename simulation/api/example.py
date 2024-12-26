@@ -29,7 +29,7 @@ async def test_prediction():
         start_time=current_time,
         time_increment=300,
         time_length=86400,
-        num_simulations=1
+        num_simulations=1,
     )
     bt.logging.info(f"Sending {str(simulation_input)} to predict a path.")
 

@@ -173,7 +173,7 @@ def add_miner_args(cls, parser):
         "--miner_type",
         type=str,
         default="default",
-        help="Miner type to choose different implementations"
+        help="Miner type to choose different implementations",
     )
 
 

@@ -22,11 +22,18 @@ class TestPriceSimulation(unittest.TestCase):
         sigma_real = 0.01
 
         price_paths = simulate_crypto_price_paths(
-            current_price, time_increment, time_length, num_simulations, sigma_real
+            current_price,
+            time_increment,
+            time_length,
+            num_simulations,
+            sigma_real,
         )
 
         # Test the shape of the result
-        self.assertEqual(price_paths.shape, (num_simulations, time_length / time_increment + 1))
+        self.assertEqual(
+            price_paths.shape,
+            (num_simulations, time_length / time_increment + 1),
+        )
 
         # Test that all values are finite (no NaN or Inf values)
         self.assertTrue(np.all(np.isfinite(price_paths)))

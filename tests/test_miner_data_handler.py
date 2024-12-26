@@ -28,7 +28,7 @@ class TestMinerDataHandler(unittest.TestCase):
             start_time=start_time,
             time_increment=300,
             time_length=86400,
-            num_simulations=100
+            num_simulations=100,
         )
 
         values = generate_values(datetime.fromisoformat(start_time))
@@ -38,8 +38,12 @@ class TestMinerDataHandler(unittest.TestCase):
 
         self.assertEqual(1, len(result))
         self.assertEqual(288, len(result[0]))  # Half of the 288 intervals
-        self.assertEqual({"time": "2024-11-20T12:00:00", "price": 90000}, result[0][0])
-        self.assertEqual({"time": "2024-11-21T11:55:00", "price": 233500}, result[0][287])
+        self.assertEqual(
+            {"time": "2024-11-20T12:00:00", "price": 90000}, result[0][0]
+        )
+        self.assertEqual(
+            {"time": "2024-11-21T11:55:00", "price": 233500}, result[0][287]
+        )
 
     def test_get_values_exceeding_range(self):
         """
@@ -58,7 +62,7 @@ class TestMinerDataHandler(unittest.TestCase):
             start_time=start_time,
             time_increment=300,
             time_length=86400,
-            num_simulations=100
+            num_simulations=100,
         )
 
         values = generate_values(datetime.fromisoformat(start_time))
@@ -85,7 +89,7 @@ class TestMinerDataHandler(unittest.TestCase):
             start_time=start_time,
             time_increment=300,
             time_length=86400,
-            num_simulations=100
+            num_simulations=100,
         )
 
         values = generate_values(datetime.fromisoformat(start_time))
@@ -118,14 +122,14 @@ class TestMinerDataHandler(unittest.TestCase):
             start_time=start_time_1,
             time_increment=300,
             time_length=86400,
-            num_simulations=100
+            num_simulations=100,
         )
         simulation_input2 = SimulationInput(
             asset="BTC",
             start_time=start_time_2,
             time_increment=300,
             time_length=86400,
-            num_simulations=100
+            num_simulations=100,
         )
 
         values = generate_values(datetime.fromisoformat(start_time_1))
@@ -138,8 +142,12 @@ class TestMinerDataHandler(unittest.TestCase):
 
         self.assertEqual(1, len(result))
         self.assertEqual(288, len(result[0]))  # Half of the 288 intervals
-        self.assertEqual({"time": "2024-11-20T12:00:00", "price": 90000}, result[0][0])
-        self.assertEqual({"time": "2024-11-21T11:55:00", "price": 233500}, result[0][287])
+        self.assertEqual(
+            {"time": "2024-11-20T12:00:00", "price": 90000}, result[0][0]
+        )
+        self.assertEqual(
+            {"time": "2024-11-21T11:55:00", "price": 233500}, result[0][287]
+        )
 
     def test_multiple_records_for_same_miner_with_overlapping(self):
         """
@@ -164,7 +172,7 @@ class TestMinerDataHandler(unittest.TestCase):
             start_time=start_time_1,
             time_increment=300,
             time_length=86400,
-            num_simulations=100
+            num_simulations=100,
         )
 
         simulation_input2 = SimulationInput(
@@ -172,7 +180,7 @@ class TestMinerDataHandler(unittest.TestCase):
             start_time=start_time_2,
             time_increment=300,
             time_length=86400,
-            num_simulations=100
+            num_simulations=100,
         )
 
         values = generate_values(datetime.fromisoformat(start_time_1))
@@ -185,8 +193,12 @@ class TestMinerDataHandler(unittest.TestCase):
 
         self.assertEqual(1, len(result))
         self.assertEqual(288, len(result[0]))  # Half of the 288 intervals
-        self.assertEqual({"time": "2024-11-20T00:00:00", "price": 90000}, result[0][0])
-        self.assertEqual({"time": "2024-11-20T23:55:00", "price": 233500}, result[0][287])
+        self.assertEqual(
+            {"time": "2024-11-20T00:00:00", "price": 90000}, result[0][0]
+        )
+        self.assertEqual(
+            {"time": "2024-11-20T23:55:00", "price": 233500}, result[0][287]
+        )
 
     def test_no_data_for_miner(self):
         """Test retrieving values for a miner that doesn't exist."""

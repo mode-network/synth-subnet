@@ -20,7 +20,7 @@ class TestCalculateCrps(unittest.TestCase):
         sum_all_scores, _ = calculate_crps_for_miner(
             np.array([predictions_path]),
             np.array(real_price_path),
-            time_increment
+            time_increment,
         )
 
         self.assertEqual(sum_all_scores, 1100)
@@ -33,7 +33,7 @@ class TestCalculateCrps(unittest.TestCase):
         sum_all_scores, _ = calculate_crps_for_miner(
             np.array([predictions_path]),
             np.array(real_price_path),
-            time_increment
+            time_increment,
         )
 
         self.assertEqual(sum_all_scores, 3500)
@@ -46,7 +46,7 @@ class TestCalculateCrps(unittest.TestCase):
         sum_all_scores, _ = calculate_crps_for_miner(
             np.array([predictions_path]),
             np.array(real_price_path),
-            time_increment
+            time_increment,
         )
 
         self.assertEqual(sum_all_scores, 1100)

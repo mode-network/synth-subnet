@@ -33,9 +33,10 @@ from simulation.validator.reward import get_rewards
 
 
 async def forward(
-        self: BaseValidatorNeuron,
-        miner_data_handler: MinerDataHandler,
-        price_data_provider: PriceDataProvider):
+    self: BaseValidatorNeuron,
+    miner_data_handler: MinerDataHandler,
+    price_data_provider: PriceDataProvider,
+):
     """
     The forward function is called by the validator every time step.
 
@@ -72,15 +73,13 @@ async def forward(
         start_time=start_time,
         time_increment=300,
         time_length=86400,
-        num_simulations=100
+        num_simulations=100,
     )
 
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
     # prices for a chosen asset)
-    synapse = Simulation(
-        simulation_input=simulation_input
-    )
+    synapse = Simulation(simulation_input=simulation_input)
 
     # The dendrite client queries the network:
     # it is the actual call to all the miners from validator
@@ -130,7 +129,9 @@ async def forward(
 
     # Update the scores based on the rewards.
     # You may want to define your own update_scores function for custom behavior.
-    filtered_rewards, filtered_miner_uids = remove_zero_rewards(rewards, miner_uids)
+    filtered_rewards, filtered_miner_uids = remove_zero_rewards(
+        rewards, miner_uids
+    )
     self.update_scores(filtered_rewards, filtered_miner_uids)
     time.sleep(3600)  # wait for an hour
 
