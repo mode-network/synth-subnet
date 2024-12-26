@@ -71,7 +71,7 @@ class MinerDataHandler:
                 miner_predictions.c.start_time <= current_time,
                 miner_predictions.c.miner_uid == miner_uid
             )
-            result = connection.execute(query)
+            result = connection.execute(query)[0]
 
             # Fetch all results
             predictions = [row.prediction for row in result]
