@@ -9,7 +9,7 @@ def generate_simulations(
 
     Parameters:
         asset (str): The asset to simulate. Default is 'BTC'.
-        start_time (datetime): The start time of the simulation. Defaults to current time.
+        start_time (str): The start time of the simulation. Defaults to current time.
         time_increment (int): Time increment in seconds.
         time_length (int): Total time length in seconds.
         num_simulations (int): Number of simulation runs.
@@ -44,7 +44,7 @@ def generate_fixed_simulation(asset='BTC', start_time=None, time_increment=300, 
 
     Parameters:
         asset (str): The asset to simulate. Default is 'BTC'.
-        start_time (datetime): The start time of the simulation. Defaults to current time.
+        start_time (str): The start time of the simulation. Defaults to current time.
         time_increment (int): Time increment in seconds.
         time_length (int): Total time length in seconds.
         num_simulations (int): Number of simulation runs.

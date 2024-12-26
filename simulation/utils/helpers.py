@@ -19,12 +19,15 @@ def convert_prices_to_time_format(prices, start_time, time_increment):
     start_time = datetime.fromisoformat(start_time)  # Convert start_time to a datetime object
     result = []
 
-    for i, price in enumerate(prices[0]):  # todo: think how we can process several simulation paths
-        time_point = start_time + timedelta(seconds=i * time_increment)
-        result.append({
-            "time": time_point.isoformat(),
-            "price": price
-        })
+    for price_item in prices:
+        single_prediction = []
+        for i, price in enumerate(price_item):
+            time_point = start_time + timedelta(seconds=i * time_increment)
+            single_prediction.append({
+                "time": time_point.isoformat(),
+                "price": price
+            })
+        result.append(single_prediction)
 
     return result
 

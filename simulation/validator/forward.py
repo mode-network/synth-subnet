@@ -72,7 +72,7 @@ async def forward(
         start_time=start_time,
         time_increment=300,
         time_length=86400,
-        num_simulations=1
+        num_simulations=100
     )
 
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case

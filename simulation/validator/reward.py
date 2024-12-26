@@ -63,7 +63,6 @@ def reward(
     real_price_path = [entry["price"] for entry in intersecting_real_price]
 
     score, detailed_crps_data = calculate_crps_for_miner(
-        miner_uid,
         np.array([predictions_path]),  # calculate_crps_for_miner is intended to work with multiple paths
         np.array(real_price_path),
         simulation_input.time_increment

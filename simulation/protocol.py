@@ -58,7 +58,7 @@ class Simulation(bt.Synapse):
     simulation_input: SimulationInput
 
     # Optional request output, filled by receiving axon.
-    simulation_output: typing.Optional[typing.List[typing.Dict[str, typing.Union[str, float]]]] = None
+    simulation_output: typing.Optional[typing.List[typing.List[typing.Dict[str, typing.Union[str, float]]]]] = None
 
     def deserialize(self) -> []:
         """
