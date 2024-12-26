@@ -50,20 +50,24 @@ def reward(
         return -1, [], [], []  # represents no prediction data from the miner
 
     # get last time in predictions
-    end_time = predictions[len(predictions) - 1]["time"]
+    end_time = predictions[0][len(predictions) - 1]["time"]
     real_prices = price_data_provider.fetch_data(end_time)
 
     if len(real_prices) == 0:
         return -1, [], [], predictions
 
     # in case some of the time points is not overlapped
-    intersecting_predictions, intersecting_real_price = get_intersecting_arrays(predictions, real_prices)
+    intersecting_predictions = []
+    intersecting_real_price = real_prices
+    for prediction in predictions:
+        intersecting_prediction, intersecting_real_price = get_intersecting_arrays(prediction, intersecting_real_price)
+        intersecting_predictions.append(intersecting_prediction)
 
-    predictions_path = [entry["price"] for entry in intersecting_predictions]
+    predictions_path = [[entry["price"] for entry in sublist] for sublist in intersecting_predictions]
     real_price_path = [entry["price"] for entry in intersecting_real_price]
 
     score, detailed_crps_data = calculate_crps_for_miner(
-        np.array([predictions_path]),  # calculate_crps_for_miner is intended to work with multiple paths
+        np.array(predictions_path),
         np.array(real_price_path),
         simulation_input.time_increment
     )

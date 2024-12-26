@@ -16,8 +16,6 @@ from tests.utils import generate_values
 class TestRewards(unittest.TestCase):
     def setUp(self):
         """Set up a temporary file for testing."""
-        self.test_file = "test_miner_data.json"
-        self.handler = MinerDataHandler(self.test_file)
         self.price_data_provider = PriceDataProvider("BTC")
 
     def tearDown(self):
@@ -84,30 +82,84 @@ class TestRewards(unittest.TestCase):
         def mock_get_values(miner_uid, mock_validation_time):
             if miner_uid == 1:
                 return [
-                    {"time": "2024-11-25T20:20:00", "price": 90000},
-                    {"time": "2024-11-25T20:25:00", "price": 91000},
-                    {"time": "2024-11-25T20:30:00", "price": 92000},
-                    {"time": "2024-11-25T20:35:00", "price": 92500},
-                    {"time": "2024-11-25T20:40:00", "price": 92600},
-                    {"time": "2024-11-25T20:45:00", "price": 92500}
+                    [
+                        {"time": "2024-11-25T20:20:00", "price": 90000},
+                        {"time": "2024-11-25T20:25:00", "price": 91000},
+                        {"time": "2024-11-25T20:30:00", "price": 92000},
+                        {"time": "2024-11-25T20:35:00", "price": 92500},
+                        {"time": "2024-11-25T20:40:00", "price": 92600},
+                        {"time": "2024-11-25T20:45:00", "price": 92500}
+                    ],
+                    [
+                        {"time": "2024-11-25T20:20:00", "price": 90500},
+                        {"time": "2024-11-25T20:25:00", "price": 91500},
+                        {"time": "2024-11-25T20:30:00", "price": 92500},
+                        {"time": "2024-11-25T20:35:00", "price": 93500},
+                        {"time": "2024-11-25T20:40:00", "price": 92900},
+                        {"time": "2024-11-25T20:45:00", "price": 92100}
+                    ],
+                    [
+                        {"time": "2024-11-25T20:20:00", "price": 91500},
+                        {"time": "2024-11-25T20:25:00", "price": 92500},
+                        {"time": "2024-11-25T20:30:00", "price": 94500},
+                        {"time": "2024-11-25T20:35:00", "price": 90500},
+                        {"time": "2024-11-25T20:40:00", "price": 90900},
+                        {"time": "2024-11-25T20:45:00", "price": 90100}
+                    ]
                 ]
             elif miner_uid == 2:
                 return [
-                    {"time": "2024-11-25T20:10:00", "price": 90000},
-                    {"time": "2024-11-25T20:15:00", "price": 91000},
-                    {"time": "2024-11-25T20:20:00", "price": 92000},
-                    {"time": "2024-11-25T20:25:00", "price": 92500},
-                    {"time": "2024-11-25T20:30:00", "price": 92600},
-                    {"time": "2024-11-25T20:35:00", "price": 92500}
+                    [
+                        {"time": "2024-11-25T20:20:00", "price": 100000},
+                        {"time": "2024-11-25T20:25:00", "price": 101000},
+                        {"time": "2024-11-25T20:30:00", "price": 102000},
+                        {"time": "2024-11-25T20:35:00", "price": 102500},
+                        {"time": "2024-11-25T20:40:00", "price": 102600},
+                        {"time": "2024-11-25T20:45:00", "price": 102500}
+                    ],
+                    [
+                        {"time": "2024-11-25T20:20:00", "price": 100500},
+                        {"time": "2024-11-25T20:25:00", "price": 101500},
+                        {"time": "2024-11-25T20:30:00", "price": 102500},
+                        {"time": "2024-11-25T20:35:00", "price": 103500},
+                        {"time": "2024-11-25T20:40:00", "price": 102900},
+                        {"time": "2024-11-25T20:45:00", "price": 102100}
+                    ],
+                    [
+                        {"time": "2024-11-25T20:20:00", "price": 101500},
+                        {"time": "2024-11-25T20:25:00", "price": 102500},
+                        {"time": "2024-11-25T20:30:00", "price": 104500},
+                        {"time": "2024-11-25T20:35:00", "price": 100500},
+                        {"time": "2024-11-25T20:40:00", "price": 100900},
+                        {"time": "2024-11-25T20:45:00", "price": 100100}
+                    ]
                 ]
             elif miner_uid == 3:
                 return [
-                    {"time": "2024-11-25T20:20:00", "price": 50000},
-                    {"time": "2024-11-25T20:25:00", "price": 51000},
-                    {"time": "2024-11-25T20:30:00", "price": 52000},
-                    {"time": "2024-11-25T20:35:00", "price": 52500},
-                    {"time": "2024-11-25T20:40:00", "price": 52600},
-                    {"time": "2024-11-25T20:45:00", "price": 52500}
+                    [
+                        {"time": "2024-11-25T20:20:00", "price": 50000},
+                        {"time": "2024-11-25T20:25:00", "price": 51000},
+                        {"time": "2024-11-25T20:30:00", "price": 52000},
+                        {"time": "2024-11-25T20:35:00", "price": 52500},
+                        {"time": "2024-11-25T20:40:00", "price": 52600},
+                        {"time": "2024-11-25T20:45:00", "price": 52500}
+                    ],
+                    [
+                        {"time": "2024-11-25T20:20:00", "price": 60000},
+                        {"time": "2024-11-25T20:25:00", "price": 61000},
+                        {"time": "2024-11-25T20:30:00", "price": 62000},
+                        {"time": "2024-11-25T20:35:00", "price": 62500},
+                        {"time": "2024-11-25T20:40:00", "price": 62600},
+                        {"time": "2024-11-25T20:45:00", "price": 62500}
+                    ],
+                    [
+                        {"time": "2024-11-25T20:20:00", "price": 70000},
+                        {"time": "2024-11-25T20:25:00", "price": 71000},
+                        {"time": "2024-11-25T20:30:00", "price": 72000},
+                        {"time": "2024-11-25T20:35:00", "price": 72500},
+                        {"time": "2024-11-25T20:40:00", "price": 72600},
+                        {"time": "2024-11-25T20:45:00", "price": 72500}
+                    ]
                 ]
 
         mock_miner_data_handler.get_values.side_effect = mock_get_values
@@ -125,9 +177,9 @@ class TestRewards(unittest.TestCase):
         simulation_input = SimulationInput(
             asset="BTC",
             start_time=validation_time,
-            time_increment=300,  # default: 5 mins
-            time_length=86400,  # default: 1 day
-            num_simulations=1  # default: 100
+            time_increment=300,  # 5 mins
+            time_length=86400,  # 1 day
+            num_simulations=3
         )
 
         result = get_rewards(
@@ -135,7 +187,7 @@ class TestRewards(unittest.TestCase):
             price_data_provider=mock_price_data_provider,
             simulation_input=simulation_input,
             miner_uids=miner_uids,
-            start_time=validation_time,
+            validation_time=validation_time,
         )
 
         print(result)
