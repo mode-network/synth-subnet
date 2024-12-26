@@ -71,10 +71,10 @@ class MinerDataHandler:
                 miner_predictions.c.start_time <= current_time,
                 miner_predictions.c.miner_uid == miner_uid
             )
-            result = connection.execute(query)[0]
+            result = connection.execute(query)
 
             # Fetch all results
-            predictions = [row.prediction for row in result]
+            predictions = [row.prediction for row in result[0]]
 
         bt.logging.info("in get_values, predictions length:" + str(len(predictions)))
 
