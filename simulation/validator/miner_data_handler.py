@@ -74,7 +74,7 @@ class MinerDataHandler:
             result = connection.execute(query)
 
             # Fetch all results
-            predictions = [row.prediction for row in result[0]]
+            predictions = [row.prediction for row in result]
 
         bt.logging.info("in get_values, predictions length:" + str(len(predictions)))
 
@@ -83,7 +83,7 @@ class MinerDataHandler:
             if prediction is None:
                 continue
 
-            end_time = datetime.fromisoformat(prediction[-1]["time"])
+            end_time = datetime.fromisoformat(prediction[0][-1]["time"])
 
             if current_time > end_time:
                 if end_time > max_end_time:
