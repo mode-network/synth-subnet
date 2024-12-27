@@ -6,20 +6,18 @@ import numpy as np
 from numpy.testing import assert_almost_equal, assert_equal
 
 from simulation.validator.forward import remove_zero_rewards
-from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.simulation_input import SimulationInput
 from simulation.validator.price_data_provider import PriceDataProvider
 from simulation.validator.reward import get_rewards, compute_softmax
 from tests.utils import generate_values
+from simulation.validator.miner_data_handler import MinerDataHandler
 
 
 class TestRewards(unittest.TestCase):
     def setUp(self):
         """Set up a temporary file for testing."""
         self.price_data_provider = PriceDataProvider("BTC")
-
-    def tearDown(self):
-        pass
+        self.handler = MinerDataHandler()
 
     def test_compute_softmax_1(self):
         score_values = np.array([1000, 1500, 2000])
@@ -52,9 +50,16 @@ class TestRewards(unittest.TestCase):
         miner_id = 0
         start_time = "2024-11-26T00:00:00"
         current_time = "2024-11-28T00:00:00"
+        simulation_input = SimulationInput(
+            asset="BTC",
+            start_time=start_time,
+            time_increment=300,
+            time_length=86400,
+            num_simulations=100
+        )
 
         values = generate_values(datetime.fromisoformat(start_time))
-        self.handler.set_values(miner_id, start_time, values)
+        self.handler.set_values(miner_id, values, simulation_input)
 
         softmax_scores = get_rewards(
             self.handler,
@@ -246,7 +251,7 @@ class TestRewards(unittest.TestCase):
             price_data_provider=mock_price_data_provider,
             simulation_input=simulation_input,
             miner_uids=miner_uids,
-            start_time=validation_time,
+            validation_time=validation_time,
         )
 
         print(result)

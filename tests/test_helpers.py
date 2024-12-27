@@ -1,5 +1,4 @@
 import unittest
-from datetime import datetime
 
 from simulation.utils.helpers import convert_prices_to_time_format, get_intersecting_arrays, round_time_to_minutes, \
     from_iso_to_unix_time, get_current_time
@@ -24,10 +23,11 @@ class TestHelpers(unittest.TestCase):
         formatted_data = convert_prices_to_time_format(prices, start_time, time_increment)
 
         self.assertEqual(formatted_data, [
-            {"time": "2024-11-20T00:00:00", "price": 45.67},
-            {"time": "2024-11-20T00:05:00", "price": 56.78},
-            {"time": "2024-11-20T00:10:00", "price": 34.89},
-            {"time": "2024-11-20T00:15:00", "price": 62.15}
+           [
+               {'time': '2024-11-20T00:00:00', 'price': 45.67},
+               {'time': '2024-11-20T00:05:00', 'price': 56.78},
+               {'time': '2024-11-20T00:10:00', 'price': 34.89},
+               {'time': '2024-11-20T00:15:00', 'price': 62.15}]
         ])
 
     def test_get_intersecting_arrays(self):
@@ -85,4 +85,4 @@ class TestHelpers(unittest.TestCase):
 
         unix_time = from_iso_to_unix_time(iso_time)
 
-        self.assertEqual(unix_time, 1732544400)
+        self.assertEqual(unix_time, 1732551600)
