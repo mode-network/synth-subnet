@@ -18,7 +18,6 @@
 # DEALINGS IN THE SOFTWARE.
 
 import time
-from datetime import datetime
 
 import bittensor as bt
 
