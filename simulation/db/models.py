@@ -3,8 +3,6 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, MetaData, Table, Column, Integer, DateTime, JSON, Float, String, BigInteger
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import sessionmaker
-from datetime import datetime
 
 # Load environment variables from .env file
 load_dotenv()
