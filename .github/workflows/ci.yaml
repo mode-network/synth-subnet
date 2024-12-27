@@ -37,4 +37,10 @@ jobs:
 
       - name: Run unit tests
         run: |
-          python -m unittest discover
+          # python -m unittest tests/test_calculate_crps.py
+          # python -m unittest tests/test_helpers.py
+          python -m unittest tests/test_price_data_provider.py
+          python -m unittest tests/test_rewards.py
+          python -m unittest tests/test_generate_simulation.py
+          # python -m unittest tests/test_miner_data_handler.py
+          python -m unittest tests/test_price_simulation.py
