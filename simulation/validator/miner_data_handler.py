@@ -1,7 +1,6 @@
-import json
-from datetime import datetime, timedelta
+from datetime import datetime
 import bittensor as bt
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from simulation.db.models import engine, miner_predictions, miner_rewards
 from simulation.simulation_input import SimulationInput
@@ -58,39 +57,32 @@ class MinerDataHandler:
                 bt.logging.info(f"in set_reward_details (got an exception): {e}")
 
     @staticmethod
-    def get_values(miner_uid: int, current_time_str: str):
+    def get_values(miner_uid: int, validation_time: str):
         """Retrieve the record with the longest valid interval for the given miner_id."""
-        current_time = datetime.fromisoformat(current_time_str)
+        try:
+            validation_time = datetime.fromisoformat(validation_time)
 
-        best_record = None
-        max_end_time = current_time - timedelta(days=5)
+            with engine.connect() as connection:
+                query = (
+                    select(miner_predictions.c.prediction)
+                    .where(
+                        (miner_predictions.c.start_time - text("INTERVAL '1 second'") * miner_predictions.c.time_length) < validation_time,
+                        miner_predictions.c.miner_uid == miner_uid
+                    )
+                    .order_by((miner_predictions.c.start_time - text("INTERVAL '1 second'") * miner_predictions.c.time_length).desc())
+                    .limit(1)
+                )
 
-        with engine.connect() as connection:
-            query = select(miner_predictions.c.prediction).where(
-                miner_predictions.c.start_time >= max_end_time,
-                miner_predictions.c.start_time <= current_time,
-                miner_predictions.c.miner_uid == miner_uid
-            )
-            result = connection.execute(query)
+                result = connection.execute(query).fetchone()
 
-            # Fetch all results
-            predictions = [row.prediction for row in result]
+            bt.logging.info("in get_values, predictions fetched for miner_uid: " + str(miner_uid))
 
-        bt.logging.info("in get_values, predictions length:" + str(len(predictions)))
+            if result is None:
+                return []
 
-        # Find the record with the longest valid interval
-        for prediction in predictions:
-            if prediction is None:
-                continue
+            bt.logging.info("in get_values, predictions length:" + str(len(result[0].prediction)))
 
-            end_time = datetime.fromisoformat(prediction[0][-1]["time"])
-
-            if current_time > end_time:
-                if end_time > max_end_time:
-                    max_end_time = end_time
-                    best_record = prediction
-
-        if not best_record:
+            return result[0].prediction
+        except Exception as e:
+            bt.logging.info(f"in get_values (got an exception): {e}")
             return []
-
-        return best_record
