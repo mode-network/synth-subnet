@@ -66,10 +66,10 @@ class MinerDataHandler:
                 query = (
                     select(miner_predictions.c.prediction)
                     .where(
-                        (miner_predictions.c.start_time - text("INTERVAL '1 second'") * miner_predictions.c.time_length) < validation_time,
+                        (miner_predictions.c.start_time + text("INTERVAL '1 second'") * miner_predictions.c.time_length) < validation_time,
                         miner_predictions.c.miner_uid == miner_uid
                     )
-                    .order_by((miner_predictions.c.start_time - text("INTERVAL '1 second'") * miner_predictions.c.time_length).desc())
+                    .order_by((miner_predictions.c.start_time + text("INTERVAL '1 second'") * miner_predictions.c.time_length).desc())
                     .limit(1)
                 )
 
@@ -80,9 +80,11 @@ class MinerDataHandler:
             if result is None:
                 return []
 
-            bt.logging.info("in get_values, predictions length:" + str(len(result[0].prediction)))
+            bt.logging.info("in get_values, predictions length:" + str(len(result[0])))
 
-            return result[0].prediction
+            # fetchone return a tuple, so we need to return the first element, which is the prediction
+            return result[0]
         except Exception as e:
             bt.logging.info(f"in get_values (got an exception): {e}")
+            print(e)
             return []
