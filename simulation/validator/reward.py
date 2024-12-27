@@ -50,7 +50,7 @@ def reward(
         return -1, [], [], []  # represents no prediction data from the miner
 
     # get last time in predictions
-    end_time = predictions[0][len(predictions) - 1]["time"]
+    end_time = predictions[0][len(predictions[0]) - 1]["time"]
     real_prices = price_data_provider.fetch_data(end_time)
 
     if len(real_prices) == 0:
