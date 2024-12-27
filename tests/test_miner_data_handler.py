@@ -1,21 +1,15 @@
 import unittest
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 from simulation.validator.miner_data_handler import MinerDataHandler
 
 from tests.utils import generate_values
+from simulation.simulation_input import SimulationInput
 
 
 class TestMinerDataHandler(unittest.TestCase):
     def setUp(self):
         """Set up a temporary file for testing."""
-        self.test_file = "test_miner_data.json"
-        self.handler = MinerDataHandler(self.test_file)
-
-    def tearDown(self):
-        """Clean up the temporary file after each test."""
-        if os.path.exists(self.test_file):
-            os.remove(self.test_file)
+        self.handler = MinerDataHandler()
 
     def test_get_values_within_range(self):
         """
@@ -26,12 +20,19 @@ class TestMinerDataHandler(unittest.TestCase):
                                                 2024-11-22T00:00:00
                                                         |-|        (Current Time)
         """
-        miner_id = "miner_123"
+        miner_id = 1
         start_time = "2024-11-20T00:00:00"
         current_time = "2024-11-22T00:00:00"
+        simulation_input = SimulationInput(
+            asset="BTC",
+            start_time=start_time,
+            time_increment=300,
+            time_length=86400,
+            num_simulations=100
+        )
 
         values = generate_values(datetime.fromisoformat(start_time))
-        self.handler.set_values(miner_id, start_time, values)
+        self.handler.set_values(miner_id, values, simulation_input)
 
         result = self.handler.get_values(miner_id, current_time)
 
@@ -48,12 +49,19 @@ class TestMinerDataHandler(unittest.TestCase):
                                                 2024-11-30T00:00:00
                                                         |-|        (Current Time - more than 5 days passed)
         """
-        miner_id = "miner_123"
+        miner_id = 1
         start_time = "2024-11-20T00:00:00"
         current_time = "2024-11-30T00:00:00"
+        simulation_input = SimulationInput(
+            asset="BTC",
+            start_time=start_time,
+            time_increment=300,
+            time_length=86400,
+            num_simulations=100
+        )
 
         values = generate_values(datetime.fromisoformat(start_time))
-        self.handler.set_values(miner_id, start_time, values)
+        self.handler.set_values(miner_id, values, simulation_input)
 
         result = self.handler.get_values(miner_id, current_time)
         self.assertEqual(result, [])
@@ -67,12 +75,20 @@ class TestMinerDataHandler(unittest.TestCase):
                     2024-11-20T12:00:00
                             |-|                      (Current Time)
         """
-        miner_id = "miner_123"
+        miner_id = 1
         start_time = "2024-11-20T00:00:00"
         current_time = "2024-11-20T12:00:00"
 
+        simulation_input = SimulationInput(
+            asset="BTC",
+            start_time=start_time,
+            time_increment=300,
+            time_length=86400,
+            num_simulations=100
+        )
+
         values = generate_values(datetime.fromisoformat(start_time))
-        self.handler.set_values(miner_id, start_time, values)
+        self.handler.set_values(miner_id, values, simulation_input)
 
         result = self.handler.get_values(miner_id, current_time)
         self.assertEqual(result, [])
@@ -91,16 +107,31 @@ class TestMinerDataHandler(unittest.TestCase):
                                                       2024-11-21T15:00:00
                                                               |-|        (Current Time)
         """
-        miner_id = "miner_123"
+        miner_id = 1
         start_time_1 = "2024-11-20T00:00:00"
         start_time_2 = "2024-11-20T12:00:00"
         current_time = "2024-11-21T15:00:00"
 
+        simulation_input1 = SimulationInput(
+            asset="BTC",
+            start_time=start_time_1,
+            time_increment=300,
+            time_length=86400,
+            num_simulations=100
+        )
+        simulation_input2 = SimulationInput(
+            asset="BTC",
+            start_time=start_time_2,
+            time_increment=300,
+            time_length=86400,
+            num_simulations=100
+        )
+
         values = generate_values(datetime.fromisoformat(start_time_1))
-        self.handler.set_values(miner_id, start_time_1, values)
+        self.handler.set_values(miner_id, values, simulation_input1)
 
         values = generate_values(datetime.fromisoformat(start_time_2))
-        self.handler.set_values(miner_id, start_time_2, values)
+        self.handler.set_values(miner_id, values, simulation_input2)
 
         result = self.handler.get_values(miner_id, current_time)
 
@@ -122,16 +153,31 @@ class TestMinerDataHandler(unittest.TestCase):
                                         2024-11-21T03:00:00
                                                 |-|                      (Current Time)
         """
-        miner_id = "miner_123"
+        miner_id = 1
         start_time_1 = "2024-11-20T00:00:00"
         start_time_2 = "2024-11-20T12:00:00"
         current_time = "2024-11-21T03:00:00"
+        simulation_input1 = SimulationInput(
+            asset="BTC",
+            start_time=start_time_1,
+            time_increment=300,
+            time_length=86400,
+            num_simulations=100
+        )
+
+        simulation_input2 = SimulationInput(
+            asset="BTC",
+            start_time=start_time_2,
+            time_increment=300,
+            time_length=86400,
+            num_simulations=100
+        )
 
         values = generate_values(datetime.fromisoformat(start_time_1))
-        self.handler.set_values(miner_id, start_time_1, values)
+        self.handler.set_values(miner_id, values, simulation_input1)
 
         values = generate_values(datetime.fromisoformat(start_time_2))
-        self.handler.set_values(miner_id, start_time_2, values)
+        self.handler.set_values(miner_id, values, simulation_input2)
 
         result = self.handler.get_values(miner_id, current_time)
 
@@ -141,7 +187,7 @@ class TestMinerDataHandler(unittest.TestCase):
 
     def test_no_data_for_miner(self):
         """Test retrieving values for a miner that doesn't exist."""
-        miner_id = "nonexistent_miner"
+        miner_id = 0
         current_time = "2024-11-20T12:00:00"
 
         result = self.handler.get_values(miner_id, current_time)
