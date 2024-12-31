@@ -1,8 +1,8 @@
 from datetime import datetime
 import bittensor as bt
-from sqlalchemy import select, text
+from sqlalchemy import select, join, text
 
-from simulation.db.models import engine, miner_predictions, miner_rewards, validator_requests
+from simulation.db.models import engine, miner_predictions, miner_scores, validator_requests
 from simulation.simulation_input import SimulationInput
 
 
@@ -68,34 +68,46 @@ class MinerDataHandler:
                 bt.logging.info(f"in set_reward_details (got an exception): {e}")
 
     @staticmethod
-    def get_values(miner_uid: int, validation_time: str):
+    def get_values(miner_uid: int, scored_time_str: str, simulation_input: SimulationInput):
         """Retrieve the record with the longest valid interval for the given miner_id."""
         try:
-            validation_time = datetime.fromisoformat(validation_time)
+            scored_time = datetime.fromisoformat(scored_time_str)
 
             with engine.connect() as connection:
                 query = (
-                    select(miner_predictions.c.prediction)
-                    .where(
-                        (miner_predictions.c.start_time + text("INTERVAL '1 second'") * miner_predictions.c.time_length) < validation_time,
-                        miner_predictions.c.miner_uid == miner_uid
+                    select(
+                        miner_predictions.c.prediction,
+                        miner_predictions.c.id
                     )
-                    .order_by((miner_predictions.c.start_time + text("INTERVAL '1 second'") * miner_predictions.c.time_length).desc())
+                    .select_from(miner_predictions)
+                    .join(
+                        validator_requests,
+                        miner_predictions.c.validator_requests_id == validator_requests.c.id
+                    )
+                    .where(
+                        (validator_requests.c.start_time + text(
+                            "INTERVAL '1 second'") * miner_predictions.c.time_length) < scored_time,
+                        miner_predictions.c.miner_uid == miner_uid,
+                        validator_requests.c.asset == simulation_input.asset,
+                        validator_requests.c.time_increment == simulation_input.time_increment,
+                        validator_requests.c.time_length == simulation_input.time_length,
+                        validator_requests.c.num_simulations == simulation_input.num_simulations
+                    )
+                    .order_by(
+                        validator_requests.c.start_time.desc()
+                    )
                     .limit(1)
                 )
 
                 result = connection.execute(query).fetchone()
 
-            bt.logging.info("in get_values, predictions fetched for miner_uid: " + str(miner_uid))
-
             if result is None:
-                return []
+                return None, []
 
-            bt.logging.info("in get_values, predictions length:" + str(len(result[0])))
+            record_id = result.id
+            prediction = result.prediction
 
-            # fetchone return a tuple, so we need to return the first element, which is the prediction
-            return result[0]
+            return record_id, prediction
         except Exception as e:
             bt.logging.info(f"in get_values (got an exception): {e}")
-            print(e)
-            return []
+            return None, []

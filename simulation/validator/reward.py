@@ -44,7 +44,7 @@ def reward(
     - float: The reward value for the miner.
     """
 
-    predictions = miner_data_handler.get_values(miner_uid, validation_time)
+    predictions = miner_data_handler.get_values(miner_uid, validation_time, simulation_input)
 
     if predictions is None or len(predictions) == 0:
         return -1, [], [], []  # represents no prediction data from the miner
