@@ -106,32 +106,35 @@ async def forward(
     # Log the results for monitoring purposes.
     # bt.logging.info(f"Received responses: {responses}")
 
+    miner_predictions = {}
     for i, response in enumerate(responses):
         if response is None or len(response) == 0:
             continue
         miner_id = miner_uids[i]
-        miner_data_handler.set_values(miner_id, response, simulation_input)
+        miner_predictions[miner_id] = response
+
+    miner_data_handler.save_responses(miner_predictions, simulation_input)
 
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
     # this is the function we need to implement for our incentives mechanism,
     # it returns an array of floats that determines how good a particular miner was at price predictions:
     # example: [0.2, 0.8, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
-    rewards, rewards_detailed_info = get_rewards(
-        miner_data_handler=miner_data_handler,
-        simulation_input=simulation_input,
-        miner_uids=miner_uids,
-        validation_time=start_time,
-        price_data_provider=price_data_provider,
-    )
-
-    bt.logging.info(f"Scored responses: {rewards}")
-    miner_data_handler.set_reward_details(rewards_detailed_info, start_time)
-
-    # Update the scores based on the rewards.
-    # You may want to define your own update_scores function for custom behavior.
-    filtered_rewards, filtered_miner_uids = remove_zero_rewards(rewards, miner_uids)
-    self.update_scores(filtered_rewards, filtered_miner_uids)
+    # rewards, rewards_detailed_info = get_rewards(
+    #     miner_data_handler=miner_data_handler,
+    #     simulation_input=simulation_input,
+    #     miner_uids=miner_uids,
+    #     validation_time=start_time,
+    #     price_data_provider=price_data_provider,
+    # )
+    #
+    # bt.logging.info(f"Scored responses: {rewards}")
+    # miner_data_handler.set_reward_details(rewards_detailed_info, start_time)
+    #
+    # # Update the scores based on the rewards.
+    # # You may want to define your own update_scores function for custom behavior.
+    # filtered_rewards, filtered_miner_uids = remove_zero_rewards(rewards, miner_uids)
+    # self.update_scores(filtered_rewards, filtered_miner_uids)
     time.sleep(3600)  # wait for an hour
 
 
