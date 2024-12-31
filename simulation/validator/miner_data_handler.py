@@ -1,8 +1,9 @@
 from datetime import datetime
-import bittensor as bt
-from sqlalchemy import select, join, text
 
-from simulation.db.models import engine, miner_predictions, miner_scores, validator_requests
+import bittensor as bt
+from sqlalchemy import select, text
+
+from simulation.db.models import engine, miner_predictions, miner_scores, validator_requests, validator_scores_prompts
 from simulation.simulation_input import SimulationInput
 
 
@@ -39,36 +40,50 @@ class MinerDataHandler:
                     insert_stmt_miner_predictions = miner_predictions.insert().values(miner_prediction_records)
                     connection.execute(insert_stmt_miner_predictions)
         except Exception as e:
+            connection.rollback()
             bt.logging.info(f"in set_values (got an exception): {e}")
 
     @staticmethod
-    def set_reward_details(reward_details: [], start_time: str):
-        rows_to_insert = [
-            {
-                "miner_uid": row["miner_uid"],
-                "start_time": start_time,
-                "reward_details": {
-                    "score": row["score"],
-                    "softmax_score": row["softmax_score"],
-                    "crps_data": row["crps_data"]
-                },
-                "reward": row["softmax_score"],
-                "real_prices": row["real_prices"],
-                "prediction": row["predictions"]
-            }
-            for row in reward_details
-        ]
+    def set_reward_details(reward_details: [], scored_time: str, simulation_input: SimulationInput):
+        validator_scores_prompts_row = {
+            "scored_time": scored_time,
+            "asset": simulation_input.asset,
+            "time_increment": simulation_input.time_increment,
+            "time_length": simulation_input.time_length,
+            "num_simulations": simulation_input.num_simulations
+        }
 
-        with engine.begin() as connection:
-            try:
-                insert_stmt = miner_rewards.insert().values(rows_to_insert)
-                connection.execute(insert_stmt)
-            except Exception as e:
-                connection.rollback()
-                bt.logging.info(f"in set_reward_details (got an exception): {e}")
+        try:
+            with engine.connect() as connection:
+                with connection.begin():  # Begin a transaction
+                    insert_stmt_validator_scores_prompts = validator_scores_prompts.insert().values(validator_scores_prompts_row)
+                    result = connection.execute(insert_stmt_validator_scores_prompts)
+                    validator_scores_prompts_id = result.inserted_primary_key[0]
+
+                    rows_to_insert = [
+                        {
+                            "miner_uid": row["miner_uid"],
+                            "validator_scores_prompts_id": validator_scores_prompts_id,
+                            "miner_predictions_id": row["predictions"],
+                            "reward_details": {
+                                "score": row["score"],
+                                "softmax_score": row["softmax_score"],
+                                "crps_data": row["crps_data"]
+                            },
+                            "reward": row["softmax_score"],
+                            "real_prices": row["real_prices"]
+                        }
+                        for row in reward_details
+                    ]
+
+                    insert_stmt_miner_scores = miner_scores.insert().values(rows_to_insert)
+                    connection.execute(insert_stmt_miner_scores)
+        except Exception as e:
+            connection.rollback()
+            bt.logging.info(f"in set_reward_details (got an exception): {e}")
 
     @staticmethod
-    def get_values(miner_uid: int, scored_time_str: str, simulation_input: SimulationInput):
+    def get_latest_prediction(miner_uid: int, scored_time_str: str, simulation_input: SimulationInput):
         """Retrieve the record with the longest valid interval for the given miner_id."""
         try:
             scored_time = datetime.fromisoformat(scored_time_str)

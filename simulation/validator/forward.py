@@ -119,7 +119,7 @@ async def forward(
     # response[0] - miner_uuids[0]
     # this is the function we need to implement for our incentives mechanism,
     # it returns an array of floats that determines how good a particular miner was at price predictions:
-    # example: [0.2, 0.8, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
+    # example: [0.2, 0.7, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
     rewards, rewards_detailed_info = get_rewards(
         miner_data_handler=miner_data_handler,
         simulation_input=simulation_input,
@@ -129,7 +129,11 @@ async def forward(
     )
 
     bt.logging.info(f"Scored responses: {rewards}")
-    miner_data_handler.set_reward_details(rewards_detailed_info, start_time)
+    miner_data_handler.set_reward_details(
+        reward_details=rewards_detailed_info,
+        scored_time=start_time,
+        simulation_input=simulation_input
+    )
 
     # Update the scores based on the rewards.
     # You may want to define your own update_scores function for custom behavior.

@@ -44,17 +44,17 @@ def reward(
     - float: The reward value for the miner.
     """
 
-    predictions = miner_data_handler.get_values(miner_uid, validation_time, simulation_input)
+    miner_prediction_id, predictions = miner_data_handler.get_latest_prediction(miner_uid, validation_time, simulation_input)
 
     if predictions is None or len(predictions) == 0:
-        return -1, [], [], []  # represents no prediction data from the miner
+        return -1, [], [], None  # represents no prediction data from the miner
 
     # get last time in predictions
     end_time = predictions[0][len(predictions[0]) - 1]["time"]
     real_prices = price_data_provider.fetch_data(end_time)
 
     if len(real_prices) == 0:
-        return -1, [], [], predictions
+        return -1, [], [], miner_prediction_id
 
     # in case some of the time points is not overlapped
     intersecting_predictions = []
@@ -72,7 +72,7 @@ def reward(
         simulation_input.time_increment
     )
 
-    return score, detailed_crps_data, real_prices, predictions
+    return score, detailed_crps_data, real_prices, miner_prediction_id
 
 
 def get_rewards(
