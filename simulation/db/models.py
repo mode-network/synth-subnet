@@ -35,14 +35,26 @@ miner_predictions = Table(
 )
 
 # Define the table
-miner_rewards = Table(
-    "miner_rewards",
+validator_scores_prompts = Table(
+    'validator_scores_prompts',
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("scored_time", DateTime(timezone=True), nullable=False),
+    Column("asset", String, nullable=True),
+    Column("time_increment", Integer, nullable=True),
+    Column("time_length", Integer, nullable=True),
+    Column("num_simulations", Integer, nullable=True),
+)
+
+# Define the table
+miner_scores = Table(
+    "miner_scores",
     metadata,
     Column("id", BigInteger, primary_key=True),
     Column("miner_uid", Integer, nullable=False),
-    Column("scored_time", DateTime(timezone=True), nullable=False),
-    Column("reward_details", JSONB, nullable=False),
+    Column("validator_scores_prompts_id", BigInteger, nullable=False),
+    Column("miner_predictions_id", BigInteger, nullable=False),
     Column("reward", Float, nullable=False),
+    Column("reward_details", JSONB, nullable=False),
     Column("real_prices", JSON, nullable=False),
-    Column("prediction", JSON, nullable=False),
 )
