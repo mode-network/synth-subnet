@@ -101,7 +101,7 @@ class MinerDataHandler:
                     )
                     .where(
                         (validator_requests.c.start_time + text(
-                            "INTERVAL '1 second'") * miner_predictions.c.time_length) < scored_time,
+                            "INTERVAL '1 second'") * validator_requests.c.time_length) < scored_time,
                         miner_predictions.c.miner_uid == miner_uid,
                         validator_requests.c.asset == simulation_input.asset,
                         validator_requests.c.time_increment == simulation_input.time_increment,
