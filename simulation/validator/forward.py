@@ -113,7 +113,7 @@ async def forward(
         miner_id = miner_uids[i]
         miner_predictions[miner_id] = response
 
-    miner_data_handler.save_responses(miner_predictions, simulation_input)
+    # miner_data_handler.save_responses(miner_predictions, simulation_input)
 
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
