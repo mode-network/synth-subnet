@@ -20,7 +20,7 @@
 from typing import List, Union, Any, Dict
 
 import bittensor as bt
-from bittensor.subnets import SubnetsAPI
+from simulation.api import SubnetsAPI
 
 from simulation.protocol import Simulation
 from simulation.simulation_input import SimulationInput
