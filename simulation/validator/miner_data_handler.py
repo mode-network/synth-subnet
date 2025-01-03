@@ -3,7 +3,7 @@ from datetime import datetime
 import bittensor as bt
 from sqlalchemy import select, text
 
-from simulation.db.models import engine, miner_predictions, miner_scores, validator_requests, validator_scores_prompts
+from simulation.db.models import engine, miner_predictions, miner_scores, validator_requests
 from simulation.simulation_input import SimulationInput
 
 
