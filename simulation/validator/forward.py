@@ -115,6 +115,22 @@ async def forward(
 
     miner_data_handler.save_responses(miner_predictions, simulation_input)
 
+    # scored_time is the same as start_time for a single validator step
+    # but the meaning is different
+    # start_time - is the time when validator asks miners for prediction data
+    #              and stores it in the database
+    # scored_time - is the time when validator calculates rewards using the data
+    #               from the database of previous prediction data
+    scored_time = start_time
+
+    # get latest prediction request from validator
+    # for which we already have real prices data,
+    # i.e. (start_time + time_length) < scored_time
+    validator_request_id = miner_data_handler.get_latest_prediction_request(scored_time, simulation_input)
+    if validator_request_id is None:
+        time.sleep(3600)  # wait for an hour
+        return
+
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
     # this is the function we need to implement for our incentives mechanism,
@@ -122,17 +138,16 @@ async def forward(
     # example: [0.2, 0.7, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
     rewards, rewards_detailed_info = get_rewards(
         miner_data_handler=miner_data_handler,
+        price_data_provider=price_data_provider,
         simulation_input=simulation_input,
         miner_uids=miner_uids,
-        validation_time=start_time,
-        price_data_provider=price_data_provider,
+        validator_request_id=validator_request_id
     )
 
     bt.logging.info(f"Scored responses: {rewards}")
     miner_data_handler.set_reward_details(
         reward_details=rewards_detailed_info,
-        scored_time=start_time,
-        simulation_input=simulation_input
+        scored_time=scored_time
     )
 
     # Update the scores based on the rewards.
