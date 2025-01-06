@@ -14,7 +14,7 @@ from simulation.utils.config import config
 # Example usage
 async def test_prediction(args):
     wallet_name = bittensor.wallet(name=args.name)
-    wallet = bt.wallet(wallet_name)
+    wallet = bt.wallet(wallet_name.name)
 
     # Fetch the axons of the available API nodes, or specify UIDs directly
     metagraph = bt.subtensor("finney").metagraph(netuid=247)
