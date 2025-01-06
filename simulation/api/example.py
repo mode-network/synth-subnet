@@ -1,3 +1,4 @@
+import bittensor
 import bittensor as bt
 
 from simulation.api.get_query_axons import get_query_api_axons
@@ -12,7 +13,7 @@ from simulation.utils.config import config
 
 # Example usage
 async def test_prediction():
-    wallet = bt.wallet(config=config)
+    wallet = bt.wallet(bittensor.wallet(name="miner-base"))
 
     # Fetch the axons of the available API nodes, or specify UIDs directly
     metagraph = bt.subtensor("finney").metagraph(netuid=247)
