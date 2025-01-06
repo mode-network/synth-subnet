@@ -12,8 +12,9 @@ from simulation.utils.config import config
 
 
 # Example usage
-async def test_prediction():
-    wallet = bt.wallet(bittensor.wallet(name="miner-base"))
+async def test_prediction(args):
+    wallet_name = bittensor.wallet(name=args.name)
+    wallet = bt.wallet(wallet_name)
 
     # Fetch the axons of the available API nodes, or specify UIDs directly
     metagraph = bt.subtensor("finney").metagraph(netuid=247)
@@ -47,4 +48,11 @@ async def test_prediction():
 
 
 if __name__ == "__main__":
-    asyncio.run(test_prediction())
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate a signature")
+    parser.add_argument("--message", help="The message to sign", type=str)
+    parser.add_argument("--name", help="The wallet name", type=str)
+    args = parser.parse_args()
+
+    asyncio.run(test_prediction(args))
