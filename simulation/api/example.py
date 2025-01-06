@@ -7,11 +7,12 @@ import asyncio
 
 from simulation.simulation_input import SimulationInput
 from simulation.utils.helpers import get_current_time
+from simulation.utils.config import config
 
 
 # Example usage
 async def test_prediction():
-    wallet = bt.wallet()
+    wallet = bt.wallet(config=config)
 
     # Fetch the axons of the available API nodes, or specify UIDs directly
     metagraph = bt.subtensor("finney").metagraph(netuid=247)
