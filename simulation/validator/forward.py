@@ -63,6 +63,13 @@ async def forward(
             self.metagraph, uid, self.config.neuron.vpermit_tao_limit
         )
         if uid_is_available:
+            log = (
+                "Miner | "
+                f"Incentive:{self.metagraph.I[uid]:.4f} | "
+                f"Rank:{self.metagraph.R[uid]} | "
+                f"Coldkey:{self.metagraph.coldkeys[uid]} | "
+            )
+            bt.logging.info()
             miner_uids.append(uid)
 
     # input data

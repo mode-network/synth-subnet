@@ -41,7 +41,6 @@ class SynthAPI(SubnetsAPI):
     ) -> List[Dict[str, Union[str, float]]]:
         outputs = []
         for response in responses:
-            print(response)
             if response.dendrite.status_code != 200:
                 continue
             outputs.append(response.simulation_output)
