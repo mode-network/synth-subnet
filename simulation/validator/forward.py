@@ -73,11 +73,11 @@ async def forward(
             bt.logging.info(log)
             metagraph_item = {
                 "neuron_uid": uid,
-                "incentive": self.metagraph.I[uid],
-                "rank": self.metagraph.R[uid],
-                "stake": self.metagraph.S[uid],
-                "trust": self.metagraph.T[uid],
-                "emission": self.metagraph.E[uid],
+                "incentive": float(self.metagraph.I[uid]),
+                "rank": float(self.metagraph.R[uid]),
+                "stake": float(self.metagraph.S[uid]),
+                "trust": float(self.metagraph.T[uid]),
+                "emission": float(self.metagraph.E[uid]),
                 "coldkey": self.metagraph.coldkeys[uid],
                 "hotkey": self.metagraph.hotkeys[uid],
                 "updated_at": start_time,
