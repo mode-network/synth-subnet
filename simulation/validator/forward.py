@@ -69,7 +69,7 @@ async def forward(
                 f"Rank:{self.metagraph.R[uid]} | "
                 f"Coldkey:{self.metagraph.coldkeys[uid]} | "
             )
-            bt.logging.info()
+            bt.logging.info(log)
             miner_uids.append(uid)
 
     # input data
