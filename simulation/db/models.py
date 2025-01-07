@@ -46,3 +46,19 @@ miner_scores = Table(
     Column("reward_details", JSONB, nullable=False),
     Column("real_prices", JSON, nullable=False),
 )
+
+# Define the table
+metagraph_history = Table(
+    "metagraph_history",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("neuron_uid", Integer, nullable=False),
+    Column("incentive", Float, nullable=True),
+    Column("rank", Float, nullable=True),
+    Column("stake", Float, nullable=True),
+    Column("trust", Float, nullable=True),
+    Column("emission", Float, nullable=True),
+    Column("coldkey", String, nullable=True),
+    Column("hotkey", String, nullable=True),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+)

@@ -58,6 +58,7 @@ async def forward(
     start_time = round_time_to_minutes(current_time, 60, 60)
 
     miner_uids = []
+    metagraph_info = []
     for uid in range(len(self.metagraph.S)):
         uid_is_available = check_uid_availability(
             self.metagraph, uid, self.config.neuron.vpermit_tao_limit
@@ -70,7 +71,21 @@ async def forward(
                 f"Coldkey:{self.metagraph.coldkeys[uid]} | "
             )
             bt.logging.info(log)
+            metagraph_item = {
+                "neuron_uid": uid,
+                "incentive": self.metagraph.I[uid],
+                "rank": self.metagraph.R[uid],
+                "stake": self.metagraph.S[uid],
+                "trust": self.metagraph.T[uid],
+                "emission": self.metagraph.E[uid],
+                "coldkey": self.metagraph.coldkeys[uid],
+                "hotkey": self.metagraph.hotkeys[uid],
+                "updated_at": start_time,
+            }
             miner_uids.append(uid)
+            metagraph_info.append(metagraph_item)
+
+    miner_data_handler.update_metagraph_history(metagraph_info)
 
     # input data
     # give me prediction of BTC price for the next 1 day for every 5 min of time

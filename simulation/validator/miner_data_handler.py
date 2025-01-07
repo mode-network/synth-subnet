@@ -3,7 +3,7 @@ from datetime import datetime
 import bittensor as bt
 from sqlalchemy import select, text
 
-from simulation.db.models import engine, miner_predictions, miner_scores, validator_requests
+from simulation.db.models import engine, miner_predictions, miner_scores, validator_requests, metagraph_history
 from simulation.simulation_input import SimulationInput
 
 
@@ -136,3 +136,14 @@ class MinerDataHandler:
         except Exception as e:
             bt.logging.error(f"in get_latest_prediction_request (got an exception): {e}")
             return None
+
+    @staticmethod
+    def update_metagraph_history(metagraph_info: []):
+        try:
+            with engine.connect() as connection:
+                with connection.begin():  # Begin a transaction
+                    insert_stmt = metagraph_history.insert().values(metagraph_info)
+                    connection.execute(insert_stmt)
+        except Exception as e:
+            connection.rollback()
+            bt.logging.error(f"in update_metagraph_history (got an exception): {e}")
