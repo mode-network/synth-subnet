@@ -78,7 +78,8 @@ def compute_weighted_averages(
         reward_item = {
             "miner_uid": miner_uid,
             "smoothed_score": float(ewma_val),
-            "reward_weight": float(norm_val)
+            "reward_weight": float(norm_val),
+            "updated_at": validation_time_str
         }
         rewards.append(reward_item)
 
