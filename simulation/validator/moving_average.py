@@ -3,6 +3,8 @@ from datetime import datetime, timezone
 import pandas as pd
 from pandas import DataFrame
 
+import bittensor as bt
+
 
 def compute_weighted_averages(
         input_df: DataFrame,
@@ -51,6 +53,8 @@ def compute_weighted_averages(
 
         ewma = weighted_reward_sum / total_weight if total_weight > 0 else float('nan')
         results.append((miner_uid, ewma))
+
+    bt.logging.info(f"in compute_weighted_averages: {results}")
 
     # Now compute EWMA^alpha for each miner and normalize
     # If the EWMA is NaN, treat it as 0 for the power-sum.
