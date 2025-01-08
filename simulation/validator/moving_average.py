@@ -82,6 +82,8 @@ def compute_weighted_averages(
         }
         rewards.append(reward_item)
 
+    return rewards
+
 
 def compute_weight(scored_dt: datetime, validation_time: datetime, half_life_days: float) -> float:
     """
