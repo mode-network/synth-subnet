@@ -169,12 +169,14 @@ async def forward(
 
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(scored_time, 2)
+    bt.logging.info(f"dataframe: {miner_scores_df}")
     moving_averages_data = compute_weighted_averages(
         input_df=miner_scores_df,
         half_life_days=1.0,
         alpha=2.0,
         validation_time_str=scored_time
     )
+    bt.logging.info(f"Scored responses moving averages: {moving_averages_data}")
     if moving_averages_data is None:
         time.sleep(3600)
         return
