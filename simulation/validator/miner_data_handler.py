@@ -52,12 +52,12 @@ class MinerDataHandler:
                 "miner_uid": row["miner_uid"],
                 "scored_time": scored_time,
                 "miner_predictions_id": row["predictions"],
-                "reward_details": {
+                "score_details": {
                     "score": row["score"],
                     "softmax_score": row["softmax_score"],
                     "crps_data": row["crps_data"]
                 },
-                "reward": row["softmax_score"],
+                "prompt_score": row["softmax_score"],
                 "real_prices": row["real_prices"]
             }
             for row in reward_details
@@ -160,7 +160,7 @@ class MinerDataHandler:
                 query = (
                     select(
                         miner_scores.c.miner_uid,
-                        miner_scores.c.reward,
+                        miner_scores.c.prompt_score,
                         miner_scores.c.scored_time
                     )
                     .select_from(miner_scores)

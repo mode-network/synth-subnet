@@ -42,8 +42,8 @@ miner_scores = Table(
     Column("miner_uid", Integer, nullable=False),
     Column("scored_time", DateTime(timezone=True), nullable=False),
     Column("miner_predictions_id", BigInteger, nullable=False),
-    Column("reward", Float, nullable=False),
-    Column("reward_details", JSONB, nullable=False),
+    Column("prompt_score", Float, nullable=False),
+    Column("score_details", JSONB, nullable=False),
     Column("real_prices", JSON, nullable=False),
 )
 

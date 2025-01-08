@@ -130,7 +130,7 @@ async def forward(
         miner_id = miner_uids[i]
         miner_predictions[miner_id] = response
 
-    # miner_data_handler.save_responses(miner_predictions, simulation_input)
+    miner_data_handler.save_responses(miner_predictions, simulation_input)
 
     # scored_time is the same as start_time for a single validator step
     # but the meaning is different
@@ -162,14 +162,13 @@ async def forward(
     )
 
     bt.logging.info(f"Scored responses: {rewards}")
-    # miner_data_handler.set_reward_details(
-    #     reward_details=rewards_detailed_info,
-    #     scored_time=scored_time
-    # )
+    miner_data_handler.set_reward_details(
+        reward_details=rewards_detailed_info,
+        scored_time=scored_time
+    )
 
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(scored_time, 2)
-    bt.logging.info(f"dataframe: {miner_scores_df}")
     moving_averages_data = compute_weighted_averages(
         input_df=miner_scores_df,
         half_life_days=1.0,

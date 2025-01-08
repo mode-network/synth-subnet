@@ -3,8 +3,6 @@ from datetime import datetime, timezone
 import pandas as pd
 from pandas import DataFrame
 
-import bittensor as bt
-
 
 def compute_weighted_averages(
         input_df: DataFrame,
@@ -44,17 +42,15 @@ def compute_weighted_averages(
         weighted_reward_sum = 0.0
 
         for _, row in group_df.iterrows():
-            if pd.isna(row["reward"]):
+            if pd.isna(row["prompt_score"]):
                 continue  # skip missing or invalid reward
 
             w = compute_weight(row["scored_time"], validation_time, half_life_days)
             total_weight += w
-            weighted_reward_sum += w * row["reward"]
+            weighted_reward_sum += w * row["prompt_score"]
 
         ewma = weighted_reward_sum / total_weight if total_weight > 0 else float('nan')
         results.append((miner_uid, ewma))
-
-    bt.logging.info(f"in compute_weighted_averages: {results}")
 
     # Now compute EWMA^alpha for each miner and normalize
     # If the EWMA is NaN, treat it as 0 for the power-sum.
