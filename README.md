@@ -1,7 +1,43 @@
+<p align="center">
+  <a href="https://mode.network">
+    <img alt="Rounded Mode icon" src=".assets/mode_icon@128x128.png" style="padding-top: 15px" height="128" />
+  </a>
+</p>
 
-# Synth Subnet
+<h1 align="center">
+  Synth Subnet
+</h1>
 
-## Intro
+<p align="center">
+  <a href="https://github.com/mode-network/synth-subnet/blob/main/LICENSE">
+    <img alt="GitHub License" src="https://img.shields.io/github/license/mode-network/synth-subnet">
+  </a>
+</p>
+
+### Table Of Contents
+
+* [1. Overview](#-1-overview)
+  - [1.1. Introduction](#11-introduction)
+  - [1.2. Task Presented to the Miners](#12-task-presented-to-the-miners)
+  - [1.3. Validator's Scoring Methodology](#13-validators-scoring-methodology)
+  - [1.4. Calculation of Leaderboard Score](#14-calculation-of-leaderboard-score)
+  - [1.5. Overall Purpose](#15-overall-purpose)
+* [2. Usage](#-2-usage)
+  - [2.1. Requirements](#21-requirements)
+  - [2.2. Setup](#22-setup)
+  - [2.3. Miners](#23-miners)
+    - [2.3.1. Create a Wallet](#231-create-a-wallet)
+    - [2.3.2. Run the Miner](#232-run-the-miner)
+  - [2.4. Validators](#24-validators)
+    - [2.4.1. Create a Wallet](#241-create-a-wallet)
+    - [2.4.2. Run the Validator](#242-run-the-validator)
+* [3. Appendix](#-3-appendix)
+  - [3.1. Useful Commands](#31-useful-commands)
+* [4. License](#-4-license)
+
+## 🔭 1. Overview
+
+### 1.1. Introduction
 
 The Synth Subnet leverages Bittensor’s decentralized intelligence network to create the world's most powerful synthetic data for price forecasting. Unlike traditional price prediction systems that focus on single-point forecasts, Synth specializes in capturing the full distribution of possible price movements and their associated probabilities, to build the most accurate synthetic data in the world. 
 
@@ -11,8 +47,9 @@ Validators score miners on short-term and long-term prediction accuracy, with re
 
 The Synth Subnet aims to become a key source of synthetic price data for AI Agents and the go-to resource for options trading and portfolio management, offering valuable insights into price probability distributions.
 
+<sup>[Back to top ^][table-of-contents]</sup>
 
-## 1. Task Presented to the Miners
+### 1.2. Task Presented to the Miners
 
 Miners are tasked with providing probabilistic forecasts of a cryptocurrency's future price movements. Specifically, each miner is required to generate multiple simulated price paths for an asset, from the current time over specified time increments and time horizon. Initially all checking prompts will be to produce 100 simulated paths for the future price of bitcoin at 5-minute time increments for the next 24 hours. 
 
@@ -41,18 +78,17 @@ where:
 
 - $N = \dfrac{T}{\Delta t}$ is the total number of increments.
 
-
 We recommend the miner sends a request to the Pyth Oracle to acquire the price of the asset at the start_time.
 
 If they fail to return predictions by the start_time or the predictions are in the wrong format, they will be scored 0 for that prompt.
 
+<sup>[Back to top ^][table-of-contents]</sup>
 
-## 2. Validator's Scoring Methodology
+### 1.3. Validator's Scoring Methodology
 
 The role of the validators is, after the time horizon as passed, to judge the accuracy of each miner’s predicted paths compared to how the price moved in reality. The validator evaluates the miners' probabilistic forecasts using the Continuous Ranked Probability Score (CRPS). The CRPS is a proper scoring rule that measures the accuracy of probabilistic forecasts for continuous variables, considering both the calibration and sharpness of the predicted distribution. The lower the CRPS, the better the forecasted distribution predicted the observed value.
 
-
-### Application of CRPS to Ensemble Forecasts
+#### Application of CRPS to Ensemble Forecasts
 
 In our setup, miners produce ensemble forecasts by generating a finite number of simulated price paths rather than providing an explicit continuous distribution. The CRPS can be calculated directly from these ensemble forecasts using an empirical formula suitable for finite samples.
 
@@ -70,8 +106,7 @@ where:
 
 This formulation allows us to assess the miners' forecasts directly from their simulated paths without the need to construct an explicit probability distribution.
 
-
-### Application to Multiple Time Increments
+#### Application to Multiple Time Increments
 
 To comprehensively assess the miners' forecasts, the CRPS is applied to sets of price changes over different time increments. These increments include short-term and long-term intervals (in the case of the initial checking prompt parameters, these will be 5 minutes, 30 minutes, 3 hours, 24 hours).
 
@@ -82,10 +117,11 @@ For each time increment:
   
 The final score for a miner for a single checking prompt is the sum of these CRPS values over all the time increments.
 
+<sup>[Back to top ^][table-of-contents]</sup>
 
-## 3. Calculation of Leaderboard Score
+### 1.4. Calculation of Leaderboard Score
 
-### Normalization Using Softmax Function
+#### Normalization Using Softmax Function
 
 After calculating the sum of the CRPS values, the validator normalizes these scores across all miners who submitted correctly formatted forecasts prior to the start time. The normalized score $S_i$ for miner $i$ is calculated as:
 
@@ -100,8 +136,7 @@ where:
 
 Any miners who didn’t submit a correct prediction are allocated a normalised score of 0 for that prompt.
 
-
-### Exponentially Decaying Time-Weighted Average (Leaderboard Score)
+#### Exponentially Decaying Time-Weighted Average (Leaderboard Score)
 
 The validator is required to store the historic request scores for each miner. After each new request is scored, the validator recalculates the ‘leaderboard score’ for each miner, using an exponentially decaying time-weighted average over their past **per request** scores, up to a threshold of 30 days in the past.
 
@@ -120,8 +155,7 @@ where:
 - $\lambda = \dfrac{\ln 2}{h}$ is the decay constant, with half-life $h = 10$ days.
 - The sum runs over all requests $j$ such that $t - t_j \leq T$, where $T = 30$ days is the threshold time.
 
-
-### Allocation of Emissions 
+#### Allocation of Emissions 
 At the end of each day, the leaderboard scores are then raised to the power of an exponent $\alpha$ (e.g., $\alpha = 2$) to amplify performance differences. The adjusted scores determine each miner's share of the total emissions for that day
 
 Adjusted Scores:
@@ -136,9 +170,9 @@ $$
 P_{i,t} = \frac{AdjScore_{i,t}}{\sum_j AdjScore_{j,t}} \times Total
 $$
 
+<sup>[Back to top ^][table-of-contents]</sup>
 
-
-## Overall Purpose
+### 1.5. Overall Purpose
 
 The system creates a competitive environment through:
 
@@ -157,191 +191,214 @@ The system creates a competitive environment through:
 5. **Calculating Leaderboard Scores and Allocating Emissions**
    - Rewards consistent performance and encourages competition
 
+<sup>[Back to top ^][table-of-contents]</sup>
 
-## Environment Setup Instructions
+## 🪄 2. Usage
 
-### Step 1: Create a Wallet
-You can create a single wallet or multiple wallets, depending on how many miners or validators you intend to run.  
-There is no functional difference between wallets for miners or validators, and you can name them as you prefer.
+### 2.1. Requirements
 
-#### Create a Miner Wallet
-- create a coldkey
-```
-btcli wallet new_coldkey --wallet.name miner
-```
+* [Git](https://github.com/git-guides/install-git)
+* [Ubuntu v20.04+](https://ubuntu.com/download)
 
-- create a hotkey
-```
-btcli wallet new_hotkey --wallet.name miner --wallet.hotkey default
-```
+<sup>[Back to top ^][table-of-contents]</sup>
 
-#### Create a Validator Wallet
-- create a coldkey
-```
-btcli wallet new_coldkey --wallet.name validator
-```
+### 2.2. Setup
 
-- create a hotkey
-```
-btcli wallet new_hotkey --wallet.name validator --wallet.hotkey default
-```
-
----
-
-### Step 2: Register Wallet in the Subnet
-Before starting a miner or validator, you must acquire a slot in the subnet. This connects your application to the Bittensor subnet.
-
-Register a miner wallet:
-```
-btcli subnet register --wallet.name miner --wallet.hotkey default --subtensor.network test
-```
-
-Register a validator wallet:
-```
-btcli subnet register --wallet.name validator --wallet.hotkey default --subtensor.network test
-```
-
----
-
-### Step 3: Verify Registration
-You can check wallet details and verify successful registration in the subnet.
-
-Miner wallet details:
-```
-btcli wallet overview --wallet.name miner --subtensor.network test
-```
-
-Validator wallet details:
-```
-btcli wallet overview --wallet.name validator --subtensor.network test
-```
-
----
-
-### Step 4: Check Network Metagraph
-You can explore the metagraph of the network for additional insights:
-```
-btcli subnet metagraph --netuid 247 --subtensor.network test
-```
-
----
-
-### Step 5: Install PM2
-PM2 is recommended for running miner and validator processes.
-
-#### Update and install Node.js and npm:
-```
-sudo apt update
-sudo apt install nodejs npm
-```
-
-#### Install PM2 globally:
-```
-sudo npm install pm2 -g
-```
-
-#### Verify the installation:
-```
-pm2 --version
-```
-
----
-
-### Step 6: Clone the Synth Repository
-Clone the repository containing the example miner and validator code. This repository also provides a base template you can customize.
-```
+1. Clone the repository:
+```shell
 git clone https://github.com/mode-network/synth-subnet.git
 ```
 
----
-
-### Step 7: Set Up Python Virtual Environment
-Install Python 3.9 (ensure no conflicts with existing Python versions, do not uninstall or upgrade if you have the default 3.8 or any other in the system):
-```
-sudo apt install python3.9
+2. Change directory to the project root:
+```shell
+cd ./synth-subnet
 ```
 
-Install the venv package:
+3. Add the required repositories:
+```shell
+sudo add-apt-repository ppa:deadsnakes/ppa
 ```
-sudo apt install python3.9-venv
+> ⚠️ **NOTE:** The [deadsnakes](https://github.com/deadsnakes) repository, while unofficial, it is hugely popular and used by many Python projects.
+
+4. Install the dependencies:
+
+```shell
+sudo apt update && \
+  sudo apt install nodejs npm python3.10
 ```
 
-Create and activate the virtual environment:
+5. Install [PM2](https://pm2.io/):
+```shell
+sudo npm install pm2 -g
 ```
-python3.9 -m venv bt_venv
+
+6. Install the Python virtual environment:
+```shell
+sudo apt install python3.10-venv
+```
+
+7. Create a new virtual environment:
+```shell
+python3.10 -m venv bt_venv
+```
+
+8. Activate and switch to the newly created Python virtual environment:
+```shell
 source bt_venv/bin/activate
 ```
 
-Install dependencies:
-```
+9. Install the Python dependencies:
+```shell
 pip install -r requirements.txt
 ```
 
-Add the current directory to PYTHONPATH to resolve module issues:
-```
-export PYTHONPATH="/home/{your-user}/synth-subnet:$PYTHONPATH"
-```
+<sup>[Back to top ^][table-of-contents]</sup>
 
----
+### 2.3. Miners
 
-### Step 8: Run a Miner
-Configuration files (`*.config.js`) in the repository define how to start and manage applications with PM2. They allow you to specify application details, environment variables, and runtime configurations.
+#### 2.3.1 Create a Wallet
 
-#### IMPORTANT: Activate the virtual environment before running:
-```
+1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
+```shell
 source bt_venv/bin/activate
 ```
 
-Start a miner using the example configuration file:
+2. Create a cold key wallet:
+```shell
+btcli wallet <replace_with_wallet_name> \
+  --wallet.name miner
 ```
+
+3. Create a hot key wallet:
+```shell
+btcli wallet <replace_with_wallet_name> \
+  --wallet.name miner \
+  --wallet.hotkey default
+```
+
+4. Acquire a slot on the Bittensor subnet by registering the wallet:
+```shell
+btcli subnet register \
+  --wallet.name miner \
+  --wallet.hotkey default \
+  --subtensor.network <replace_with_network_name> \
+  --netuid <replace_with_netud>
+```
+
+5. (Optional) Check the wallet has been registered:
+```shell
+btcli wallet overview \
+  --wallet.name miner \
+  --subtensor.network <replace_with_network_name>
+```
+
+6. (Optional) Check the network metagraph:
+```shell
+btcli subnet metagraph \
+  --subtensor.network <replace_with_network_name> \
+  --netuid <replace_with_netud>
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### 2.3.2 Run the Miner
+
+1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
+```shell
+source bt_venv/bin/activate
+```
+
+2. Start PM2 with the miner config:
+```shell
 pm2 start miner.config.js
 ```
 
-Alternatively, use the dummy miner for testing:
-```
-pm2 start miner-dummy.local.config.js
-```
-
-You can create and run your custom configuration file similarly.
-
-#### PM2 Commands:
-
-To return a list of currently running applications:
-```
+3. (Optional) Check the miner is running:
+```shell
 pm2 list
 ```
 
-Stop a specific application:
-```
-pm2 stop miner
-```
+<sup>[Back to top ^][table-of-contents]</sup>
 
-Restart an application after code changes:
-```
-pm2 start miner
-```
+### 2.4. Validators
 
-View logs:
-```
-pm2 logs miner
-```
+#### 2.4.1 Create a Wallet
 
-View detailed logs:
-```
-pm2 logs miner --lines 100
-```
-
----
-
-### Step 9: Run a Validator
-Similar to miners, validators also use `*.config.js` files for configuration.
-
-#### IMPORTANT: Activate the virtual environment before running:
-```
+1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
+```shell
 source bt_venv/bin/activate
 ```
 
-Start a validator using the example configuration file:
+2. Create a cold key wallet:
+```shell
+btcli wallet <replace_with_wallet_name> \
+  --wallet.name validator
 ```
+
+3. Create a hot key wallet:
+```shell
+btcli wallet <replace_with_wallet_name> \
+  --wallet.name validator \
+  --wallet.hotkey default
+```
+
+4. Acquire a slot on the Bittensor subnet by registering the wallet:
+```shell
+btcli subnet register \
+  --wallet.name validator \
+  --wallet.hotkey default \
+  --subtensor.network <replace_with_network_name> \
+  --netuid <replace_with_netud>
+```
+
+5. (Optional) Check the wallet has been registered:
+```shell
+btcli wallet overview \
+  --wallet.name validator \
+  --subtensor.network <replace_with_network_name>
+```
+
+6. (Optional) Check the network metagraph:
+```shell
+btcli subnet metagraph \
+  --subtensor.network <replace_with_network_name> \
+  --netuid <replace_with_netud>
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### 2.4.2 Run the Validator
+
+1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
+```shell
+source bt_venv/bin/activate
+```
+
+2. Start PM2 with the validator config:
+```shell
 pm2 start validator.config.js
 ```
+
+3. (Optional) Check the validator is running:
+```shell
+pm2 list
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+## 📑 3. Appendix
+
+### 3.1. Useful Commands
+
+| Command                       | Description                |
+|-------------------------------|----------------------------|
+| `pm2 stop <miner\|validator>` | Stops the miner/validator. |
+
+## 📄 4. License
+
+Please refer to the [LICENSE](./LICENSE) file.
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+<!-- links -->
+[table-of-contents]: #table-of-contents
