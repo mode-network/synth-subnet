@@ -33,6 +33,7 @@
     - [2.4.2. Run the Validator](#242-run-the-validator)
 * [3. Appendix](#-3-appendix)
   - [3.1. Useful Commands](#31-useful-commands)
+  - [3.2. Troubleshooting](#32-troubleshooting)
 * [4. License](#-4-license)
 
 ## 🔭 1. Overview
@@ -390,9 +391,39 @@ pm2 list
 
 ### 3.1. Useful Commands
 
-| Command                       | Description                |
-|-------------------------------|----------------------------|
-| `pm2 stop <miner\|validator>` | Stops the miner/validator. |
+| Command                                   | Description                           |
+|-------------------------------------------|---------------------------------------|
+| `pm2 stop <miner\|validator>`             | Stops the miner/validator.            |
+| `pm2 logs <miner\|validator> --lines 100` | View the logs of the miner/validator. |
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 3.2. Troubleshooting
+
+#### `ModuleNotFoundError: No module named 'simulation'`
+
+This error is due to Python unable to locate the local Python modules. To avoid this error, ensure you have created and activate the Python virtual environment from the project root and ensure the `PYTHONPATH` is present in the `<miner|validator>.config.js` file and is pointing to the project root.
+
+An example of a config file should be:
+```js
+// miner.config.js
+module.exports = {
+  apps: [
+    {
+      name: 'miner',
+      script: 'python3',
+      args: './neurons/miner.py --netuid 247 --logging.debug --logging.trace --subtensor.network test --wallet.name miner --wallet.hotkey default --axon.port 8091',
+      env: {
+        PYTHONPATH: '.'
+      },
+    },
+  ],
+};
+```
+
+As you can see, we are setting the `PYTHONPATH` environment variable that will be injected when we run `pm2 start miner`.
+
+<sup>[Back to top ^][table-of-contents]</sup>
 
 ## 📄 4. License
 
