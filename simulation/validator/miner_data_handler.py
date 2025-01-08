@@ -1,9 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import bittensor as bt
+import pandas as pd
 from sqlalchemy import select, text
 
-from simulation.db.models import engine, miner_predictions, miner_scores, validator_requests, metagraph_history
+from simulation.db.models import engine, miner_predictions, miner_scores, validator_requests, metagraph_history, \
+    miner_rewards
 from simulation.simulation_input import SimulationInput
 
 
@@ -147,3 +149,42 @@ class MinerDataHandler:
         except Exception as e:
             connection.rollback()
             bt.logging.error(f"in update_metagraph_history (got an exception): {e}")
+
+    @staticmethod
+    def get_miner_scores(scored_time_str: str, cutoff_days: int):
+        scored_time = datetime.fromisoformat(scored_time_str)
+        min_scored_time = scored_time - timedelta(days=cutoff_days)
+
+        try:
+            with engine.connect() as connection:
+                query = (
+                    select(
+                        miner_scores.c.miner_uid,
+                        miner_scores.c.reward,
+                        miner_scores.c.scored_time
+                    )
+                    .select_from(miner_scores)
+                    .where(
+                        miner_scores.c.scored_time > min_scored_time
+                    )
+                )
+
+                result = connection.execute(query)
+
+            df = pd.DataFrame(result.fetchall(), columns=result.keys())
+
+            return df
+        except Exception as e:
+            bt.logging.error(f"in get_miner_scores (got an exception): {e}")
+            return pd.DataFrame()
+
+    @staticmethod
+    def update_miner_rewards(miner_rewards_data: []):
+        try:
+            with engine.connect() as connection:
+                with connection.begin():  # Begin a transaction
+                    insert_stmt = miner_rewards.insert().values(miner_rewards_data)
+                    connection.execute(insert_stmt)
+        except Exception as e:
+            connection.rollback()
+            bt.logging.error(f"in update_miner_rewards (got an exception): {e}")

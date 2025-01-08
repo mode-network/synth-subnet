@@ -21,6 +21,7 @@ import time
 from datetime import datetime
 
 import bittensor as bt
+import numpy as np
 
 from simulation.base.validator import BaseValidatorNeuron
 from simulation.protocol import Simulation
@@ -28,6 +29,7 @@ from simulation.simulation_input import SimulationInput
 from simulation.utils.helpers import get_current_time, round_time_to_minutes
 from simulation.utils.uids import check_uid_availability
 from simulation.validator.miner_data_handler import MinerDataHandler
+from simulation.validator.moving_average import compute_weighted_averages
 from simulation.validator.price_data_provider import PriceDataProvider
 from simulation.validator.reward import get_rewards
 
@@ -64,13 +66,6 @@ async def forward(
             self.metagraph, uid, self.config.neuron.vpermit_tao_limit
         )
         if uid_is_available:
-            log = (
-                "Miner | "
-                f"Incentive:{self.metagraph.I[uid]:.4f} | "
-                f"Rank:{self.metagraph.R[uid]} | "
-                f"Coldkey:{self.metagraph.coldkeys[uid]} | "
-            )
-            bt.logging.info(log)
             metagraph_item = {
                 "neuron_uid": uid,
                 "incentive": float(self.metagraph.I[uid]),
@@ -172,16 +167,31 @@ async def forward(
         scored_time=scored_time
     )
 
+    # apply custom moving average rewards
+    miner_scores_df = miner_data_handler.get_miner_scores(scored_time, 2)
+    moving_averages_data = compute_weighted_averages(
+        input_df=miner_scores_df,
+        half_life_days=1.0,
+        alpha=2.0,
+        validation_time=scored_time
+    )
+    if moving_averages_data is None:
+        time.sleep(3600)
+        return
+    miner_data_handler.update_miner_rewards(moving_averages_data)
+
     # Update the scores based on the rewards.
     # You may want to define your own update_scores function for custom behavior.
-    filtered_rewards, filtered_miner_uids = remove_zero_rewards(rewards, miner_uids)
-    self.update_scores(filtered_rewards, filtered_miner_uids)
+    filtered_rewards, filtered_miner_uids = remove_zero_rewards(moving_averages_data)
+    self.update_scores(np.array(filtered_rewards), filtered_miner_uids)
     time.sleep(3600)  # wait for an hour
 
 
-def remove_zero_rewards(rewards, miner_uids):
-    mask = rewards != 0
-    filtered_rewards = rewards[mask]
-    filtered_miners_uid = [miner_uids[i] for i in range(len(mask)) if mask[i]]
-
-    return filtered_rewards, filtered_miners_uid
+def remove_zero_rewards(moving_averages_data):
+    miners = []
+    rewards = []
+    for rewards_item in moving_averages_data:
+        if rewards_item["reward_weight"] != 0:
+            miners.append(rewards_item["miner_uid"])
+            rewards.append(rewards_item["reward_weight"])
+    return rewards, miners

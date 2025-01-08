@@ -48,6 +48,17 @@ miner_scores = Table(
 )
 
 # Define the table
+miner_rewards = Table(
+    "miner_rewards",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("miner_uid", Integer, nullable=False),
+    Column("smoothed_score", Float, nullable=False),
+    Column("reward_weight", Float, nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+)
+
+# Define the table
 metagraph_history = Table(
     "metagraph_history",
     metadata,
