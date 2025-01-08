@@ -173,7 +173,7 @@ async def forward(
         input_df=miner_scores_df,
         half_life_days=1.0,
         alpha=2.0,
-        validation_time=scored_time
+        validation_time_str=scored_time
     )
     if moving_averages_data is None:
         time.sleep(3600)

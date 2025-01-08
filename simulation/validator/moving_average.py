@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pandas as pd
 from pandas import DataFrame
@@ -8,7 +8,7 @@ def compute_weighted_averages(
         input_df: DataFrame,
         half_life_days: float,
         alpha: float,
-        validation_time: datetime
+        validation_time_str: str
 ) -> []:
     """
     Reads a TSV file of miner rewards, computes an exponentially weighted
@@ -25,12 +25,14 @@ def compute_weighted_averages(
     :param input_df: Dataframe of miner rewards.
     :param half_life_days: The half-life in days for the exponential decay.
     :param alpha: The exponent to raise the EWMA to, before normalization.
-    :param validation_time: The current time when validator does the scoring.
+    :param validation_time_str: The current time when validator does the scoring.
     """
     if input_df.empty:
         return None
 
-        # Group by miner_uid
+    validation_time = datetime.fromisoformat(validation_time_str).replace(tzinfo=timezone.utc)
+
+    # Group by miner_uid
     grouped = input_df.groupby("miner_uid")
 
     results = []  # will hold tuples of (miner_uid, ewma)
