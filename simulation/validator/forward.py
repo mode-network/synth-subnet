@@ -31,6 +31,7 @@ from simulation.utils.uids import check_uid_availability
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.moving_average import compute_weighted_averages
 from simulation.validator.price_data_provider import PriceDataProvider
+from simulation.validator.response_validation import validate_responses
 from simulation.validator.reward import get_rewards
 
 
@@ -249,7 +250,7 @@ async def _query_available_miners_and_save_responses(
 
     miner_predictions = {}
     for i, response in enumerate(responses):
-        if response is None or len(response) == 0:
+        if validate_responses(response):
             continue
         miner_id = miner_uids[i]
         miner_predictions[miner_id] = response
