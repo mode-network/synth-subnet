@@ -250,7 +250,7 @@ async def _query_available_miners_and_save_responses(
 
     miner_predictions = {}
     for i, response in enumerate(responses):
-        if validate_responses(response):
+        if validate_responses(response) is False:
             continue
         miner_id = miner_uids[i]
         miner_predictions[miner_id] = response
