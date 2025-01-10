@@ -41,9 +41,7 @@ class Miner(BaseMinerNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    async def forward(
-        self, synapse: Simulation
-    ) -> Simulation:
+    async def forward(self, synapse: Simulation) -> Simulation:
         """
         Processes the incoming 'Dummy' synapse by performing a predefined operation on the input data.
         This method should be replaced with actual logic relevant to the miner's purpose.
@@ -70,24 +68,24 @@ class Miner(BaseMinerNeuron):
         time_length = simulation_input.time_length
         num_simulations = simulation_input.num_simulations
 
-        if self.config.miner_type == 'dummy':
-            prediction = generate_fixed_simulation(start_time=dt, time_length=86400)
+        if self.config.miner_type == "dummy":
+            prediction = generate_fixed_simulation(
+                start_time=dt, time_length=86400
+            )
         else:
             prediction = generate_simulations(
                 start_time=dt,
                 asset=asset,
                 time_increment=time_increment,
                 time_length=time_length,
-                num_simulations=num_simulations
+                num_simulations=num_simulations,
             )
 
         synapse.simulation_output = prediction
 
         return synapse
 
-    async def blacklist(
-        self, synapse: Simulation
-    ) -> typing.Tuple[bool, str]:
+    async def blacklist(self, synapse: Simulation) -> typing.Tuple[bool, str]:
         """
         Determines whether an incoming request should be blacklisted and thus ignored. Your implementation should
         define the logic for blacklisting requests based on your needs and desired security parameters.

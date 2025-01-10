@@ -1,9 +1,22 @@
-from simulation.simulations.price_simulation import simulate_crypto_price_paths, get_asset_price
-from simulation.utils.helpers import get_current_time, convert_prices_to_time_format, round_time_to_minutes
+from simulation.simulations.price_simulation import (
+    simulate_crypto_price_paths,
+    get_asset_price,
+)
+from simulation.utils.helpers import (
+    get_current_time,
+    convert_prices_to_time_format,
+    round_time_to_minutes,
+)
 
 
 def generate_simulations(
-        asset='BTC', start_time=None, time_increment=300, time_length=86400, num_simulations=1, sigma=0.01):
+    asset="BTC",
+    start_time=None,
+    time_increment=300,
+    time_length=86400,
+    num_simulations=1,
+    sigma=0.01,
+):
     """
     Generate simulated price paths.
 
@@ -30,15 +43,24 @@ def generate_simulations(
         time_increment=time_increment,
         time_length=time_length,
         num_simulations=num_simulations,
-        sigma=sigma
+        sigma=sigma,
     )
 
-    predictions = convert_prices_to_time_format(simulations.tolist(), start_time, time_increment)
+    predictions = convert_prices_to_time_format(
+        simulations.tolist(), start_time, time_increment
+    )
 
     return predictions
 
 
-def generate_fixed_simulation(asset='BTC', start_time=None, time_increment=300, time_length=86400, num_simulations=1, sigma=0.01):
+def generate_fixed_simulation(
+    asset="BTC",
+    start_time=None,
+    time_increment=300,
+    time_length=86400,
+    num_simulations=1,
+    sigma=0.01,
+):
     """
     Generate constant results. Method is used just for test. Don't use in a real simulation.
 
@@ -54,8 +76,12 @@ def generate_fixed_simulation(asset='BTC', start_time=None, time_increment=300, 
         numpy.ndarray: Simulated price paths.
     """
 
-    simulations = [[1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]]
+    simulations = [
+        [1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000]
+    ]
 
-    predictions = convert_prices_to_time_format(simulations, start_time, time_increment)
+    predictions = convert_prices_to_time_format(
+        simulations, start_time, time_increment
+    )
 
     return predictions

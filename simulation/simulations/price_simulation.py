@@ -3,7 +3,7 @@ import requests
 from properscoring import crps_ensemble
 
 
-def get_asset_price(asset='BTC'):
+def get_asset_price(asset="BTC"):
     """
     Retrieves the current price of the specified asset.
     Currently, supports BTC via Pyth Network.
@@ -11,9 +11,11 @@ def get_asset_price(asset='BTC'):
     Returns:
         float: Current asset price.
     """
-    if asset == 'BTC':
-        btc_price_id = "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
-        endpoint = f"https://hermes.pyth.network/api/latest_price_feeds?ids[]={btc_price_id}" # TODO: this endpoint is deprecated
+    if asset == "BTC":
+        btc_price_id = (
+            "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
+        )
+        endpoint = f"https://hermes.pyth.network/api/latest_price_feeds?ids[]={btc_price_id}"  # TODO: this endpoint is deprecated
         try:
             response = requests.get(endpoint)
             response.raise_for_status()
@@ -21,7 +23,7 @@ def get_asset_price(asset='BTC'):
             if not data or len(data) == 0:
                 raise ValueError("No price data received")
             price_feed = data[0]
-            price = float(price_feed['price']['price']) / (10**8)
+            price = float(price_feed["price"]["price"]) / (10**8)
             return price
         except Exception as e:
             print(f"Error fetching {asset} price: {str(e)}")
@@ -32,7 +34,9 @@ def get_asset_price(asset='BTC'):
         return None
 
 
-def simulate_single_price_path(current_price, time_increment, time_length, sigma):
+def simulate_single_price_path(
+    current_price, time_increment, time_length, sigma
+):
     """
     Simulate a single crypto asset price path.
     """
@@ -47,23 +51,31 @@ def simulate_single_price_path(current_price, time_increment, time_length, sigma
     return price_path
 
 
-def generate_real_price_path(current_price, time_increment, time_length, sigma):
+def generate_real_price_path(
+    current_price, time_increment, time_length, sigma
+):
     """
     Generate a 'real' price path.
     """
     # No random seed set to ensure independent random numbers
-    real_price_path = simulate_single_price_path(current_price, time_increment, time_length, sigma)
+    real_price_path = simulate_single_price_path(
+        current_price, time_increment, time_length, sigma
+    )
     return real_price_path
 
 
-def simulate_crypto_price_paths(current_price, time_increment, time_length, num_simulations, sigma):
+def simulate_crypto_price_paths(
+    current_price, time_increment, time_length, num_simulations, sigma
+):
     """
     Simulate multiple crypto asset price paths.
     """
 
     price_paths = []
     for _ in range(num_simulations):
-        price_path = simulate_single_price_path(current_price, time_increment, time_length, sigma)
+        price_path = simulate_single_price_path(
+            current_price, time_increment, time_length, sigma
+        )
         price_paths.append(price_path)
 
     return np.array(price_paths)
@@ -94,7 +106,9 @@ def calculate_cumulative_price_changes(price_paths):
     Calculate the cumulative price changes from the start time to each time increment.
     """
     initial_prices = price_paths[:, [0]]  # Shape: (num_paths, 1)
-    cumulative_changes = price_paths - initial_prices  # Broadcasting subtraction
+    cumulative_changes = (
+        price_paths - initial_prices
+    )  # Broadcasting subtraction
     return cumulative_changes
 
 

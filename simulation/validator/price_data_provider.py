@@ -7,10 +7,7 @@ from datetime import datetime, timezone
 class PriceDataProvider:
     BASE_URL = "https://benchmarks.pyth.network/v1/shims/tradingview/history"
 
-    TOKEN_MAP = {
-        "BTC": "Crypto.BTC/USD",
-        "ETH": "Crypto.ETH/USD"
-    }
+    TOKEN_MAP = {"BTC": "Crypto.BTC/USD", "ETH": "Crypto.ETH/USD"}
 
     one_day_seconds = 24 * 60 * 60
 
@@ -32,7 +29,7 @@ class PriceDataProvider:
             "symbol": self.token,
             "resolution": 1,
             "from": start_time,
-            "to": end_time
+            "to": end_time,
         }
 
         response = requests.get(self.BASE_URL, params=params)
@@ -53,8 +50,10 @@ class PriceDataProvider:
 
         transformed_data = [
             {
-                "time": datetime.fromtimestamp(timestamps[i], timezone.utc).isoformat(),
-                "price": float(close_prices[i])
+                "time": datetime.fromtimestamp(
+                    timestamps[i], timezone.utc
+                ).isoformat(),
+                "price": float(close_prices[i]),
             }
             for i in range(len(timestamps) - 1, -1, -5)
         ][::-1]

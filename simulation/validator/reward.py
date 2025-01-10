@@ -30,11 +30,11 @@ import bittensor as bt
 
 
 def reward(
-        miner_data_handler: MinerDataHandler,
-        price_data_provider: PriceDataProvider,
-        miner_uid: int,
-        simulation_input: SimulationInput,
-        validator_request_id: int
+    miner_data_handler: MinerDataHandler,
+    price_data_provider: PriceDataProvider,
+    miner_uid: int,
+    simulation_input: SimulationInput,
+    validator_request_id: int,
 ):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
@@ -44,7 +44,9 @@ def reward(
     - float: The reward value for the miner.
     """
 
-    miner_prediction_id, predictions = miner_data_handler.get_miner_prediction(miner_uid, validator_request_id)
+    miner_prediction_id, predictions = miner_data_handler.get_miner_prediction(
+        miner_uid, validator_request_id
+    )
 
     if predictions is None or len(predictions) == 0:
         return -1, [], [], None  # represents no prediction data from the miner
@@ -60,27 +62,32 @@ def reward(
     intersecting_predictions = []
     intersecting_real_price = real_prices
     for prediction in predictions:
-        intersecting_prediction, intersecting_real_price = get_intersecting_arrays(prediction, intersecting_real_price)
+        intersecting_prediction, intersecting_real_price = (
+            get_intersecting_arrays(prediction, intersecting_real_price)
+        )
         intersecting_predictions.append(intersecting_prediction)
 
-    predictions_path = [[entry["price"] for entry in sublist] for sublist in intersecting_predictions]
+    predictions_path = [
+        [entry["price"] for entry in sublist]
+        for sublist in intersecting_predictions
+    ]
     real_price_path = [entry["price"] for entry in intersecting_real_price]
 
     score, detailed_crps_data = calculate_crps_for_miner(
         np.array(predictions_path),
         np.array(real_price_path),
-        simulation_input.time_increment
+        simulation_input.time_increment,
     )
 
     return score, detailed_crps_data, real_prices, miner_prediction_id
 
 
 def get_rewards(
-        miner_data_handler: MinerDataHandler,
-        price_data_provider: PriceDataProvider,
-        simulation_input: SimulationInput,
-        miner_uids: List[int],
-        validator_request_id: int
+    miner_data_handler: MinerDataHandler,
+    price_data_provider: PriceDataProvider,
+    simulation_input: SimulationInput,
+    miner_uids: List[int],
+    validator_request_id: int,
 ) -> (np.ndarray, []):
     """
     Returns an array of rewards for the given query and responses.
@@ -102,12 +109,12 @@ def get_rewards(
     for i, miner_id in enumerate(miner_uids):
         # function that calculates a score for an individual miner
         score, detailed_crps_data, real_prices, predictions = reward(
-                miner_data_handler,
-                price_data_provider,
-                miner_id,
-                simulation_input,
-                validator_request_id
-            )
+            miner_data_handler,
+            price_data_provider,
+            miner_id,
+            simulation_input,
+            validator_request_id,
+        )
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
         real_prices_list.append(real_prices)
@@ -127,8 +134,14 @@ def get_rewards(
             "real_prices": real_prices,
             "predictions": predictions,
         }
-        for miner_uid, score, crps_data, softmax_score, real_prices, predictions in
-        zip(miner_uids, scores, detailed_crps_data_list, softmax_scores, real_prices_list, predictions_list)
+        for miner_uid, score, crps_data, softmax_score, real_prices, predictions in zip(
+            miner_uids,
+            scores,
+            detailed_crps_data_list,
+            softmax_scores,
+            real_prices_list,
+            predictions_list,
+        )
     ]
 
     return softmax_scores, detailed_info
@@ -154,7 +167,10 @@ def compute_softmax(score_values: np.ndarray) -> np.ndarray:
 
 def clean_numpy_in_crps_data(crps_data: []) -> []:
     cleaned_crps_data = [
-        {key: (float(value) if isinstance(value, np.float64) else value) for key, value in item.items()}
+        {
+            key: (float(value) if isinstance(value, np.float64) else value)
+            for key, value in item.items()
+        }
         for item in crps_data
     ]
     return cleaned_crps_data

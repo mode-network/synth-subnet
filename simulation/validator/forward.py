@@ -35,9 +35,10 @@ from simulation.validator.reward import get_rewards
 
 
 async def forward(
-        self: BaseValidatorNeuron,
-        miner_data_handler: MinerDataHandler,
-        price_data_provider: PriceDataProvider):
+    self: BaseValidatorNeuron,
+    miner_data_handler: MinerDataHandler,
+    price_data_provider: PriceDataProvider,
+):
     """
     The forward function is called by the validator every time step.
 
@@ -89,15 +90,13 @@ async def forward(
         start_time=start_time,
         time_increment=300,
         time_length=86400,
-        num_simulations=100
+        num_simulations=100,
     )
 
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
     # prices for a chosen asset)
-    synapse = Simulation(
-        simulation_input=simulation_input
-    )
+    synapse = Simulation(simulation_input=simulation_input)
 
     # The dendrite client queries the network:
     # it is the actual call to all the miners from validator
@@ -143,7 +142,9 @@ async def forward(
     # get latest prediction request from validator
     # for which we already have real prices data,
     # i.e. (start_time + time_length) < scored_time
-    validator_request_id = miner_data_handler.get_latest_prediction_request(scored_time, simulation_input)
+    validator_request_id = miner_data_handler.get_latest_prediction_request(
+        scored_time, simulation_input
+    )
     if validator_request_id is None:
         time.sleep(3600)  # wait for an hour
         return
@@ -158,13 +159,12 @@ async def forward(
         price_data_provider=price_data_provider,
         simulation_input=simulation_input,
         miner_uids=miner_uids,
-        validator_request_id=validator_request_id
+        validator_request_id=validator_request_id,
     )
 
     bt.logging.info(f"Scored responses: {rewards}")
     miner_data_handler.set_reward_details(
-        reward_details=rewards_detailed_info,
-        scored_time=scored_time
+        reward_details=rewards_detailed_info, scored_time=scored_time
     )
 
     # apply custom moving average rewards
@@ -173,9 +173,11 @@ async def forward(
         input_df=miner_scores_df,
         half_life_days=1.0,
         alpha=2.0,
-        validation_time_str=scored_time
+        validation_time_str=scored_time,
     )
-    bt.logging.info(f"Scored responses moving averages: {moving_averages_data}")
+    bt.logging.info(
+        f"Scored responses moving averages: {moving_averages_data}"
+    )
     if moving_averages_data is None:
         time.sleep(3600)
         return
@@ -183,7 +185,9 @@ async def forward(
 
     # Update the scores based on the rewards.
     # You may want to define your own update_scores function for custom behavior.
-    filtered_rewards, filtered_miner_uids = remove_zero_rewards(moving_averages_data)
+    filtered_rewards, filtered_miner_uids = remove_zero_rewards(
+        moving_averages_data
+    )
     self.update_scores(np.array(filtered_rewards), filtered_miner_uids)
     time.sleep(3600)  # wait for an hour
 

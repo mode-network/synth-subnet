@@ -62,7 +62,9 @@ class Validator(BaseValidatorNeuron):
         - Updating the scores
         """
         bt.logging.info("calling forward()")
-        return await forward(self, self.miner_data_handler, self.price_data_provider)
+        return await forward(
+            self, self.miner_data_handler, self.price_data_provider
+        )
 
 
 # The main function parses the configuration and runs the validator.
