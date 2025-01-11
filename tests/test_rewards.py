@@ -4,7 +4,11 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal, assert_equal
 
-from simulation.db.models import miner_predictions, validator_requests, miner_scores
+from simulation.db.models import (
+    miner_predictions,
+    validator_requests,
+    miner_scores,
+)
 from simulation.simulation_input import SimulationInput
 from simulation.validator.forward import remove_zero_rewards
 from simulation.validator.miner_data_handler import MinerDataHandler
@@ -68,7 +72,7 @@ def test_remove_zero_rewards():
             "smoothed_score": float(0.8),
             "reward_weight": float(0.8),
             "updated_at": "2024-11-20T00:00:00",
-        }
+        },
     ]
 
     filtered_rewards, filtered_miner_uids = remove_zero_rewards(
@@ -97,7 +101,9 @@ def test_get_rewards(db_engine):
     )
 
     handler = MinerDataHandler(db_engine)
-    price_data_provider = PriceDataProvider("BTC")  # TODO: add a mock instead of the real provider
+    price_data_provider = PriceDataProvider(
+        "BTC"
+    )  # TODO: add a mock instead of the real provider
 
     values = generate_values(datetime.fromisoformat(start_time))
     simulation_data = {miner_id: values}
@@ -118,7 +124,7 @@ def test_get_rewards(db_engine):
             num_simulations=1,  # default: 100
         ),
         [miner_id],  # TODO: add another test with more miners
-        validator_request_id
+        validator_request_id,
     )
 
     assert len(softmax_scores) == 2
