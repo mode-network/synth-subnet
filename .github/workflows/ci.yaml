@@ -35,5 +35,5 @@ jobs:
         run: |
           black --line-length 79 --exclude '(env|venv|.eggs|.git)' --check .
 
-      # - name: Run unit tests
-      #   run: python -m unittest discover tests
+      - name: Run unit tests
+        run: pytest ./tests/

@@ -1,42 +1,11 @@
-import os
-import subprocess
 from datetime import datetime
 
 import pytest
-from sqlalchemy import create_engine, text
-from testcontainers.postgres import PostgresContainer
 
 from simulation.db.models import miner_predictions, validator_requests
 from simulation.simulation_input import SimulationInput
 from simulation.validator.miner_data_handler import MinerDataHandler
 from tests.utils import generate_values
-
-postgres = PostgresContainer("postgres:16-alpine")
-
-
-@pytest.fixture(scope="module", autouse=True)
-def setup(request):
-    postgres.start()
-
-    def remove_container():
-        postgres.stop()
-
-    request.addfinalizer(remove_container)
-    os.environ["DB_URL"] = postgres.get_connection_url()
-
-
-@pytest.fixture(scope="module", autouse=True)
-def apply_migrations(setup):
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    alembic_command = ["alembic", "upgrade", "head"]
-    subprocess.run(alembic_command, check=True, cwd=project_root)
-
-
-@pytest.fixture(scope="module", autouse=True)
-def db_engine(setup):
-    engine = create_engine(os.environ["DB_URL"])
-    yield engine
-    engine.dispose()
 
 
 @pytest.fixture(scope="function", autouse=True)
