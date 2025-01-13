@@ -214,34 +214,39 @@ sudo add-apt-repository ppa:deadsnakes/ppa
 ```
 > ⚠️ **NOTE:** The [deadsnakes](https://github.com/deadsnakes) repository, while unofficial, it is hugely popular and used by many Python projects.
 
-4. Install the dependencies:
+4. Install Rust:
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+5. Install the dependencies:
 
 ```shell
 sudo apt update && \
-  sudo apt install nodejs npm python3.10
+  sudo apt install nodejs npm python3.10 pkg-config
 ```
 
-5. Install [PM2](https://pm2.io/):
+6. Install [PM2](https://pm2.io/):
 ```shell
 sudo npm install pm2 -g
 ```
 
-6. Install the Python virtual environment:
+7. Install the Python virtual environment:
 ```shell
 sudo apt install python3.10-venv
 ```
 
-7. Create a new virtual environment:
+8. Create a new virtual environment:
 ```shell
 python3.10 -m venv bt_venv
 ```
 
-8. Activate and switch to the newly created Python virtual environment:
+9. Activate and switch to the newly created Python virtual environment:
 ```shell
 source bt_venv/bin/activate
 ```
 
-9. Install the Python dependencies:
+10. Install the Python dependencies:
 ```shell
 pip install -r requirements.txt
 ```
