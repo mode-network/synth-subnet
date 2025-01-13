@@ -255,13 +255,13 @@ pip install -r requirements.txt
 
 ### 2.3. Miners
 
-Please refer to this [guide](./docs/miner_guide.md) on detailed instructions on getting a miner up and running.
+Please refer to this [guide](./docs/miner_guide.md) for detailed instructions on getting a miner up and running.
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
 ### 2.4. Validators
 
-Please refer to this [guide](./docs/validator_guide.md) on detailed instructions on getting a validator up and running.
+Please refer to this [guide](./docs/validator_guide.md) for detailed instructions on getting a validator up and running.
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
