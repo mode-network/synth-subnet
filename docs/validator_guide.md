@@ -23,6 +23,8 @@ btcli wallet create \
   --wallet.hotkey default
 ```
 
+> 🚨 **WARNING:** You must ensure your wallets have enough TAO (0.1 should be sufficient) to be start mining. For testnet, you can use the [`btcli wallet faucet`](https://docs.bittensor.com/btcli#btcli-wallet-faucet).
+
 3. Acquire a slot on the Bittensor subnet by registering the wallet:
 ```shell
 btcli subnet register \
