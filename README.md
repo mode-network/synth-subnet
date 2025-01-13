@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://mode.network">
-    <img alt="Rounded Mode icon" src=".assets/mode_icon@128x128.png" style="padding-top: 15px" height="128" />
+    <img alt="Rounded Mode icon" src="docs/images/mode_icon@128x128.png" style="padding-top: 15px" height="128" />
   </a>
 </p>
 

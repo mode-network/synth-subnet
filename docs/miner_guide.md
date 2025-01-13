@@ -10,45 +10,41 @@
 
 ## 1. Create a Wallet
 
+> 💡 **TIP:** For a more extensive list of the Bittensor CLI commands see [here](https://docs.bittensor.com/btcli).
+
 1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
 ```shell
 source bt_venv/bin/activate
 ```
 
-2. Create a cold key wallet:
+2. Create the cold/hot wallets:
 ```shell
-btcli wallet <replace_with_wallet_name> \
-  --wallet.name miner
-```
-
-3. Create a hot key wallet:
-```shell
-btcli wallet <replace_with_wallet_name> \
+btcli wallet create \
   --wallet.name miner \
   --wallet.hotkey default
 ```
 
-4. Acquire a slot on the Bittensor subnet by registering the wallet:
+3. Acquire a slot on the Bittensor subnet by registering the wallet:
 ```shell
 btcli subnet register \
   --wallet.name miner \
-  --wallet.hotkey default \
-  --subtensor.network <replace_with_network_name> \
-  --netuid <replace_with_netud>
+  --subtensor.network test \
+  --netuid 247
 ```
 
-5. (Optional) Check the wallet has been registered:
+4. (Optional) Check the wallet has been registered:
 ```shell
 btcli wallet overview \
   --wallet.name miner \
-  --subtensor.network <replace_with_network_name>
+  --wallet.hotkey default \
+  --subtensor.network test
 ```
 
-6. (Optional) Check the network metagraph:
+5. (Optional) Check the network metagraph:
 ```shell
 btcli subnet metagraph \
-  --subtensor.network <replace_with_network_name> \
-  --netuid <replace_with_netud>
+  --subtensor.network test \
+  --netuid 247
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
