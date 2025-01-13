@@ -244,3 +244,4 @@ prediction*.json
 ### Misc
 
 miner.local.config.js
+validator.local.config.js
