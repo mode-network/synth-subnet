@@ -26,15 +26,8 @@
   - [2.1. Requirements](#21-requirements)
   - [2.2. Setup](#22-setup)
   - [2.3. Miners](#23-miners)
-    - [2.3.1. Create a Wallet](#231-create-a-wallet)
-    - [2.3.2. Run the Miner](#232-run-the-miner)
   - [2.4. Validators](#24-validators)
-    - [2.4.1. Create a Wallet](#241-create-a-wallet)
-    - [2.4.2. Run the Validator](#242-run-the-validator)
-* [3. Appendix](#-3-appendix)
-  - [3.1. Useful Commands](#31-useful-commands)
-  - [3.2. Troubleshooting](#32-troubleshooting)
-* [4. License](#-4-license)
+* [3. License](#-3-license)
 
 ## 🔭 1. Overview
 
@@ -257,175 +250,17 @@ pip install -r requirements.txt
 
 ### 2.3. Miners
 
-#### 2.3.1 Create a Wallet
-
-1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
-```shell
-source bt_venv/bin/activate
-```
-
-2. Create a cold key wallet:
-```shell
-btcli wallet <replace_with_wallet_name> \
-  --wallet.name miner
-```
-
-3. Create a hot key wallet:
-```shell
-btcli wallet <replace_with_wallet_name> \
-  --wallet.name miner \
-  --wallet.hotkey default
-```
-
-4. Acquire a slot on the Bittensor subnet by registering the wallet:
-```shell
-btcli subnet register \
-  --wallet.name miner \
-  --wallet.hotkey default \
-  --subtensor.network <replace_with_network_name> \
-  --netuid <replace_with_netud>
-```
-
-5. (Optional) Check the wallet has been registered:
-```shell
-btcli wallet overview \
-  --wallet.name miner \
-  --subtensor.network <replace_with_network_name>
-```
-
-6. (Optional) Check the network metagraph:
-```shell
-btcli subnet metagraph \
-  --subtensor.network <replace_with_network_name> \
-  --netuid <replace_with_netud>
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-#### 2.3.2 Run the Miner
-
-1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
-```shell
-source bt_venv/bin/activate
-```
-
-2. Start PM2 with the miner config:
-```shell
-pm2 start miner.config.js
-```
-
-3. (Optional) Check the miner is running:
-```shell
-pm2 list
-```
+Please refer to this [guide](./docs/miner_guide.md) on detailed instructions on getting a miner up and running.
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
 ### 2.4. Validators
 
-#### 2.4.1 Create a Wallet
-
-1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
-```shell
-source bt_venv/bin/activate
-```
-
-2. Create a cold key wallet:
-```shell
-btcli wallet <replace_with_wallet_name> \
-  --wallet.name validator
-```
-
-3. Create a hot key wallet:
-```shell
-btcli wallet <replace_with_wallet_name> \
-  --wallet.name validator \
-  --wallet.hotkey default
-```
-
-4. Acquire a slot on the Bittensor subnet by registering the wallet:
-```shell
-btcli subnet register \
-  --wallet.name validator \
-  --wallet.hotkey default \
-  --subtensor.network <replace_with_network_name> \
-  --netuid <replace_with_netud>
-```
-
-5. (Optional) Check the wallet has been registered:
-```shell
-btcli wallet overview \
-  --wallet.name validator \
-  --subtensor.network <replace_with_network_name>
-```
-
-6. (Optional) Check the network metagraph:
-```shell
-btcli subnet metagraph \
-  --subtensor.network <replace_with_network_name> \
-  --netuid <replace_with_netud>
-```
+Please refer to this [guide](./docs/validator_guide.md) on detailed instructions on getting a validator up and running.
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-#### 2.4.2 Run the Validator
-
-1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
-```shell
-source bt_venv/bin/activate
-```
-
-2. Start PM2 with the validator config:
-```shell
-pm2 start validator.config.js
-```
-
-3. (Optional) Check the validator is running:
-```shell
-pm2 list
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-## 📑 3. Appendix
-
-### 3.1. Useful Commands
-
-| Command                                   | Description                           |
-|-------------------------------------------|---------------------------------------|
-| `pm2 stop <miner\|validator>`             | Stops the miner/validator.            |
-| `pm2 logs <miner\|validator> --lines 100` | View the logs of the miner/validator. |
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-### 3.2. Troubleshooting
-
-#### `ModuleNotFoundError: No module named 'simulation'`
-
-This error is due to Python unable to locate the local Python modules. To avoid this error, ensure you have created and activate the Python virtual environment from the project root and ensure the `PYTHONPATH` is present in the `<miner|validator>.config.js` file and is pointing to the project root.
-
-An example of a config file should be:
-```js
-// miner.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'miner',
-      script: 'python3',
-      args: './neurons/miner.py --netuid 247 --logging.debug --logging.trace --subtensor.network test --wallet.name miner --wallet.hotkey default --axon.port 8091',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
-
-As you can see, we are setting the `PYTHONPATH` environment variable that will be injected when we run `pm2 start miner`.
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-## 📄 4. License
+## 📄 3. License
 
 Please refer to the [LICENSE](./LICENSE) file.
 
