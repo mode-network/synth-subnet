@@ -1,10 +1,5 @@
 import numpy as np
-import pandas as pd
 from properscoring import crps_ensemble
-from simulation.simulations.price_simulation import (
-    calculate_price_changes_over_intervals,
-)
-import os
 
 
 def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
@@ -86,3 +81,21 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
 
     # Return the sum of all scores
     return sum_all_scores, detailed_crps_data
+
+
+def calculate_price_changes_over_intervals(price_paths, interval_steps):
+    """
+    Calculate price changes over specified intervals.
+
+    Parameters:
+        price_paths (numpy.ndarray): Array of simulated price paths.
+        interval_steps (int): Number of steps that make up the interval.
+
+    Returns:
+        numpy.ndarray: Array of price changes over intervals.
+    """
+    # Get the prices at the interval points
+    interval_prices = price_paths[:, ::interval_steps]
+    # Calculate price changes over intervals
+    price_changes = np.diff(interval_prices, axis=1)
+    return price_changes

@@ -51,19 +51,6 @@ def simulate_single_price_path(
     return price_path
 
 
-def generate_real_price_path(
-    current_price, time_increment, time_length, sigma
-):
-    """
-    Generate a 'real' price path.
-    """
-    # No random seed set to ensure independent random numbers
-    real_price_path = simulate_single_price_path(
-        current_price, time_increment, time_length, sigma
-    )
-    return real_price_path
-
-
 def simulate_crypto_price_paths(
     current_price, time_increment, time_length, num_simulations, sigma
 ):
@@ -79,52 +66,3 @@ def simulate_crypto_price_paths(
         price_paths.append(price_path)
 
     return np.array(price_paths)
-
-
-def calculate_price_changes(price_paths):
-    """
-    Calculate the incremental price changes between consecutive time increments.
-    """
-    return np.diff(price_paths, axis=1)
-
-
-def calculate_crps_over_time(simulated_values, real_values):
-    """
-    Calculate the CRPS over time.
-    """
-    num_time_steps = simulated_values.shape[1]
-    crps_values = np.zeros(num_time_steps)
-    for t in range(num_time_steps):
-        forecasts = simulated_values[:, t]
-        observation = real_values[t]
-        crps_values[t] = crps_ensemble(observation, forecasts)
-    return crps_values
-
-
-def calculate_cumulative_price_changes(price_paths):
-    """
-    Calculate the cumulative price changes from the start time to each time increment.
-    """
-    initial_prices = price_paths[:, [0]]  # Shape: (num_paths, 1)
-    cumulative_changes = (
-        price_paths - initial_prices
-    )  # Broadcasting subtraction
-    return cumulative_changes
-
-
-def calculate_price_changes_over_intervals(price_paths, interval_steps):
-    """
-    Calculate price changes over specified intervals.
-
-    Parameters:
-        price_paths (numpy.ndarray): Array of simulated price paths.
-        interval_steps (int): Number of steps that make up the interval.
-
-    Returns:
-        numpy.ndarray: Array of price changes over intervals.
-    """
-    # Get the prices at the interval points
-    interval_prices = price_paths[:, ::interval_steps]
-    # Calculate price changes over intervals
-    price_changes = np.diff(interval_prices, axis=1)
-    return price_changes

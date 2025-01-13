@@ -23,7 +23,7 @@ import bittensor as bt
 
 # import base miner class which takes care of most of the boilerplate
 from simulation.base.miner import BaseMinerNeuron
-from simulation.miner import generate_simulations, generate_fixed_simulation
+from simulation.simulations import generate_simulations
 from simulation.protocol import Simulation
 
 
@@ -60,26 +60,19 @@ class Miner(BaseMinerNeuron):
             f"Received prediction request from: {synapse.dendrite.hotkey} for timestamp: {simulation_input.start_time}"
         )
 
-        bt.logging.info(f"Miner triggered with type: {self.config.miner_type}")
-
         dt = simulation_input.start_time
         asset = simulation_input.asset
         time_increment = simulation_input.time_increment
         time_length = simulation_input.time_length
         num_simulations = simulation_input.num_simulations
 
-        if self.config.miner_type == "dummy":
-            prediction = generate_fixed_simulation(
-                start_time=dt, time_length=86400
-            )
-        else:
-            prediction = generate_simulations(
-                start_time=dt,
-                asset=asset,
-                time_increment=time_increment,
-                time_length=time_length,
-                num_simulations=num_simulations,
-            )
+        prediction = generate_simulations(
+            start_time=dt,
+            asset=asset,
+            time_increment=time_increment,
+            time_length=time_length,
+            num_simulations=num_simulations,
+        )
 
         synapse.simulation_output = prediction
 
@@ -214,4 +207,4 @@ if __name__ == "__main__":
     with Miner() as miner:
         while True:
             miner.print_info()
-            time.sleep(15)
+            time.sleep(5)
