@@ -109,13 +109,16 @@ class Miner(BaseMinerNeuron):
         Otherwise, allow the request to be processed further.
         """
 
-        bt.logging.info("Received prediction request from: %s", synapse.dendrite.hotkey)
+        bt.logging.info(f"Received prediction request from: %s", synapse.dendrite.hotkey)
 
         if synapse.dendrite is None or synapse.dendrite.hotkey is None:
             bt.logging.warning(
                 "Received a request without a dendrite or hotkey."
             )
             return True, "Missing dendrite or hotkey"
+
+        bt.logging.info(f"Allow non-registered: %s", self.config.blacklist.allow_non_registered)
+        bt.logging.info(f"Validator permit: %s", self.config.blacklist.force_validator_permit)
 
         # TODO(developer): Define how miners should blacklist requests.
         uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
