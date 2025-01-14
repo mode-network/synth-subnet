@@ -192,16 +192,16 @@ class Miner(BaseMinerNeuron):
             self.wallet.hotkey.ss58_address
         )
 
-        log = (
-            "Miner | "
-            f"Step:{self.step} | "
-            f"UID:{self.uid} | "
-            f"Stake:{metagraph.S[self.uid]:.4f} | "
-            f"Trust:{metagraph.T[self.uid]:.4f} | "
-            f"Incentive:{metagraph.I[self.uid]:.4f} | "
-            f"Emission:{metagraph.E[self.uid]:.4f}"
-        )
-        bt.logging.info(log)
+        # log = (
+        #     "Miner | "
+        #     f"Step:{self.step} | "
+        #     f"UID:{self.uid} | "
+        #     f"Stake:{metagraph.S[self.uid]:.4f} | "
+        #     f"Trust:{metagraph.T[self.uid]:.4f} | "
+        #     f"Incentive:{metagraph.I[self.uid]:.4f} | "
+        #     f"Emission:{metagraph.E[self.uid]:.4f}"
+        # )
+        # bt.logging.info(log)
 
 
 # This is the main function, which runs the miner.
