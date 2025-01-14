@@ -19,7 +19,8 @@ async def test_prediction(args):
     # Fetch the axons of the available API nodes, or specify UIDs directly
     metagraph = bt.subtensor("test").metagraph(netuid=247)
 
-    uids = [uid.item() for uid in metagraph.uids if metagraph.trust[uid] > 0]
+    # uids = [uid.item() for uid in metagraph.uids if metagraph.trust[uid] > 0]
+    uids = [5]
 
     axons = await get_query_api_axons(
         wallet=wallet, metagraph=metagraph, uids=uids
