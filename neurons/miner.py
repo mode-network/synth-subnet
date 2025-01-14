@@ -134,7 +134,7 @@ class Miner(BaseMinerNeuron):
 
         if self.config.blacklist.force_validator_permit:
             # If the config is set to force validator permit, then we should only allow requests from validators.
-            bt.logging.info(f"Force blacklisting request, {self.metagraph.validator_permit[uid]}")
+            bt.logging.info(f"Force blacklisting request, {self.metagraph.validator_permit[uid]}, with uid {uid}")
 
             if not self.metagraph.validator_permit[uid]:
                 bt.logging.warning(
