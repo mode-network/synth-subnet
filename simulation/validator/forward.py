@@ -64,11 +64,11 @@ async def forward(
     miner_uids = _get_available_miners_and_update_metagraph_history(
         base_neuron=base_neuron,
         miner_data_handler=miner_data_handler,
-        start_time=start_time
+        start_time=start_time,
     )
 
     if len(miner_uids) == 0:
-        bt.logging.error('No miners available')
+        bt.logging.error("No miners available")
         _wait_till_next_iteration()
         return
 
@@ -90,7 +90,7 @@ async def forward(
         base_neuron=base_neuron,
         miner_data_handler=miner_data_handler,
         miner_uids=miner_uids,
-        simulation_input=simulation_input
+        simulation_input=simulation_input,
     )
 
     # ================= Step 3 ================= #
@@ -115,7 +115,7 @@ async def forward(
         miner_uids=miner_uids,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        simulation_input=simulation_input
+        simulation_input=simulation_input,
     )
 
     if not success:
@@ -128,9 +128,10 @@ async def forward(
     # in the miner_rewards table in the end
     # ========================================== #
 
-    filtered_miner_uids, filtered_rewards = _calculate_moving_average_and_update_rewards(
-        miner_data_handler=miner_data_handler,
-        scored_time=scored_time
+    filtered_miner_uids, filtered_rewards = (
+        _calculate_moving_average_and_update_rewards(
+            miner_data_handler=miner_data_handler, scored_time=scored_time
+        )
     )
 
     if len(filtered_miner_uids) == 0:
@@ -150,7 +151,9 @@ def _wait_till_next_iteration():
     time.sleep(3600)  # wait for an hour
 
 
-def _calculate_moving_average_and_update_rewards(miner_data_handler, scored_time) -> ([], []):
+def _calculate_moving_average_and_update_rewards(
+    miner_data_handler, scored_time
+) -> ([], []):
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(scored_time, 2)
     moving_averages_data = compute_weighted_averages(
@@ -178,11 +181,11 @@ def _calculate_moving_average_and_update_rewards(miner_data_handler, scored_time
 
 
 def _calculate_rewards_and_update_scores(
-        miner_data_handler,
-        miner_uids,
-        price_data_provider,
-        scored_time,
-        simulation_input
+    miner_data_handler,
+    miner_uids,
+    price_data_provider,
+    scored_time,
+    simulation_input,
 ) -> bool:
     # get latest prediction request from validator
     # for which we already have real prices data,
@@ -210,18 +213,14 @@ def _calculate_rewards_and_update_scores(
     bt.logging.info(f"Scored responses: {rewards}")
 
     miner_data_handler.set_reward_details(
-        reward_details=rewards_detailed_info,
-        scored_time=scored_time
+        reward_details=rewards_detailed_info, scored_time=scored_time
     )
 
     return True
 
 
 async def _query_available_miners_and_save_responses(
-        base_neuron,
-        miner_data_handler,
-        miner_uids,
-        simulation_input
+    base_neuron, miner_data_handler, miner_uids, simulation_input
 ):
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
@@ -258,12 +257,16 @@ async def _query_available_miners_and_save_responses(
     miner_data_handler.save_responses(miner_predictions, simulation_input)
 
 
-def _get_available_miners_and_update_metagraph_history(base_neuron, miner_data_handler, start_time):
+def _get_available_miners_and_update_metagraph_history(
+    base_neuron, miner_data_handler, start_time
+):
     miner_uids = []
     metagraph_info = []
     for uid in range(len(base_neuron.metagraph.S)):
         uid_is_available = check_uid_availability(
-            base_neuron.metagraph, uid, base_neuron.config.neuron.vpermit_tao_limit
+            base_neuron.metagraph,
+            uid,
+            base_neuron.config.neuron.vpermit_tao_limit,
         )
         if uid_is_available:
             metagraph_item = {
