@@ -117,8 +117,8 @@ class Miner(BaseMinerNeuron):
             )
             return True, "Missing dendrite or hotkey"
 
-        bt.logging.info(f"Allow non-registered: %s", self.config.blacklist.allow_non_registered)
-        bt.logging.info(f"Validator permit: %s", self.config.blacklist.force_validator_permit)
+        bt.logging.info(f"Allow non-registered: {self.config.blacklist.allow_non_registered}")
+        bt.logging.info(f"Validator permit: {self.config.blacklist.force_validator_permit}")
 
         # TODO(developer): Define how miners should blacklist requests.
         uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
@@ -134,6 +134,8 @@ class Miner(BaseMinerNeuron):
 
         if self.config.blacklist.force_validator_permit:
             # If the config is set to force validator permit, then we should only allow requests from validators.
+            bt.logging.info(f"Force blacklisting request, {self.metagraph.validator_permit[uid]}")
+
             if not self.metagraph.validator_permit[uid]:
                 bt.logging.warning(
                     f"Blacklisting a request from non-validator hotkey {synapse.dendrite.hotkey}"
