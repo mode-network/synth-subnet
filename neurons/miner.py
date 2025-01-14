@@ -109,6 +109,8 @@ class Miner(BaseMinerNeuron):
         Otherwise, allow the request to be processed further.
         """
 
+        bt.logging.info("Received prediction request from: %s", synapse.dendrite.hotkey)
+
         if synapse.dendrite is None or synapse.dendrite.hotkey is None:
             bt.logging.warning(
                 "Received a request without a dendrite or hotkey."
