@@ -174,7 +174,7 @@ def _calculate_moving_average_and_update_rewards(
 
     # Update the scores based on the rewards.
     # You may want to define your own update_scores function for custom behavior.
-    filtered_rewards, filtered_miner_uids = _remove_zero_rewards(
+    filtered_rewards, filtered_miner_uids = remove_zero_rewards(
         moving_averages_data
     )
     return filtered_miner_uids, filtered_rewards
@@ -289,7 +289,7 @@ def _get_available_miners_and_update_metagraph_history(
     return miner_uids
 
 
-def _remove_zero_rewards(moving_averages_data):
+def remove_zero_rewards(moving_averages_data):
     miners = []
     rewards = []
     for rewards_item in moving_averages_data:

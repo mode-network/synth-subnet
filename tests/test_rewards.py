@@ -2,7 +2,7 @@ from datetime import datetime
 
 import numpy as np
 import pytest
-from numpy.testing import assert_almost_equal, assert_equal
+from numpy.testing import assert_almost_equal
 
 from simulation.db.models import (
     miner_predictions,
