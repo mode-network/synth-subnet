@@ -1,18 +1,40 @@
-<p align="center">
+<div align="center">
   <a href="https://mode.network">
-    <img alt="Rounded Mode icon" src="docs/images/mode_icon@128x128.png" style="padding-top: 15px" height="128" />
+    <img alt="Rounded Mode icon" src="docs/images/banner_logo.svg" height="64" />
   </a>
-</p>
+</div>
 
-<h1 align="center">
-  Synth Subnet
-</h1>
+<div align="center">
+  <h1 align="center">
+    Synth Subnet
+  </h1>
+</div>
 
-<p align="center">
+<div align="center">
   <a href="https://github.com/mode-network/synth-subnet/blob/main/LICENSE">
     <img alt="GitHub License" src="https://img.shields.io/github/license/mode-network/synth-subnet">
   </a>
-</p>
+</div>
+
+---
+
+<div align="center">
+    <a href="https://app.mode.network" target="_blank">
+        <b>Dashboard</b>
+    </a>
+·
+    <a href="" target="_blank">
+        <b>Whitepaper</b>
+    </a>
+·
+    <a href="https://discord.gg/modenetworkofficial" target="_blank">
+        <b>Discord</b>
+    </a>
+·
+    <a href="https://synth.mode.network/docs" target="_blank">
+        <b>API Documentation</b>
+    </a>
+</div>
 
 ### Table Of Contents
 
