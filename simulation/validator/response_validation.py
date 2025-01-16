@@ -22,7 +22,10 @@ def validate_responses(response, simulation_input: SimulationInput) -> bool:
         # check the number of time points
         if (
             len(path)
-            != (simulation_input.time_length // simulation_input.time_increment) + 1
+            != (
+                simulation_input.time_length // simulation_input.time_increment
+            )
+            + 1
         ):
             return False
 
