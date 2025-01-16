@@ -14,9 +14,6 @@ def validate_responses(response, simulation_input: SimulationInput) -> bool:
     if response is None or len(response) == 0:
         return False
 
-    # assuming `response` is in json
-    response = json.loads(response)
-
     # check the number of paths
     if len(response) != simulation_input.num_simulations:
         return False
@@ -25,7 +22,7 @@ def validate_responses(response, simulation_input: SimulationInput) -> bool:
         # check the number of time points
         if (
             len(path)
-            != simulation_input.time_length // simulation_input.time_increment
+            != (simulation_input.time_length // simulation_input.time_increment) + 1
         ):
             return False
 
