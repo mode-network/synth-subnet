@@ -254,10 +254,10 @@ def add_validator_args(cls, parser):
     )
 
     parser.add_argument(
-        "--prediction_history_file",
-        type=str,
-        default="prediction_history.json",
-        help="The file where the history of predictions is stored.",
+        "--validator.min_stake",
+        type=int,
+        default=1000,
+        help="Minimum validator stake to accept forward requests from as a miner",
     )
 
 

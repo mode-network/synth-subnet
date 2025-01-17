@@ -115,8 +115,9 @@ class Miner(BaseMinerNeuron):
             )
             return True, "Missing dendrite or hotkey"
 
-        # TODO(developer): Define how miners should blacklist requests.
         uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
+        stake = self.metagraph.S[uid].item()
+
         if (
             not self.config.blacklist.allow_non_registered
             and synapse.dendrite.hotkey not in self.metagraph.hotkeys
@@ -126,6 +127,15 @@ class Miner(BaseMinerNeuron):
                 f"Blacklisting un-registered hotkey {synapse.dendrite.hotkey}"
             )
             return True, "Unrecognized hotkey"
+
+        bt.logging.info(f"Requesting UID: {uid} | Stake at UID: {stake}")
+
+        if stake <= self.config.validator.min_stake:
+            # Ignore requests if the stake is below minimum
+            bt.logging.info(
+                f"Hotkey: {synapse.dendrite.hotkey}: stake below minimum threshold of {self.config.validator.min_stake}"
+            )
+            return True, "Stake below minimum threshold"
 
         if self.config.blacklist.force_validator_permit:
             # If the config is set to force validator permit, then we should only allow requests from validators.
