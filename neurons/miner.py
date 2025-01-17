@@ -130,10 +130,10 @@ class Miner(BaseMinerNeuron):
 
         bt.logging.info(f"Requesting UID: {uid} | Stake at UID: {stake}")
 
-        if stake <= self.config.blacklist.validator.min_stake:
+        if stake <= self.config.blacklist.validator_min_stake:
             # Ignore requests if the stake is below minimum
             bt.logging.info(
-                f"Hotkey: {synapse.dendrite.hotkey}: stake below minimum threshold of {self.config.validator.min_stake}"
+                f"Hotkey: {synapse.dendrite.hotkey}: stake below minimum threshold of {self.config.blacklist.validator_min_stake}"
             )
             return True, "Stake below minimum threshold"
 
