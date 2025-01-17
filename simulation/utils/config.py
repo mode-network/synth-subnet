@@ -156,6 +156,13 @@ def add_miner_args(cls, parser):
     )
 
     parser.add_argument(
+        "--blacklist.validator.min_stake",
+        type=int,
+        default=1000,
+        help="Minimum validator stake to accept forward requests from as a miner",
+    )
+
+    parser.add_argument(
         "--wandb.project_name",
         type=str,
         default="template-miners",
@@ -167,13 +174,6 @@ def add_miner_args(cls, parser):
         type=str,
         default="opentensor-dev",
         help="Wandb entity to log to.",
-    )
-
-    parser.add_argument(
-        "--validator.min_stake",
-        type=int,
-        default=1000,
-        help="Minimum validator stake to accept forward requests from as a miner",
     )
 
 
