@@ -170,10 +170,10 @@ def add_miner_args(cls, parser):
     )
 
     parser.add_argument(
-        "--miner_type",
-        type=str,
-        default="default",
-        help="Miner type to choose different implementations",
+        "--validator.min_stake",
+        type=int,
+        default=1000,
+        help="Minimum validator stake to accept forward requests from as a miner",
     )
 
 
@@ -251,13 +251,6 @@ def add_validator_args(cls, parser):
         type=str,
         help="The name of the project where you are sending the new run.",
         default="opentensor-dev",
-    )
-
-    parser.add_argument(
-        "--validator.min_stake",
-        type=int,
-        default=1000,
-        help="Minimum validator stake to accept forward requests from as a miner",
     )
 
 
