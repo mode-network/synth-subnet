@@ -117,7 +117,7 @@ class MinerDataHandler:
                 result = connection.execute(query).fetchone()
 
             if result is None:
-                return None, []
+                return None, [], ""
 
             record_id = result.id
             prediction = result.prediction
@@ -128,7 +128,7 @@ class MinerDataHandler:
             bt.logging.error(
                 f"in get_miner_prediction (got an exception): {e}"
             )
-            return None, []
+            return None, [], ""
 
     def get_latest_prediction_request(
         self, scored_time_str: str, simulation_input: SimulationInput
