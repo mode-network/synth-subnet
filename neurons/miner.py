@@ -115,8 +115,6 @@ class Miner(BaseMinerNeuron):
             )
             return True, "Missing dendrite or hotkey"
 
-        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
-        stake = self.metagraph.S[uid].item()
 
         if (
             not self.config.blacklist.allow_non_registered
@@ -128,6 +126,8 @@ class Miner(BaseMinerNeuron):
             )
             return True, "Unrecognized hotkey"
 
+        uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
+        stake = self.metagraph.S[uid]
         bt.logging.info(f"Requesting UID: {uid} | Stake at UID: {stake}")
 
         if stake <= self.config.blacklist.validator_min_stake:
