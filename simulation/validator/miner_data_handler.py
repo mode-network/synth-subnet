@@ -101,7 +101,9 @@ class MinerDataHandler:
             with self.engine.connect() as connection:
                 query = (
                     select(
-                        miner_predictions.c.id, miner_predictions.c.prediction, miner_predictions.c.format_validation
+                        miner_predictions.c.id,
+                        miner_predictions.c.prediction,
+                        miner_predictions.c.format_validation,
                     )
                     .select_from(miner_predictions)
                     .where(

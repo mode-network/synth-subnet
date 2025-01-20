@@ -45,12 +45,19 @@ def reward(
     - float: The reward value for the miner.
     """
 
-    miner_prediction_id, predictions, format_validation = miner_data_handler.get_miner_prediction(
-        miner_uid, validator_request_id
+    miner_prediction_id, predictions, format_validation = (
+        miner_data_handler.get_miner_prediction(
+            miner_uid, validator_request_id
+        )
     )
 
     if format_validation != response_validation.CORRECT:
-        return 0, [], [], miner_prediction_id # 0 or no score in case the prediction is not valid?
+        return (
+            0,
+            [],
+            [],
+            miner_prediction_id,
+        )  # 0 or no score in case the prediction is not valid?
 
     # I think this is not necessary because the prediction is already validated
     if predictions is None or len(predictions) == 0:
