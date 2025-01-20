@@ -21,7 +21,7 @@ class MinerDataHandler:
         self.engine = engine or get_engine()
 
     def save_responses(
-        self, miner_predictions_data: {}, simulation_input: SimulationInput
+        self, miner_predictions_data: dict, simulation_input: SimulationInput
     ):
         """Save miner predictions and simulation input."""
 
@@ -63,7 +63,7 @@ class MinerDataHandler:
             connection.rollback()
             bt.logging.error(f"in save_responses (got an exception): {e}")
 
-    def set_reward_details(self, reward_details: [], scored_time: str):
+    def set_reward_details(self, reward_details: list[dict], scored_time: str):
         rows_to_insert = [
             {
                 "miner_uid": row["miner_uid"],
