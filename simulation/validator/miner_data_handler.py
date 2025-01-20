@@ -49,8 +49,12 @@ class MinerDataHandler:
                             "validator_requests_id": validator_requests_id,
                             "miner_uid": miner_uid,
                             "prediction": prediction,
+                            "format_validation": format_validation,
                         }
-                        for miner_uid, prediction in miner_predictions_data.items()
+                        for miner_uid, (
+                            prediction,
+                            format_validation,
+                        ) in miner_predictions_data.items()
                     ]
 
                     insert_stmt_miner_predictions = (
@@ -97,7 +101,7 @@ class MinerDataHandler:
             with self.engine.connect() as connection:
                 query = (
                     select(
-                        miner_predictions.c.id, miner_predictions.c.prediction
+                        miner_predictions.c.id, miner_predictions.c.prediction, miner_predictions.c.format_validation
                     )
                     .select_from(miner_predictions)
                     .where(
@@ -115,8 +119,9 @@ class MinerDataHandler:
 
             record_id = result.id
             prediction = result.prediction
+            format_validation = result.format_validation
 
-            return record_id, prediction
+            return record_id, prediction, format_validation
         except Exception as e:
             bt.logging.error(
                 f"in get_miner_prediction (got an exception): {e}"

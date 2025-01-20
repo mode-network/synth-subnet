@@ -63,6 +63,7 @@ miner_predictions = Table(
     Column("validator_requests_id", BigInteger, nullable=False),
     Column("miner_uid", Integer, nullable=False),
     Column("prediction", JSONB, nullable=False),
+    Column("format_validation", String, nullable=True),
 )
 
 # Define the table

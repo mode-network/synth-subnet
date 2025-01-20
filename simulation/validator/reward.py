@@ -25,6 +25,7 @@ from simulation.utils.helpers import get_intersecting_arrays
 from simulation.validator.crps_calculation import calculate_crps_for_miner
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
+from simulation.validator import response_validation
 
 import bittensor as bt
 
@@ -44,10 +45,14 @@ def reward(
     - float: The reward value for the miner.
     """
 
-    miner_prediction_id, predictions = miner_data_handler.get_miner_prediction(
+    miner_prediction_id, predictions, format_validation = miner_data_handler.get_miner_prediction(
         miner_uid, validator_request_id
     )
 
+    if format_validation != response_validation.CORRECT:
+        return 0, [], [], miner_prediction_id # 0 or no score in case the prediction is not valid?
+
+    # I think this is not necessary because the prediction is already validated
     if predictions is None or len(predictions) == 0:
         return -1, [], [], None  # represents no prediction data from the miner
 

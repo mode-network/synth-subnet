@@ -253,10 +253,9 @@ async def _query_available_miners_and_save_responses(
 
     miner_predictions = {}
     for i, response in enumerate(responses):
-        if validate_responses(response, simulation_input) is False:
-            continue
+        format_validation = validate_responses(response, simulation_input)
         miner_id = miner_uids[i]
-        miner_predictions[miner_id] = response
+        miner_predictions[miner_id] = (response, format_validation)
 
     if len(miner_predictions) > 0:
         miner_data_handler.save_responses(miner_predictions, simulation_input)
