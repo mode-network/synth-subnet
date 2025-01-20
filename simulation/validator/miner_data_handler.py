@@ -68,7 +68,7 @@ class MinerDataHandler:
             {
                 "miner_uid": row["miner_uid"],
                 "scored_time": scored_time,
-                "miner_predictions_id": row["predictions"],
+                "miner_predictions_id": row["miner_prediction_id"],
                 "score_details": {
                     "score": row["score"],
                     "softmax_score": row["softmax_score"],

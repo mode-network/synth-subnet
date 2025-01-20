@@ -105,10 +105,10 @@ def get_rewards(
     scores = []
     detailed_crps_data_list = []
     real_prices_list = []
-    predictions_list = []
+    prediction_id_list = []
     for i, miner_id in enumerate(miner_uids):
         # function that calculates a score for an individual miner
-        score, detailed_crps_data, real_prices, predictions = reward(
+        score, detailed_crps_data, real_prices, miner_prediction_id = reward(
             miner_data_handler,
             price_data_provider,
             miner_id,
@@ -118,7 +118,7 @@ def get_rewards(
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
         real_prices_list.append(real_prices)
-        predictions_list.append(predictions)
+        prediction_id_list.append(miner_prediction_id)
 
     score_values = np.array(scores)
     softmax_scores = compute_softmax(score_values)
@@ -132,15 +132,15 @@ def get_rewards(
             "crps_data": clean_numpy_in_crps_data(crps_data),
             "softmax_score": float(softmax_score),
             "real_prices": real_prices,
-            "predictions": predictions,
+            "miner_prediction_id": miner_prediction_id,
         }
-        for miner_uid, score, crps_data, softmax_score, real_prices, predictions in zip(
+        for miner_uid, score, crps_data, softmax_score, real_prices, miner_prediction_id in zip(
             miner_uids,
             scores,
             detailed_crps_data_list,
             softmax_scores,
             real_prices_list,
-            predictions_list,
+            prediction_id_list,
         )
     ]
 
