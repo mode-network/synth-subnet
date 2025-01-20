@@ -33,6 +33,10 @@ class MinerDataHandler:
             "num_simulations": simulation_input.num_simulations,
         }
 
+        if len(miner_predictions_data) == 0:
+            bt.logging.info("skipping because no predection")
+            return
+
         try:
             with self.engine.connect() as connection:
                 with connection.begin():  # Begin a transaction
