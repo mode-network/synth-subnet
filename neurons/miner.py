@@ -216,5 +216,5 @@ class Miner(BaseMinerNeuron):
 if __name__ == "__main__":
     with Miner() as miner:
         while True:
-            miner.print_info()
+            # miner.print_info()
             time.sleep(5)
