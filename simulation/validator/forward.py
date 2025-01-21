@@ -255,7 +255,10 @@ async def _query_available_miners_and_save_responses(
         miner_id = miner_uids[i]
         miner_predictions[miner_id] = response
 
-    miner_data_handler.save_responses(miner_predictions, simulation_input)
+    if len(miner_predictions) > 0:
+        miner_data_handler.save_responses(miner_predictions, simulation_input)
+    else:
+        bt.logging.info("skip saving because no prediction")
 
 
 def _get_available_miners_and_update_metagraph_history(
