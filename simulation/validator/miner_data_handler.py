@@ -107,14 +107,14 @@ class MinerDataHandler:
             with self.engine.connect() as connection:
                 query = (
                     select(
-                        miner_predictions.c.id,
-                        miner_predictions.c.prediction,
-                        miner_predictions.c.format_validation,
+                        miner_predictions_model.c.id,
+                        miner_predictions_model.c.prediction,
+                        miner_predictions_model.c.format_validation,
                     )
-                    .select_from(miner_predictions)
+                    .select_from(miner_predictions_model)
                     .where(
-                        miner_predictions.c.miner_uid == miner_uid,
-                        miner_predictions.c.validator_requests_id
+                        miner_predictions_model.c.miner_uid == miner_uid,
+                        miner_predictions_model.c.validator_requests_id
                         == validator_request_id,
                     )
                     .limit(1)
