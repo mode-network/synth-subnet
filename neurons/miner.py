@@ -203,7 +203,7 @@ class Miner(BaseMinerNeuron):
             "Miner | "
             f"Step:{self.step} | "
             f"UID:{self.uid} | "
-            f"Stake:{metagraph.S[self.uid]:.4f} | "
+            f"Stake:{metagraph.S[self.uid]} | "
             f"Trust:{metagraph.T[self.uid]:.4f} | "
             f"Incentive:{metagraph.I[self.uid]:.4f} | "
             f"Emission:{metagraph.E[self.uid]:.4f}"
@@ -215,5 +215,5 @@ class Miner(BaseMinerNeuron):
 if __name__ == "__main__":
     with Miner() as miner:
         while True:
-            # miner.print_info()
+            miner.print_info()
             time.sleep(5)
