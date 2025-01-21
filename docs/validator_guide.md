@@ -34,14 +34,27 @@ btcli subnet register \
   --netuid 247
 ```
 
-4. (Optional) Check the wallet has been registered:
+```shell
+btcli root register --wallet.name validator --wallet.hotkey default --network test
+```
+
+4. Stake:
+```shell
+btcli stake add \
+  --wallet.name validator \
+  --wallet.hotkey default \
+  --subtensor.network test \
+  --netuid 247
+```
+
+5. (Optional) Check the wallet has been registered:
 ```shell
 btcli wallet overview \
   --wallet.name validator \
   --subtensor.network test
 ```
 
-5. (Optional) Check the network metagraph:
+6. (Optional) Check the network metagraph:
 ```shell
 btcli subnet metagraph \
   --subtensor.network test \

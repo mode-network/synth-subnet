@@ -25,6 +25,7 @@ from simulation.utils.helpers import get_intersecting_arrays
 from simulation.validator.crps_calculation import calculate_crps_for_miner
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
+from simulation.validator import response_validation
 
 import bittensor as bt
 
@@ -44,12 +45,19 @@ def reward(
     - float: The reward value for the miner.
     """
 
-    miner_prediction_id, predictions = miner_data_handler.get_miner_prediction(
-        miner_uid, validator_request_id
+    miner_prediction_id, predictions, format_validation = (
+        miner_data_handler.get_miner_prediction(
+            miner_uid, validator_request_id
+        )
     )
 
-    if predictions is None or len(predictions) == 0:
-        return -1, [], [], None  # represents no prediction data from the miner
+    if format_validation != response_validation.CORRECT:
+        return (
+            -1,
+            [],
+            [],
+            miner_prediction_id,
+        )  # represents no prediction data from the miner
 
     # get last time in predictions
     end_time = predictions[0][len(predictions[0]) - 1]["time"]
@@ -105,10 +113,10 @@ def get_rewards(
     scores = []
     detailed_crps_data_list = []
     real_prices_list = []
-    predictions_list = []
+    prediction_id_list = []
     for i, miner_id in enumerate(miner_uids):
         # function that calculates a score for an individual miner
-        score, detailed_crps_data, real_prices, predictions = reward(
+        score, detailed_crps_data, real_prices, miner_prediction_id = reward(
             miner_data_handler,
             price_data_provider,
             miner_id,
@@ -118,7 +126,7 @@ def get_rewards(
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
         real_prices_list.append(real_prices)
-        predictions_list.append(predictions)
+        prediction_id_list.append(miner_prediction_id)
 
     score_values = np.array(scores)
     softmax_scores = compute_softmax(score_values)
@@ -132,15 +140,15 @@ def get_rewards(
             "crps_data": clean_numpy_in_crps_data(crps_data),
             "softmax_score": float(softmax_score),
             "real_prices": real_prices,
-            "predictions": predictions,
+            "miner_prediction_id": miner_prediction_id,
         }
-        for miner_uid, score, crps_data, softmax_score, real_prices, predictions in zip(
+        for miner_uid, score, crps_data, softmax_score, real_prices, miner_prediction_id in zip(
             miner_uids,
             scores,
             detailed_crps_data_list,
             softmax_scores,
             real_prices_list,
-            predictions_list,
+            prediction_id_list,
         )
     ]
 

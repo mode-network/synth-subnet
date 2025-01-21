@@ -5,7 +5,7 @@ import pandas as pd
 from sqlalchemy import select, text
 
 from simulation.db.models import (
-    miner_predictions,
+    miner_predictions as miner_predictions_model,
     miner_scores,
     validator_requests,
     metagraph_history,
@@ -13,6 +13,7 @@ from simulation.db.models import (
     get_engine,
 )
 from simulation.simulation_input import SimulationInput
+from simulation.validator import response_validation
 
 
 class MinerDataHandler:
@@ -21,7 +22,7 @@ class MinerDataHandler:
         self.engine = engine or get_engine()
 
     def save_responses(
-        self, miner_predictions_data: {}, simulation_input: SimulationInput
+        self, miner_predictions: dict, simulation_input: SimulationInput
     ):
         """Save miner predictions and simulation input."""
 
@@ -44,17 +45,26 @@ class MinerDataHandler:
                     result = connection.execute(insert_stmt_validator_requests)
                     validator_requests_id = result.inserted_primary_key[0]
 
-                    miner_prediction_records = [
-                        {
-                            "validator_requests_id": validator_requests_id,
-                            "miner_uid": miner_uid,
-                            "prediction": prediction,
-                        }
-                        for miner_uid, prediction in miner_predictions_data.items()
-                    ]
+                    miner_prediction_records = []
+                    for miner_uid, (
+                        prediction,
+                        format_validation,
+                    ) in miner_predictions.items():
+                        # If the format is not correct, we don't save the prediction
+                        if format_validation != response_validation.CORRECT:
+                            prediction = []
+
+                        miner_prediction_records.append(
+                            {
+                                "validator_requests_id": validator_requests_id,
+                                "miner_uid": miner_uid,
+                                "prediction": prediction,
+                                "format_validation": format_validation,
+                            }
+                        )
 
                     insert_stmt_miner_predictions = (
-                        miner_predictions.insert().values(
+                        miner_predictions_model.insert().values(
                             miner_prediction_records
                         )
                     )
@@ -63,12 +73,12 @@ class MinerDataHandler:
             connection.rollback()
             bt.logging.error(f"in save_responses (got an exception): {e}")
 
-    def set_reward_details(self, reward_details: [], scored_time: str):
+    def set_reward_details(self, reward_details: list[dict], scored_time: str):
         rows_to_insert = [
             {
                 "miner_uid": row["miner_uid"],
                 "scored_time": scored_time,
-                "miner_predictions_id": row["predictions"],
+                "miner_predictions_id": row["miner_prediction_id"],
                 "score_details": {
                     "score": row["score"],
                     "softmax_score": row["softmax_score"],
@@ -97,12 +107,14 @@ class MinerDataHandler:
             with self.engine.connect() as connection:
                 query = (
                     select(
-                        miner_predictions.c.id, miner_predictions.c.prediction
+                        miner_predictions_model.c.id,
+                        miner_predictions_model.c.prediction,
+                        miner_predictions_model.c.format_validation,
                     )
-                    .select_from(miner_predictions)
+                    .select_from(miner_predictions_model)
                     .where(
-                        miner_predictions.c.miner_uid == miner_uid,
-                        miner_predictions.c.validator_requests_id
+                        miner_predictions_model.c.miner_uid == miner_uid,
+                        miner_predictions_model.c.validator_requests_id
                         == validator_request_id,
                     )
                     .limit(1)
@@ -111,17 +123,18 @@ class MinerDataHandler:
                 result = connection.execute(query).fetchone()
 
             if result is None:
-                return None, []
+                return None, [], ""
 
             record_id = result.id
             prediction = result.prediction
+            format_validation = result.format_validation
 
-            return record_id, prediction
+            return record_id, prediction, format_validation
         except Exception as e:
             bt.logging.error(
                 f"in get_miner_prediction (got an exception): {e}"
             )
-            return None, []
+            return None, [], ""
 
     def get_latest_prediction_request(
         self, scored_time_str: str, simulation_input: SimulationInput

@@ -157,8 +157,8 @@ def _wait_till_next_iteration():
 
 
 def _calculate_moving_average_and_update_rewards(
-    miner_data_handler, scored_time
-) -> ([], []):
+    miner_data_handler: MinerDataHandler, scored_time
+) -> tuple[list, list]:
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(scored_time, 2)
     moving_averages_data = compute_weighted_averages(
@@ -186,7 +186,7 @@ def _calculate_moving_average_and_update_rewards(
 
 
 def _calculate_rewards_and_update_scores(
-    miner_data_handler,
+    miner_data_handler: MinerDataHandler,
     miner_uids,
     price_data_provider,
     scored_time,
@@ -225,7 +225,10 @@ def _calculate_rewards_and_update_scores(
 
 
 async def _query_available_miners_and_save_responses(
-    base_neuron, miner_data_handler, miner_uids, simulation_input
+    base_neuron: BaseValidatorNeuron,
+    miner_data_handler: MinerDataHandler,
+    miner_uids: list,
+    simulation_input: SimulationInput,
 ):
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
@@ -255,16 +258,18 @@ async def _query_available_miners_and_save_responses(
 
     miner_predictions = {}
     for i, response in enumerate(responses):
-        if validate_responses(response, simulation_input) is False:
-            continue
+        format_validation = validate_responses(response, simulation_input)
         miner_id = miner_uids[i]
-        miner_predictions[miner_id] = response
+        miner_predictions[miner_id] = (response, format_validation)
 
-    miner_data_handler.save_responses(miner_predictions, simulation_input)
+    if len(miner_predictions) > 0:
+        miner_data_handler.save_responses(miner_predictions, simulation_input)
+    else:
+        bt.logging.info("skip saving because no prediction")
 
 
 def _get_available_miners_and_update_metagraph_history(
-    base_neuron, miner_data_handler, start_time
+    base_neuron, miner_data_handler: MinerDataHandler, start_time
 ):
     miner_uids = []
     metagraph_info = []

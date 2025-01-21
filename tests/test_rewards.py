@@ -10,6 +10,7 @@ from simulation.db.models import (
     miner_scores,
 )
 from simulation.simulation_input import SimulationInput
+from simulation.validator import response_validation
 from simulation.validator.forward import remove_zero_rewards
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
@@ -106,7 +107,7 @@ def test_get_rewards(db_engine):
     )  # TODO: add a mock instead of the real provider
 
     values = generate_values(datetime.fromisoformat(start_time))
-    simulation_data = {miner_id: values}
+    simulation_data = {miner_id: (values, response_validation.CORRECT)}
     handler.save_responses(simulation_data, simulation_input)
 
     validator_request_id = handler.get_latest_prediction_request(
