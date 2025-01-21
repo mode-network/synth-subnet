@@ -301,7 +301,6 @@ def _log_to_wandb(wandb_on, miner_uids, rewards):
         wandb_val_log = {
             "miners_info": {
                 miner_uid: {
-                    "miner_response": response.prediction,
                     "miner_reward": reward,
                 }
                 for miner_uid, response, reward, success in zip(miner_uids, rewards)
