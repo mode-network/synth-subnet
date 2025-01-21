@@ -13,6 +13,7 @@ from simulation.db.models import (
     get_engine,
 )
 from simulation.simulation_input import SimulationInput
+from simulation.validator import response_validation
 
 
 class MinerDataHandler:
@@ -21,7 +22,7 @@ class MinerDataHandler:
         self.engine = engine or get_engine()
 
     def save_responses(
-        self, miner_predictions_data: dict, simulation_input: SimulationInput
+        self, miner_predictions: dict, simulation_input: SimulationInput
     ):
         """Save miner predictions and simulation input."""
 
@@ -44,18 +45,23 @@ class MinerDataHandler:
                     result = connection.execute(insert_stmt_validator_requests)
                     validator_requests_id = result.inserted_primary_key[0]
 
-                    miner_prediction_records = [
-                        {
-                            "validator_requests_id": validator_requests_id,
-                            "miner_uid": miner_uid,
-                            "prediction": prediction,
-                            "format_validation": format_validation,
-                        }
-                        for miner_uid, (
-                            prediction,
-                            format_validation,
-                        ) in miner_predictions_data.items()
-                    ]
+                    miner_prediction_records = []
+                    for miner_uid, (
+                        prediction,
+                        format_validation,
+                    ) in miner_predictions.items():
+                        # If the format is not correct, we don't save the prediction
+                        if format_validation != response_validation.CORRECT:
+                            prediction = []
+
+                        miner_prediction_records.append(
+                            {
+                                "validator_requests_id": validator_requests_id,
+                                "miner_uid": miner_uid,
+                                "prediction": prediction,
+                                "format_validation": format_validation,
+                            }
+                        )
 
                     insert_stmt_miner_predictions = (
                         miner_predictions.insert().values(
