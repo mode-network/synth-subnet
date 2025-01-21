@@ -240,24 +240,24 @@ def add_validator_args(cls, parser):
     )
 
     parser.add_argument(
+        "--wandb.enabled",
+        type=bool,
+        help="Boolean toggle for wandb integration",
+        default=False,
+    )
+
+    parser.add_argument(
         "--wandb.project_name",
         type=str,
         help="The name of the project where you are sending the new run.",
-        default="template-validators",
+        default="sn247-validators",
     )
 
     parser.add_argument(
         "--wandb.entity",
         type=str,
         help="The name of the project where you are sending the new run.",
-        default="opentensor-dev",
-    )
-
-    parser.add_argument(
-        "--neuron.wandb_on",
-        type=bool,
-        help="Boolean toggle for wandb integration",
-        default=False,
+        default="mode-synth",
     )
 
 

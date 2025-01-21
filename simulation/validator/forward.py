@@ -146,7 +146,7 @@ async def forward(
     # ========================================== #
     base_neuron.update_scores(np.array(filtered_rewards), filtered_miner_uids)
 
-    wandb_on = base_neuron.config.neuron.wandb_on
+    wandb_on = base_neuron.config.wandb.enabled
     _log_to_wandb(wandb_on, filtered_miner_uids, filtered_rewards)
 
     _wait_till_next_iteration()
