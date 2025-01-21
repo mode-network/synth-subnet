@@ -250,6 +250,7 @@ async def _query_available_miners_and_save_responses(
         # we are using numpy for the outputs now - do we need to write a function that deserializes from json to numpy?
         # you can find that function in "simulation.protocol.Simulation"
         deserialize=True,
+        timeout=base_neuron.config.neuron.timeout,
     )
 
     miner_predictions = {}
