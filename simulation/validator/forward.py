@@ -267,7 +267,6 @@ def _get_available_miners_and_update_metagraph_history(
 ):
     miner_uids = []
     metagraph_info = []
-    bt.logging.info(f"available miners: {base_neuron.metagraph.S}")
     for uid in range(len(base_neuron.metagraph.S)):
         uid_is_available = check_uid_availability(
             base_neuron.metagraph,
