@@ -250,3 +250,40 @@ def test_no_data_for_miner(db_engine):
         scored_time, simulation_input
     )
     assert validator_request_id is None
+
+
+def test_get_values_incorrect_format(db_engine):
+    """
+    Test retrieving values within the valid time range.
+    2024-11-20T00:00:00       2024-11-20T23:55:00
+             |-------------------------|                       (Prediction range)
+
+                                            2024-11-22T00:00:00
+                                                    |-|        (Scored Time)
+    """
+    miner_id = 1
+    start_time = "2024-11-20T00:00:00"
+    scored_time = "2024-11-22T00:00:00"
+    simulation_input = SimulationInput(
+        asset="BTC",
+        start_time=start_time,
+        time_increment=300,
+        time_length=86400,
+        num_simulations=1,
+    )
+
+    error_string = "some errors in the format"
+    simulation_data = {miner_id: ([], error_string)}
+    handler = MinerDataHandler(db_engine)
+    handler.save_responses(simulation_data, simulation_input)
+
+    validator_request_id = handler.get_latest_prediction_request(
+        scored_time, simulation_input
+    )
+    result = handler.get_miner_prediction(miner_id, validator_request_id)
+
+    prediction = result[1]
+    format_validation = result[2]
+
+    assert len(prediction) == 0
+    assert format_validation == error_string
