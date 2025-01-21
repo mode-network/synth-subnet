@@ -2,7 +2,7 @@
 # Copyright © 2023 Yuma Rao
 # TODO(developer): Set your name
 # Copyright © 2023 <your name>
-
+import os
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
@@ -22,6 +22,7 @@ import time
 
 # Bittensor
 import bittensor as bt
+import wandb
 
 # import base validator class which takes care of most of the boilerplate
 from simulation.base.validator import BaseValidatorNeuron
@@ -30,6 +31,8 @@ from simulation.base.validator import BaseValidatorNeuron
 from simulation.validator import forward
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.price_data_provider import PriceDataProvider
+
+from simulation import __version__
 
 
 class Validator(BaseValidatorNeuron):
@@ -61,6 +64,25 @@ class Validator(BaseValidatorNeuron):
         - Rewarding the miners
         - Updating the scores
         """
+        wandb_api_key = os.getenv("WANDB_API_KEY")
+        if wandb_api_key is not None:
+            bt.logging.info("WANDB_API_KEY is set")
+        else:
+            bt.logging.warning("WANDB_API_KEY not found in environment variables.")
+
+        wandb.init(
+            project=f"sn{self.config.netuid}-validators",
+            mode="disabled" if not getattr(self.config.neuron, "wandb_on", False) else "online",
+            entity="synth",
+            config={
+                "hotkey": self.wallet.hotkey.ss58_address,
+            },
+            name=f"validator-{self.uid}-{__version__}",
+            resume="auto",
+            dir=self.config.neuron.full_path,
+            reinit=True,
+        )
+
         bt.logging.info("calling forward()")
         return await forward(
             self, self.miner_data_handler, self.price_data_provider

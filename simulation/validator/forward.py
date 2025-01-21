@@ -22,6 +22,7 @@ from datetime import datetime
 
 import bittensor as bt
 import numpy as np
+import wandb
 
 from simulation.base.validator import BaseValidatorNeuron
 from simulation.protocol import Simulation
@@ -144,6 +145,9 @@ async def forward(
     # into bittensor consensus calculation
     # ========================================== #
     base_neuron.update_scores(np.array(filtered_rewards), filtered_miner_uids)
+
+    wandb_on = base_neuron.config.neuron.wandb_on
+    _log_to_wandb(wandb_on, filtered_miner_uids, filtered_rewards)
 
     _wait_till_next_iteration()
 
@@ -289,6 +293,21 @@ def _get_available_miners_and_update_metagraph_history(
         miner_data_handler.update_metagraph_history(metagraph_info)
 
     return miner_uids
+
+
+def _log_to_wandb(wandb_on, miner_uids, rewards):
+    if wandb_on:
+        # Log results to wandb
+        wandb_val_log = {
+            "miners_info": {
+                miner_uid: {
+                    "miner_response": response.prediction,
+                    "miner_reward": reward,
+                }
+                for miner_uid, response, reward, success in zip(miner_uids, rewards)
+            }
+        }
+        wandb.log(wandb_val_log)
 
 
 def remove_zero_rewards(moving_averages_data):
