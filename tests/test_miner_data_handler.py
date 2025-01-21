@@ -48,7 +48,6 @@ def test_get_values_within_range(db_engine):
         scored_time, simulation_input
     )
     result = handler.get_miner_prediction(miner_id, validator_request_id)
-    print(result)  # DEBUG
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
