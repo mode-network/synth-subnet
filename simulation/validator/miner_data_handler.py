@@ -5,7 +5,7 @@ import pandas as pd
 from sqlalchemy import select, text
 
 from simulation.db.models import (
-    miner_predictions,
+    miner_predictions as miner_predictions_model,
     miner_scores,
     validator_requests,
     metagraph_history,
@@ -22,7 +22,7 @@ class MinerDataHandler:
         self.engine = engine or get_engine()
 
     def save_responses(
-        self, miner_predictions: {}, simulation_input: SimulationInput
+        self, miner_predictions: dict, simulation_input: SimulationInput
     ):
         """Save miner predictions and simulation input."""
 
@@ -64,7 +64,7 @@ class MinerDataHandler:
                         )
 
                     insert_stmt_miner_predictions = (
-                        miner_predictions.insert().values(
+                        miner_predictions_model.insert().values(
                             miner_prediction_records
                         )
                     )
