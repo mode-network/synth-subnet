@@ -303,7 +303,7 @@ def _log_to_wandb(wandb_on, miner_uids, rewards):
                 miner_uid: {
                     "miner_reward": reward,
                 }
-                for miner_uid, response, reward, success in zip(miner_uids, rewards)
+                for miner_uid, reward in zip(miner_uids, rewards)
             }
         }
         wandb.log(wandb_val_log)
