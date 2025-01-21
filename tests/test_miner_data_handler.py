@@ -3,6 +3,7 @@ from datetime import datetime
 import pytest
 
 from simulation.db.models import miner_predictions, validator_requests
+from simulation.validator import response_validation
 from simulation.simulation_input import SimulationInput
 from simulation.validator.miner_data_handler import MinerDataHandler
 from tests.utils import generate_values
@@ -39,7 +40,7 @@ def test_get_values_within_range(db_engine):
     )
 
     values = generate_values(datetime.fromisoformat(start_time))
-    simulation_data = {miner_id: values}
+    simulation_data = {miner_id: (values, response_validation.CORRECT)}
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input)
 
@@ -83,7 +84,7 @@ def test_get_values_ongoing_range(db_engine):
     )
 
     values = generate_values(datetime.fromisoformat(start_time))
-    simulation_data = {miner_id: values}
+    simulation_data = {miner_id: (values, response_validation.CORRECT)}
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input)
 
@@ -137,11 +138,11 @@ def test_multiple_records_for_same_miner(db_engine):
     handler = MinerDataHandler(db_engine)
 
     values_1 = generate_values(datetime.fromisoformat(start_time_1))
-    simulation_data_1 = {miner_id: values_1}
+    simulation_data_1 = {miner_id: (values_1, response_validation.CORRECT)}
     handler.save_responses(simulation_data_1, simulation_input_1)
 
     values_2 = generate_values(datetime.fromisoformat(start_time_2))
-    simulation_data_2 = {miner_id: values_2}
+    simulation_data_2 = {miner_id: (values_2, response_validation.CORRECT)}
     handler.save_responses(simulation_data_2, simulation_input_2)
 
     validator_request_id = handler.get_latest_prediction_request(
@@ -203,11 +204,11 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
     handler = MinerDataHandler(db_engine)
 
     values_1 = generate_values(datetime.fromisoformat(start_time_1))
-    simulation_data_1 = {miner_id: values_1}
+    simulation_data_1 = {miner_id: (values_1, response_validation.CORRECT)}
     handler.save_responses(simulation_data_1, simulation_input_1)
 
     values_2 = generate_values(datetime.fromisoformat(start_time_2))
-    simulation_data_2 = {miner_id: values_2}
+    simulation_data_2 = {miner_id: (values_2, response_validation.CORRECT)}
     handler.save_responses(simulation_data_2, simulation_input_2)
 
     validator_request_id = handler.get_latest_prediction_request(
