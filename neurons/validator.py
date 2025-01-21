@@ -73,7 +73,7 @@ class Validator(BaseValidatorNeuron):
         wandb.init(
             project="sn247-validators",
             mode="disabled" if not getattr(self.config.neuron, "wandb_on", False) else "online",
-            entity="synth",
+            entity="stas_mode-mode-network-org",
             config={
                 "hotkey": self.wallet.hotkey.ss58_address,
             },
