@@ -20,7 +20,6 @@
 import typing
 
 import bittensor as bt
-import numpy as np
 
 
 from simulation.simulation_input import SimulationInput
