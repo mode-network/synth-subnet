@@ -15,7 +15,6 @@ def check_uid_availability(
     Returns:
         bool: True if uid is available, False otherwise
     """
-    bt.logging.info(f"Checking uid {uid}, vpermit tao limit {vpermit_tao_limit}, metagraph {metagraph.axons[uid]}")
     # Filter non serving axons.
     if not metagraph.axons[uid].is_serving:
         bt.logging.warning(f"uid {uid} is not serving")
