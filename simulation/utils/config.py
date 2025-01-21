@@ -253,6 +253,13 @@ def add_validator_args(cls, parser):
         default="opentensor-dev",
     )
 
+    parser.add_argument(
+        "--neuron.wandb_on",
+        type=bool,
+        help="Boolean toggle for wandb integration",
+        default=False,
+    )
+
 
 def config(cls):
     """

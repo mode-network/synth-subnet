@@ -71,7 +71,7 @@ class Validator(BaseValidatorNeuron):
             bt.logging.warning("WANDB_API_KEY not found in environment variables.")
 
         wandb.init(
-            project=f"sn{self.config.netuid}-validators",
+            project="sn247-validators",
             mode="disabled" if not getattr(self.config.neuron, "wandb_on", False) else "online",
             entity="synth",
             config={
