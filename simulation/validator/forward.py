@@ -27,7 +27,11 @@ import wandb
 from simulation.base.validator import BaseValidatorNeuron
 from simulation.protocol import Simulation
 from simulation.simulation_input import SimulationInput
-from simulation.utils.helpers import get_current_time, round_time_to_minutes
+from simulation.utils.helpers import (
+    get_current_time,
+    round_time_to_minutes,
+    timeout_from_start_time,
+)
 from simulation.utils.uids import check_uid_availability
 from simulation.validator.miner_data_handler import MinerDataHandler
 from simulation.validator.moving_average import compute_weighted_averages
@@ -230,6 +234,8 @@ async def _query_available_miners_and_save_responses(
     miner_uids: list,
     simulation_input: SimulationInput,
 ):
+    timeout = timeout_from_start_time(simulation_input.start_time)
+
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
     # prices for a chosen asset)
@@ -253,7 +259,7 @@ async def _query_available_miners_and_save_responses(
         # we are using numpy for the outputs now - do we need to write a function that deserializes from json to numpy?
         # you can find that function in "simulation.protocol.Simulation"
         deserialize=True,
-        timeout=base_neuron.config.neuron.timeout,
+        timeout=timeout,
     )
 
     miner_predictions = {}

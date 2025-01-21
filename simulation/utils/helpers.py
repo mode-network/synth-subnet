@@ -95,3 +95,22 @@ def from_iso_to_unix_time(iso_time):
     unix_time = int(dt.timestamp())
 
     return unix_time
+
+
+def timeout_from_start_time(start_time_str: str) -> float:
+    """
+    Calculate the timeout duration from the start_time to the current time.
+
+    :param start_time: ISO 8601 string representing the start time.
+    :return: Timeout duration in seconds.
+    """
+    # Convert start_time to a datetime object
+    start_time = datetime.fromisoformat(start_time_str)
+
+    # Get current date and time
+    current_time = datetime.now(timezone.utc)
+
+    # Calculate the timeout duration
+    timeout_duration = (start_time - current_time).total_seconds()
+
+    return timeout_duration
