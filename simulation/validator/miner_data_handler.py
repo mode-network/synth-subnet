@@ -22,7 +22,7 @@ class MinerDataHandler:
         self.engine = engine or get_engine()
 
     def save_responses(
-        self, miner_predictions: dict, simulation_input: SimulationInput
+        self, miner_predictions: {}, simulation_input: SimulationInput
     ):
         """Save miner predictions and simulation input."""
 
