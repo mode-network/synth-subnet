@@ -53,15 +53,11 @@ def reward(
 
     if format_validation != response_validation.CORRECT:
         return (
-            0,
+            -1,
             [],
             [],
             miner_prediction_id,
-        )  # 0 or no score in case the prediction is not valid?
-
-    # I think this is not necessary because the prediction is already validated
-    if predictions is None or len(predictions) == 0:
-        return -1, [], [], None  # represents no prediction data from the miner
+        )  # represents no prediction data from the miner
 
     # get last time in predictions
     end_time = predictions[0][len(predictions[0]) - 1]["time"]
