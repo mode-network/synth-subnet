@@ -3,6 +3,7 @@
 # TODO(developer): Set your name
 # Copyright © 2023 <your name>
 import os
+
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
@@ -68,11 +69,17 @@ class Validator(BaseValidatorNeuron):
         if wandb_api_key is not None:
             bt.logging.info("WANDB_API_KEY is set")
         else:
-            bt.logging.warning("WANDB_API_KEY not found in environment variables.")
+            bt.logging.warning(
+                "WANDB_API_KEY not found in environment variables."
+            )
 
         wandb.init(
             project=f"{self.config.wandb.project_name}",
-            mode="disabled" if not getattr(self.config.wandb, "enabled", False) else "online",
+            mode=(
+                "disabled"
+                if not getattr(self.config.wandb, "enabled", False)
+                else "online"
+            ),
             entity=f"{self.config.wandb.entity}",
             config={
                 "hotkey": self.wallet.hotkey.ss58_address,
