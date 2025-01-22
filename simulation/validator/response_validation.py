@@ -23,7 +23,7 @@ def validate_responses(
     # check the process time
     if process_time_str is None:
         return "time out (process time is None)"
-    
+
     received_at = request_time + timedelta(seconds=float(process_time_str))
     start_time = datetime.fromisoformat(simulation_input.start_time)
     if received_at > start_time:
