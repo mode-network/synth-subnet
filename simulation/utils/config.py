@@ -277,7 +277,7 @@ def add_validator_args(cls, parser):
     parser.add_argument(
         "--ewma.cutoff_days",
         type=int,
-        help="The half-life in days for the exponential decay.",
+        help="The number of days against which to run the moving average",
         default=2,
     )
 
