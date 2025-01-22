@@ -234,7 +234,9 @@ async def _query_available_miners_and_save_responses(
     miner_uids: list,
     simulation_input: SimulationInput,
 ):
-    timeout = timeout_from_start_time(simulation_input.start_time)
+    timeout = timeout_from_start_time(
+        base_neuron.config.neuron.timeout, simulation_input.start_time
+    )
 
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of

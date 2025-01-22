@@ -97,7 +97,9 @@ def from_iso_to_unix_time(iso_time):
     return unix_time
 
 
-def timeout_from_start_time(start_time_str: str) -> float:
+def timeout_from_start_time(
+    config_timeout: float, start_time_str: str
+) -> float:
     """
     Calculate the timeout duration from the start_time to the current time.
 
@@ -111,6 +113,7 @@ def timeout_from_start_time(start_time_str: str) -> float:
     current_time = datetime.now(timezone.utc)
 
     # Calculate the timeout duration
-    timeout_duration = (start_time - current_time).total_seconds()
+    dynamic_timeout_duration = (start_time - current_time).total_seconds()
+    timeout_duration = max(dynamic_timeout_duration, config_timeout)
 
     return timeout_duration
