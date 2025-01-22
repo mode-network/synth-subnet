@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import typing
 
 
 def get_current_time():
@@ -98,7 +99,7 @@ def from_iso_to_unix_time(iso_time):
 
 
 def timeout_from_start_time(
-    config_timeout: float, start_time_str: str
+    config_timeout: typing.Optional[float], start_time_str: str
 ) -> float:
     """
     Calculate the timeout duration from the start_time to the current time.
@@ -106,6 +107,9 @@ def timeout_from_start_time(
     :param start_time: ISO 8601 string representing the start time.
     :return: Timeout duration in seconds.
     """
+    if config_timeout is not None:
+        return config_timeout
+
     # Convert start_time to a datetime object
     start_time = datetime.fromisoformat(start_time_str)
 
@@ -113,7 +117,4 @@ def timeout_from_start_time(
     current_time = datetime.now(timezone.utc)
 
     # Calculate the timeout duration
-    dynamic_timeout_duration = (start_time - current_time).total_seconds()
-    timeout_duration = max(dynamic_timeout_duration, config_timeout)
-
-    return timeout_duration
+    return (start_time - current_time).total_seconds()
