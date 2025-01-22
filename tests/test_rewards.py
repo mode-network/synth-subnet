@@ -107,7 +107,7 @@ def test_get_rewards(db_engine):
     )  # TODO: add a mock instead of the real provider
 
     values = generate_values(datetime.fromisoformat(start_time))
-    simulation_data = {miner_id: (values, response_validation.CORRECT)}
+    simulation_data = {miner_id: (values, response_validation.CORRECT, "1.2")}
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
     validator_request_id = handler.get_latest_prediction_request(

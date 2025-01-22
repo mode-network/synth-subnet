@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime
 
 from simulation.utils.helpers import (
     convert_prices_to_time_format,
@@ -80,8 +81,12 @@ class TestHelpers(unittest.TestCase):
         dt_str_1 = "2024-11-25T19:01:59.940515"
         dt_str_2 = "2024-11-25T19:03:59.940515"
 
-        result_1 = round_time_to_minutes(dt_str_1, time_increment)
-        result_2 = round_time_to_minutes(dt_str_2, time_increment)
+        result_1 = round_time_to_minutes(
+            datetime.fromisoformat(dt_str_1), time_increment
+        )
+        result_2 = round_time_to_minutes(
+            datetime.fromisoformat(dt_str_2), time_increment
+        )
 
         self.assertEqual(result_1, "2024-11-25T19:05:00")
         self.assertEqual(result_2, "2024-11-25T19:05:00")
@@ -94,10 +99,10 @@ class TestHelpers(unittest.TestCase):
         dt_str_2 = "2024-11-25T19:03:59.940515"
 
         result_1 = round_time_to_minutes(
-            dt_str_1, time_increment, extra_seconds
+            datetime.fromisoformat(dt_str_1), time_increment, extra_seconds
         )
         result_2 = round_time_to_minutes(
-            dt_str_2, time_increment, extra_seconds
+            datetime.fromisoformat(dt_str_2), time_increment, extra_seconds
         )
 
         self.assertEqual(result_1, "2024-11-25T19:03:00")
