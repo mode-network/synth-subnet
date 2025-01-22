@@ -97,7 +97,7 @@ async def forward(
         miner_data_handler=miner_data_handler,
         miner_uids=miner_uids,
         simulation_input=simulation_input,
-        current_time=current_time,
+        request_time=current_time,
     )
 
     # ================= Step 3 ================= #
@@ -242,7 +242,7 @@ async def _query_available_miners_and_save_responses(
     miner_data_handler: MinerDataHandler,
     miner_uids: list,
     simulation_input: SimulationInput,
-    current_time: datetime,
+    request_time: datetime,
 ):
     timeout = timeout_from_start_time(
         base_neuron.config.neuron.timeout, simulation_input.start_time
@@ -272,7 +272,7 @@ async def _query_available_miners_and_save_responses(
         response = synapse.deserialize()
         process_time = synapse.dendrite.process_time
         format_validation = validate_responses(
-            response, simulation_input, current_time, process_time
+            response, simulation_input, request_time, process_time
         )
         miner_id = miner_uids[i]
         miner_predictions[miner_id] = (
@@ -283,7 +283,7 @@ async def _query_available_miners_and_save_responses(
 
     if len(miner_predictions) > 0:
         miner_data_handler.save_responses(
-            miner_predictions, simulation_input, current_time
+            miner_predictions, simulation_input, request_time
         )
     else:
         bt.logging.info("skip saving because no prediction")

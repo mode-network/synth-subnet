@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import typing
 
 
 from simulation.simulation_input import SimulationInput
@@ -9,8 +10,8 @@ CORRECT = "CORRECT"
 def validate_responses(
     response,
     simulation_input: SimulationInput,
-    current_time: datetime,
-    process_time: str,
+    request_time: datetime,
+    process_time_str: typing.Optional[str],
 ) -> str:
     """
     Validate responses from miners.
@@ -20,8 +21,13 @@ def validate_responses(
     otherwise, return "CORRECT".
     """
     # check the process time
-    print(f"Process time: {process_time}")
-    print(f"Current time: {current_time}")
+    if process_time_str is None:
+        return "time out (process time is None)"
+    
+    received_at = request_time + timedelta(seconds=float(process_time_str))
+    start_time = datetime.fromisoformat(simulation_input.start_time)
+    if received_at > start_time:
+        return f"Response received after the simulation start time: expected {start_time}, got {received_at}"
 
     # check if the response is empty
     if response is None or len(response) == 0:

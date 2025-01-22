@@ -25,7 +25,7 @@ class MinerDataHandler:
         self,
         miner_predictions: dict[tuple],
         simulation_input: SimulationInput,
-        current_time: datetime,
+        request_time: datetime,
     ):
         """Save miner predictions and simulation input."""
 
@@ -35,7 +35,7 @@ class MinerDataHandler:
             "time_increment": simulation_input.time_increment,
             "time_length": simulation_input.time_length,
             "num_simulations": simulation_input.num_simulations,
-            "request_time": current_time.isoformat(),
+            "request_time": request_time.isoformat(),
         }
 
         try:
@@ -55,7 +55,6 @@ class MinerDataHandler:
                         format_validation,
                         process_time,
                     ) in miner_predictions.items():
-                        print("process time", process_time)  # DEBUG
                         # If the format is not correct, we don't save the prediction
                         if format_validation != response_validation.CORRECT:
                             prediction = []
@@ -66,7 +65,7 @@ class MinerDataHandler:
                                 "miner_uid": miner_uid,
                                 "prediction": prediction,
                                 "format_validation": format_validation,
-                                # "process_time": process_time,
+                                "process_time": process_time,
                             }
                         )
 
