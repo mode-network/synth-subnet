@@ -260,6 +260,27 @@ def add_validator_args(cls, parser):
         default="mode-synth",
     )
 
+    parser.add_argument(
+        "--ewma.alpha",
+        type=float,
+        help="The exponent to raise the EWMA to, before normalization.",
+        default=2.0,
+    )
+
+    parser.add_argument(
+        "--ewma.half_life_days",
+        type=float,
+        help="The half-life in days for the exponential decay.",
+        default=1.0,
+    )
+
+    parser.add_argument(
+        "--ewma.cutoff_days",
+        type=int,
+        help="The half-life in days for the exponential decay.",
+        default=2,
+    )
+
 
 def config(cls):
     """
