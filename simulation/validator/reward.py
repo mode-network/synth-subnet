@@ -51,6 +51,8 @@ def reward(
         )
     )
 
+    bt.logging.info(f"in reward: {miner_uid}, {miner_prediction_id}, {format_validation}")
+
     if format_validation != response_validation.CORRECT:
         return (
             -1,
