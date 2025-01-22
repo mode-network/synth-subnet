@@ -58,6 +58,7 @@ Check the wallet has been registered:
 ```shell
 btcli wallet overview \
   --wallet.name validator \
+  --wallet.hotkey default \
   --subtensor.network test
 ```
 

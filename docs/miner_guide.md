@@ -36,6 +36,7 @@ Acquire a slot on the Bittensor subnet by registering the wallet:
 ```shell
 btcli subnet register \
   --wallet.name miner \
+  --wallet.hotkey default \
   --subtensor.network test \
   --netuid 247
 ```
