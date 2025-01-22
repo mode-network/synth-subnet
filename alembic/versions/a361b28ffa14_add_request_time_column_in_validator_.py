@@ -22,7 +22,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.add_column(
         "validator_requests",
-        sa.Column("request_time", sa.TIMESTAMP(timezone=True), nullable=False),
+        sa.Column("request_time", sa.TIMESTAMP(timezone=True), nullable=True),
     )
 
 

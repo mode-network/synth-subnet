@@ -53,6 +53,7 @@ validator_requests = Table(
     Column("time_increment", Integer, nullable=True),
     Column("time_length", Integer, nullable=True),
     Column("num_simulations", Integer, nullable=True),
+    Column("request_time", DateTime(timezone=True), nullable=True),
 )
 
 # Define the table
