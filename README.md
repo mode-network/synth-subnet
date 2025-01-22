@@ -5,18 +5,14 @@
 </div>
 
 <div align="center">
-  <h1 align="center">
-    Synth Subnet
-  </h1>
-</div>
-
-<div align="center">
   <a href="https://github.com/mode-network/synth-subnet/blob/main/LICENSE">
     <img alt="GitHub License" src="https://img.shields.io/github/license/mode-network/synth-subnet">
   </a>
 </div>
 
----
+<h1 align="center">
+    Synth Subnet
+</h1>
 
 <div align="center">
     <a href="https://app.mode.network" target="_blank">
@@ -35,6 +31,8 @@
         <b>API Documentation</b>
     </a>
 </div>
+
+---
 
 ### Table Of Contents
 
@@ -220,55 +218,67 @@ The system creates a competitive environment through:
 
 ### 2.2. Setup
 
-1. Clone the repository:
+**Step 1: Clone the repository**
+
 ```shell
 git clone https://github.com/mode-network/synth-subnet.git
 ```
 
-2. Change directory to the project root:
+**Step 2: Change directory to the project root**
+
 ```shell
 cd ./synth-subnet
 ```
 
-3. Add the required repositories:
+**Step 3: Add the required repositories**
+
 ```shell
 sudo add-apt-repository ppa:deadsnakes/ppa
 ```
 > ⚠️ **NOTE:** The [deadsnakes](https://github.com/deadsnakes) repository, while unofficial, it is hugely popular and used by many Python projects.
 
-4. Install Rust:
+**Step 4: Install Rust**
+
 ```shell
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ```
 
-5. Install the dependencies:
+**Step 5: Install the dependencies**
 
 ```shell
 sudo apt update && \
   sudo apt install nodejs npm python3.10 pkg-config
 ```
 
-6. Install [PM2](https://pm2.io/):
+**Step 6: Install [PM2](https://pm2.io/)**
+
 ```shell
 sudo npm install pm2 -g
 ```
 
-7. Install the Python virtual environment:
+**Step 7: Install the Python environment**
+
 ```shell
 sudo apt install python3.10-venv
 ```
 
-8. Create a new virtual environment:
+**Step 8: Create a new Python environment**
+
 ```shell
 python3.10 -m venv bt_venv
 ```
 
-9. Activate and switch to the newly created Python virtual environment:
+**Step 9: Activate and switch to the newly created Python virtual environment**
+
 ```shell
 source bt_venv/bin/activate
 ```
 
-10. Install the Python dependencies:
+This should activate the `bt_venv` environment and you should see the command line prefixed with `(bt_venv)`.
+
+**Step 10: Install local Python dependencies**
+
+With the Python virtual environment active, install the Python dependencies:
 ```shell
 pip install -r requirements.txt
 ```

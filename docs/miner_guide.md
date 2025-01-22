@@ -12,12 +12,15 @@
 
 > 💡 **TIP:** For a more extensive list of the Bittensor CLI commands see [here](https://docs.bittensor.com/btcli).
 
-1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
+**Step 1: Activate the Python virtual environment**
+
+If you haven't already, ensure you are running from the Python virtual environment:
 ```shell
 source bt_venv/bin/activate
 ```
 
-2. Create the cold/hot wallets:
+**Step 2: Create the cold/hot wallets**
+
 ```shell
 btcli wallet create \
   --wallet.name miner \
@@ -26,7 +29,9 @@ btcli wallet create \
 
 > 🚨 **WARNING:** You must ensure your wallets have enough TAO (0.1 should be sufficient) to be start mining. For testnet, you can use the [`btcli wallet faucet`](https://docs.bittensor.com/btcli#btcli-wallet-faucet).
 
-3. Acquire a slot on the Bittensor subnet by registering the wallet:
+**Step 3: Register wallet**
+
+Acquire a slot on the Bittensor subnet by registering the wallet:
 ```shell
 btcli subnet register \
   --wallet.name miner \
@@ -34,7 +39,9 @@ btcli subnet register \
   --netuid 247
 ```
 
-4. (Optional) Check the wallet has been registered:
+**Step 4: Verify wallet registration (optional)**
+
+Check the wallet has been registered:
 ```shell
 btcli wallet overview \
   --wallet.name miner \
@@ -42,7 +49,7 @@ btcli wallet overview \
   --subtensor.network test
 ```
 
-5. (Optional) Check the network metagraph:
+You can also check the network metagraph:
 ```shell
 btcli subnet metagraph \
   --subtensor.network test \
@@ -53,17 +60,20 @@ btcli subnet metagraph \
 
 ## 2. Run the Miner
 
-1. (Optional) If you haven't already, ensure you are running from the Python virtual environment:
+**Step 1: Activate the Python virtual environment**
+
 ```shell
 source bt_venv/bin/activate
 ```
 
-2. Start PM2 with the miner config:
+**Step 2: Start PM2 with the miner config**
+
 ```shell
 pm2 start miner.config.js
 ```
 
-3. (Optional) Check the miner is running:
+**Step 2: Check the miner is running (optional)**
+
 ```shell
 pm2 list
 ```
