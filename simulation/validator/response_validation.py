@@ -1,9 +1,35 @@
 from datetime import datetime, timedelta
+import typing
 
 
 from simulation.simulation_input import SimulationInput
 
 CORRECT = "CORRECT"
+
+
+def datetime_valid(dt_str) -> bool:
+    try:
+        datetime.fromisoformat(dt_str)
+    except:
+        return False
+    return True
+
+
+def validate_datetime(
+    dt_str,
+) -> typing.Tuple[typing.Optional[datetime], typing.Optional[str]]:
+    if not isinstance(dt_str, str):
+        return (
+            None,
+            f"Time format is incorrect: expected str, got {type(dt_str)}",
+        )
+    if not datetime_valid(dt_str):
+        return (
+            None,
+            f"Time format is incorrect: expected isoformat, got {dt_str}",
+        )
+
+    return datetime.fromisoformat(dt_str), None
 
 
 def validate_responses(response, simulation_input: SimulationInput) -> str:
@@ -32,11 +58,22 @@ def validate_responses(response, simulation_input: SimulationInput) -> str:
             return f"Start time is incorrect: expected {simulation_input.start_time}, got {path[0]['time']}"
 
         for i in range(1, len(path)):
+            # check the time formats
+            i_minus_one_str_time = path[i - 1]["time"]
+            i_minus_one_datetime, error_message = validate_datetime(
+                i_minus_one_str_time
+            )
+            if error_message:
+                return error_message
+
+            i_str_time = path[i]["time"]
+            i_datetime, error_message = validate_datetime(i_str_time)
+            if error_message:
+                return error_message
+
             # check the time increment
-            i_minus_one_time = datetime.fromisoformat(path[i - 1]["time"])
-            i_time = datetime.fromisoformat(path[i]["time"])
             expected_delta = timedelta(seconds=simulation_input.time_increment)
-            actual_delta = i_time - i_minus_one_time
+            actual_delta = i_datetime - i_minus_one_datetime
             if actual_delta != expected_delta:
                 return f"Time increment is incorrect: expected {expected_delta}, got {actual_delta}"
 
