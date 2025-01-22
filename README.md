@@ -235,6 +235,7 @@ cd ./synth-subnet
 ```shell
 sudo add-apt-repository ppa:deadsnakes/ppa
 ```
+
 > ⚠️ **NOTE:** The [deadsnakes](https://github.com/deadsnakes) repository, while unofficial, it is hugely popular and used by many Python projects.
 
 **Step 4: Install Rust**
