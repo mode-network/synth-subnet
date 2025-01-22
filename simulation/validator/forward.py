@@ -134,7 +134,7 @@ async def forward(
         _calculate_moving_average_and_update_rewards(
             base_neuron=base_neuron,
             miner_data_handler=miner_data_handler,
-            scored_time=scored_time
+            scored_time=scored_time,
         )
     )
 
@@ -161,12 +161,12 @@ def _wait_till_next_iteration():
 def _calculate_moving_average_and_update_rewards(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
-    scored_time: str
+    scored_time: str,
 ) -> tuple[list, list]:
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(
         scored_time_str=scored_time,
-        cutoff_days=base_neuron.config.ewma.cutoff_days
+        cutoff_days=base_neuron.config.ewma.cutoff_days,
     )
 
     moving_averages_data = compute_weighted_averages(
