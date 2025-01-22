@@ -108,7 +108,7 @@ def test_get_rewards(db_engine):
 
     values = generate_values(datetime.fromisoformat(start_time))
     simulation_data = {miner_id: (values, response_validation.CORRECT)}
-    handler.save_responses(simulation_data, simulation_input)
+    handler.save_responses(simulation_data, simulation_input, datetime.now())
 
     validator_request_id = handler.get_latest_prediction_request(
         scored_time, simulation_input

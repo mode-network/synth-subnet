@@ -1,10 +1,9 @@
 from datetime import datetime, timedelta, timezone
 
 
-def get_current_time():
+def get_current_time() -> datetime:
     # Get current date and time
-    current_time = datetime.now(timezone.utc).replace(microsecond=0)
-    return current_time.isoformat()
+    return datetime.now(timezone.utc).replace(microsecond=0)
 
 
 def convert_prices_to_time_format(prices, start_time, time_increment):
@@ -60,10 +59,7 @@ def get_intersecting_arrays(array1, array2):
     return filtered_array1, filtered_array2
 
 
-def round_time_to_minutes(dt_str, in_seconds, extra_seconds=0):
-    # Convert string to datetime object
-    dt = datetime.fromisoformat(dt_str)
-
+def round_time_to_minutes(dt: datetime, in_seconds: int, extra_seconds=0):
     # Define the rounding interval
     rounding_interval = timedelta(seconds=in_seconds)
 

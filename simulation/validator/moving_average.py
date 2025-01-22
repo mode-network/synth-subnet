@@ -9,7 +9,7 @@ def compute_weighted_averages(
     half_life_days: float,
     alpha: float,
     validation_time_str: str,
-) -> []:
+) -> list[dict]:
     """
     Reads a TSV file of miner rewards, computes an exponentially weighted
     moving average (EWMA) with a user-specified half-life, then outputs:

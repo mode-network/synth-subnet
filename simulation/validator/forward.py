@@ -97,6 +97,7 @@ async def forward(
         miner_data_handler=miner_data_handler,
         miner_uids=miner_uids,
         simulation_input=simulation_input,
+        current_time=current_time,
     )
 
     # ================= Step 3 ================= #
@@ -241,6 +242,7 @@ async def _query_available_miners_and_save_responses(
     miner_data_handler: MinerDataHandler,
     miner_uids: list,
     simulation_input: SimulationInput,
+    current_time: datetime,
 ):
     timeout = timeout_from_start_time(
         base_neuron.config.neuron.timeout, simulation_input.start_time
@@ -252,40 +254,45 @@ async def _query_available_miners_and_save_responses(
     synapse = Simulation(simulation_input=simulation_input)
     # The dendrite client queries the network:
     # it is the actual call to all the miners from validator
-    # returns an array of responses (predictions) for each of the miners
+    # returns an array of synapses (predictions) for each of the miners
     # ======================================================
     # miner has a unique uuid in the subnetwork
     # ======================================================
     # axon is a server application that accepts requests on the miner side
     # ======================================================
-    responses = await base_neuron.dendrite(
-        # Send the query to selected miner axons in the network.
+    synapses = await base_neuron.dendrite(
         axons=[base_neuron.metagraph.axons[uid] for uid in miner_uids],
-        # Construct a synapse object. This contains a simulation input parameters.
         synapse=synapse,
-        # All responses have the deserialize function called on them before returning.
-        # You are encouraged to define your own deserialization function.
-        # ======================================================
-        # we are using numpy for the outputs now - do we need to write a function that deserializes from json to numpy?
-        # you can find that function in "simulation.protocol.Simulation"
-        deserialize=True,
+        deserialize=False,
         timeout=timeout,
     )
 
     miner_predictions = {}
-    for i, response in enumerate(responses):
-        format_validation = validate_responses(response, simulation_input)
+    for i, synapse in enumerate(synapses):
+        response = synapse.deserialize()
+        process_time = synapse.dendrite.process_time
+        format_validation = validate_responses(
+            response, simulation_input, current_time, process_time
+        )
         miner_id = miner_uids[i]
-        miner_predictions[miner_id] = (response, format_validation)
+        miner_predictions[miner_id] = (
+            response,
+            format_validation,
+            process_time,
+        )
 
     if len(miner_predictions) > 0:
-        miner_data_handler.save_responses(miner_predictions, simulation_input)
+        miner_data_handler.save_responses(
+            miner_predictions, simulation_input, current_time
+        )
     else:
         bt.logging.info("skip saving because no prediction")
 
 
 def _get_available_miners_and_update_metagraph_history(
-    base_neuron, miner_data_handler: MinerDataHandler, start_time
+    base_neuron: BaseValidatorNeuron,
+    miner_data_handler: MinerDataHandler,
+    start_time: str,
 ):
     miner_uids = []
     metagraph_info = []

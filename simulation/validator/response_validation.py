@@ -6,12 +6,24 @@ from simulation.simulation_input import SimulationInput
 CORRECT = "CORRECT"
 
 
-def validate_responses(response, simulation_input: SimulationInput) -> str:
+def validate_responses(
+    response,
+    simulation_input: SimulationInput,
+    current_time: datetime,
+    process_time: str,
+) -> str:
     """
     Validate responses from miners.
 
-    Return False if response is incorrect.
+    Return a string with the error message
+    if the response is not following the expected format or the response is empty,
+    otherwise, return "CORRECT".
     """
+    # check the process time
+    print(f"Process time: {process_time}")
+    print(f"Current time: {current_time}")
+
+    # check if the response is empty
     if response is None or len(response) == 0:
         return "Response is empty"
 
