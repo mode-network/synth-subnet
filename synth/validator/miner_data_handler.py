@@ -27,7 +27,7 @@ class MinerDataHandler:
         simulation_input: SimulationInput,
         request_time: datetime,
     ):
-        """Save miner predictions and synth input."""
+        """Save miner predictions and simulation input."""
 
         validator_requests_row = {
             "start_time": simulation_input.start_time,
