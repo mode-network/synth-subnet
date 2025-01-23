@@ -26,14 +26,14 @@ import bittensor as bt
 import wandb
 
 # import base validator class which takes care of most of the boilerplate
-from simulation.base.validator import BaseValidatorNeuron
+from synth.base.validator import BaseValidatorNeuron
 
 # Bittensor Validator Template:
-from simulation.validator import forward
-from simulation.validator.miner_data_handler import MinerDataHandler
-from simulation.validator.price_data_provider import PriceDataProvider
+from synth.validator import forward
+from synth.validator.miner_data_handler import MinerDataHandler
+from synth.validator.price_data_provider import PriceDataProvider
 
-from simulation import __version__
+from synth import __version__
 
 
 class Validator(BaseValidatorNeuron):

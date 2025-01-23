@@ -1,8 +1,8 @@
-from simulation.miner.price_simulation import (
+from synth.miner.price_simulation import (
     simulate_crypto_price_paths,
     get_asset_price,
 )
-from simulation.utils.helpers import (
+from synth.utils.helpers import (
     convert_prices_to_time_format,
 )
 
@@ -19,10 +19,10 @@ def generate_simulations(
 
     Parameters:
         asset (str): The asset to simulate. Default is 'BTC'.
-        start_time (str): The start time of the simulation. Defaults to current time.
+        start_time (str): The start time of the synth. Defaults to current time.
         time_increment (int): Time increment in seconds.
         time_length (int): Total time length in seconds.
-        num_simulations (int): Number of simulation runs.
+        num_simulations (int): Number of synth runs.
 
     Returns:
         numpy.ndarray: Simulated price paths.

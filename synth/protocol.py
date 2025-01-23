@@ -22,18 +22,18 @@ import typing
 import bittensor as bt
 
 
-from simulation.simulation_input import SimulationInput
+from synth.simulation_input import SimulationInput
 
-# This is the protocol for the simulation miner and validator.
+# This is the protocol for the synth miner and validator.
 # It is a simple request-response protocol where the validator sends a request
 # to the miner, and the miner responds with a simulation_output response.
 
 # ---- miner ----
 # Example usage:
-#   def simulation( synapse: Simulation ) -> Simulation:
+#   def synth( synapse: Simulation ) -> Simulation:
 #       synapse.simulation_output = synapse.simulation_input
 #       return synapse
-#   axon = bt.axon().attach( simulation ).serve(netuid=...).start()
+#   axon = bt.axon().attach( synth ).serve(netuid=...).start()
 
 # ---- validator ---
 # Example usage:
@@ -44,7 +44,7 @@ from simulation.simulation_input import SimulationInput
 
 class Simulation(bt.Synapse):
     """
-    A simulation protocol representation which uses bt.Synapse as its base.
+    A synth protocol representation which uses bt.Synapse as its base.
     This protocol helps in handling simulation_input request and response communication between
     the miner and the validator.
 
@@ -63,7 +63,7 @@ class Simulation(bt.Synapse):
 
     def deserialize(self) -> []:
         """
-        Deserialize the simulation output. This method retrieves the response from
+        Deserialize the synth output. This method retrieves the response from
         the miner in the form of simulation_output, deserializes it and returns it
         as the output of the dendrite.query() call.
 

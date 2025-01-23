@@ -1,6 +1,6 @@
 import requests
 
-from simulation.utils.helpers import from_iso_to_unix_time
+from synth.utils.helpers import from_iso_to_unix_time
 from datetime import datetime, timezone
 
 

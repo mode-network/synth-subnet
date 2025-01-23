@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from simulation.validator.crps_calculation import calculate_crps_for_miner
+from synth.validator.crps_calculation import calculate_crps_for_miner
 
 
 class TestCalculateCrps(unittest.TestCase):

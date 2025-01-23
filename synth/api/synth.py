@@ -20,10 +20,10 @@
 from typing import List, Union, Any, Dict
 
 import bittensor as bt
-from simulation.api import SubnetsAPI
+from synth.api import SubnetsAPI
 
-from simulation.protocol import Simulation
-from simulation.simulation_input import SimulationInput
+from synth.protocol import Simulation
+from synth.simulation_input import SimulationInput
 
 
 class SynthAPI(SubnetsAPI):

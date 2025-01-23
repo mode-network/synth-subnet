@@ -7,7 +7,7 @@ class SimulationInput(BaseModel):
     asset: str = Field(default="BTC", description="The asset to simulate.")
     start_time: str = Field(
         default=datetime.now().isoformat(),
-        description="The start time of the simulation.",
+        description="The start time of the synth.",
     )
     time_increment: int = Field(
         default=300, description="Time increment in seconds."
@@ -16,7 +16,7 @@ class SimulationInput(BaseModel):
         default=86400, description="Total time length in seconds."
     )
     num_simulations: int = Field(
-        default=1, description="Number of simulation runs."
+        default=1, description="Number of synth runs."
     )
 
     class Config:

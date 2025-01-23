@@ -1,6 +1,6 @@
 import unittest
 
-from simulation.validator.price_data_provider import PriceDataProvider
+from synth.validator.price_data_provider import PriceDataProvider
 
 
 class TestPriceDataProvider(unittest.TestCase):
