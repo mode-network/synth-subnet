@@ -177,7 +177,7 @@ def add_miner_args(cls, parser):
     )
 
 
-def add_validator_args(cls, parser):
+def add_validator_args(cls, parser: argparse.ArgumentParser):
     """Add validator specific arguments to the parser."""
 
     parser.add_argument(
@@ -190,8 +190,8 @@ def add_validator_args(cls, parser):
     parser.add_argument(
         "--neuron.timeout",
         type=float,
-        help="The timeout for each forward call in seconds.",
-        default=10,
+        help="Override the timeout for each forward call in seconds.",
+        default=None,
     )
 
     parser.add_argument(
