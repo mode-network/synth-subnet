@@ -4,17 +4,17 @@ import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
 
-from simulation.db.models import (
+from synth.db.models import (
     miner_predictions,
     validator_requests,
     miner_scores,
 )
-from simulation.simulation_input import SimulationInput
-from simulation.validator import response_validation
-from simulation.validator.forward import remove_zero_rewards
-from simulation.validator.miner_data_handler import MinerDataHandler
-from simulation.validator.price_data_provider import PriceDataProvider
-from simulation.validator.reward import compute_softmax, get_rewards
+from synth.simulation_input import SimulationInput
+from synth.validator import response_validation
+from synth.validator.forward import remove_zero_rewards
+from synth.validator.miner_data_handler import MinerDataHandler
+from synth.validator.price_data_provider import PriceDataProvider
+from synth.validator.reward import compute_softmax, get_rewards
 from tests.utils import generate_values
 
 

@@ -2,10 +2,10 @@ from datetime import datetime
 
 import pytest
 
-from simulation.db.models import miner_predictions, validator_requests
-from simulation.validator import response_validation
-from simulation.simulation_input import SimulationInput
-from simulation.validator.miner_data_handler import MinerDataHandler
+from synth.db.models import miner_predictions, validator_requests
+from synth.validator import response_validation
+from synth.simulation_input import SimulationInput
+from synth.validator.miner_data_handler import MinerDataHandler
 from tests.utils import generate_values
 
 

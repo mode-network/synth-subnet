@@ -4,7 +4,7 @@ import bittensor as bt
 import pandas as pd
 from sqlalchemy import select, text
 
-from simulation.db.models import (
+from synth.db.models import (
     miner_predictions as miner_predictions_model,
     miner_scores,
     validator_requests,
@@ -12,8 +12,8 @@ from simulation.db.models import (
     miner_rewards,
     get_engine,
 )
-from simulation.simulation_input import SimulationInput
-from simulation.validator import response_validation
+from synth.simulation_input import SimulationInput
+from synth.validator import response_validation
 
 
 class MinerDataHandler:

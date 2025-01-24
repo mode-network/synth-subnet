@@ -24,20 +24,20 @@ import bittensor as bt
 import numpy as np
 import wandb
 
-from simulation.base.validator import BaseValidatorNeuron
-from simulation.protocol import Simulation
-from simulation.simulation_input import SimulationInput
-from simulation.utils.helpers import (
+from synth.base.validator import BaseValidatorNeuron
+from synth.protocol import Simulation
+from synth.simulation_input import SimulationInput
+from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
     timeout_from_start_time,
 )
-from simulation.utils.uids import check_uid_availability
-from simulation.validator.miner_data_handler import MinerDataHandler
-from simulation.validator.moving_average import compute_weighted_averages
-from simulation.validator.price_data_provider import PriceDataProvider
-from simulation.validator.response_validation import validate_responses
-from simulation.validator.reward import get_rewards
+from synth.utils.uids import check_uid_availability
+from synth.validator.miner_data_handler import MinerDataHandler
+from synth.validator.moving_average import compute_weighted_averages
+from synth.validator.price_data_provider import PriceDataProvider
+from synth.validator.response_validation import validate_responses
+from synth.validator.reward import get_rewards
 
 
 async def forward(
@@ -52,8 +52,8 @@ async def forward(
 
     Args:
         base_neuron (:obj:`bittensor.neuron.Neuron`): The neuron object which contains all the necessary state for the validator.
-        miner_data_handler (:obj:`simulation.validator.MinerDataHandler`): The MinerDataHandler object which contains all the necessary state for the validator.
-        price_data_provider (:obj:`simulation.validator.PriceDataProvider`): The PriceDataProvider returns real prices data for a specific token.
+        miner_data_handler (:obj:`synth.validator.MinerDataHandler`): The MinerDataHandler object which contains all the necessary state for the validator.
+        price_data_provider (:obj:`synth.validator.PriceDataProvider`): The PriceDataProvider returns real prices data for a specific token.
     """
     # getting current validation time
     current_time = get_current_time()

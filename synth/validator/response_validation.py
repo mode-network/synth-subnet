@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 import typing
 
 
-from simulation.simulation_input import SimulationInput
+from synth.simulation_input import SimulationInput
 
 CORRECT = "CORRECT"
 

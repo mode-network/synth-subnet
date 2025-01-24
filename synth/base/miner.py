@@ -23,8 +23,8 @@ import traceback
 
 import bittensor as bt
 
-from simulation.base.neuron import BaseNeuron
-from simulation.utils.config import add_miner_args
+from synth.base.neuron import BaseNeuron
+from synth.utils.config import add_miner_args
 
 from typing import Union
 

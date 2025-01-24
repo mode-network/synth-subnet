@@ -1,14 +1,14 @@
 import bittensor
 import bittensor as bt
 
-from simulation.api.get_query_axons import get_query_api_axons
-from simulation.api.synth import SynthAPI
+from synth.api.get_query_axons import get_query_api_axons
+from synth.api.synth import SynthAPI
 
 import asyncio
 
-from simulation.simulation_input import SimulationInput
-from simulation.utils.helpers import get_current_time
-from simulation.utils.config import config
+from synth.simulation_input import SimulationInput
+from synth.utils.helpers import get_current_time
+from synth.utils.config import config
 
 
 # Example usage

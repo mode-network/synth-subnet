@@ -22,29 +22,16 @@ import typing
 import bittensor as bt
 
 
-from simulation.simulation_input import SimulationInput
+from synth.simulation_input import SimulationInput
 
-# This is the protocol for the simulation miner and validator.
+# This is the protocol for the miner and validator interaction.
 # It is a simple request-response protocol where the validator sends a request
 # to the miner, and the miner responds with a simulation_output response.
-
-# ---- miner ----
-# Example usage:
-#   def simulation( synapse: Simulation ) -> Simulation:
-#       synapse.simulation_output = synapse.simulation_input
-#       return synapse
-#   axon = bt.axon().attach( simulation ).serve(netuid=...).start()
-
-# ---- validator ---
-# Example usage:
-#   dendrite = bt.Dendrite()
-#   simulation_output = dendrite.query( Simulation( simulation_input = SimulationInput(time_increment=60, time_length=3600, num_simulations=10) ) )
-#   assert simulation_output == np.array([[1.1, 2.2], [3.3, 4.4]], dtype=np.float64)
 
 
 class Simulation(bt.Synapse):
     """
-    A simulation protocol representation which uses bt.Synapse as its base.
+    A synth protocol representation which uses bt.Synapse as its base.
     This protocol helps in handling simulation_input request and response communication between
     the miner and the validator.
 
@@ -63,19 +50,8 @@ class Simulation(bt.Synapse):
 
     def deserialize(self) -> []:
         """
-        Deserialize the simulation output. This method retrieves the response from
+        Deserialize simulation output. This method retrieves the response from
         the miner in the form of simulation_output, deserializes it and returns it
         as the output of the dendrite.query() call.
-
-        Returns:
-        - ndarray[Any, dtype]: The deserialized response, which in this case is the value of simulation_output.
-
-        Example:
-        Assuming a Simulation instance has a simulation_output value of 5:
-        >>> simulation_instance = Simulation(simulation_input=SimulationInput(time_increment=60, time_length=3600, num_simulations=10))
-        >>> simulation_instance.simulation_output = np.array([[1.1, 2.2], [3.3, 4.4]], dtype=np.float64)
-        >>> simulation_instance.deserialize()
-        [[1.1 2.2]
-        [3.3 4.4]]
         """
         return self.simulation_output

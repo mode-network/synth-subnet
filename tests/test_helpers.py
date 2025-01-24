@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 
-from simulation.utils.helpers import (
+from synth.utils.helpers import (
     convert_prices_to_time_format,
     get_intersecting_arrays,
     round_time_to_minutes,

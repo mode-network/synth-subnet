@@ -20,12 +20,12 @@ from typing import List
 # DEALINGS IN THE SOFTWARE.
 import numpy as np
 
-from simulation.simulation_input import SimulationInput
-from simulation.utils.helpers import get_intersecting_arrays
-from simulation.validator.crps_calculation import calculate_crps_for_miner
-from simulation.validator.miner_data_handler import MinerDataHandler
-from simulation.validator.price_data_provider import PriceDataProvider
-from simulation.validator import response_validation
+from synth.simulation_input import SimulationInput
+from synth.utils.helpers import get_intersecting_arrays
+from synth.validator.crps_calculation import calculate_crps_for_miner
+from synth.validator.miner_data_handler import MinerDataHandler
+from synth.validator.price_data_provider import PriceDataProvider
+from synth.validator import response_validation
 
 import bittensor as bt
 

@@ -22,9 +22,9 @@ import typing
 import bittensor as bt
 
 # import base miner class which takes care of most of the boilerplate
-from simulation.base.miner import BaseMinerNeuron
-from simulation.miner.simulations import generate_simulations
-from simulation.protocol import Simulation
+from synth.base.miner import BaseMinerNeuron
+from synth.miner.simulations import generate_simulations
+from synth.protocol import Simulation
 
 
 class Miner(BaseMinerNeuron):

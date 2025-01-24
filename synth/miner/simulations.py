@@ -1,8 +1,8 @@
-from simulation.miner.price_simulation import (
+from synth.miner.price_simulation import (
     simulate_crypto_price_paths,
     get_asset_price,
 )
-from simulation.utils.helpers import (
+from synth.utils.helpers import (
     convert_prices_to_time_format,
 )
 

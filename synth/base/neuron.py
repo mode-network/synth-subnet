@@ -22,9 +22,9 @@ import bittensor as bt
 from abc import ABC, abstractmethod
 
 # Sync calls set weights and also resyncs the metagraph.
-from simulation.utils.config import check_config, add_args, config
-from simulation.utils.misc import ttl_get_block
-from simulation import __spec_version__ as spec_version
+from synth.utils.config import check_config, add_args, config
+from synth.utils.misc import ttl_get_block
+from synth import __spec_version__ as spec_version
 
 
 class BaseNeuron(ABC):
