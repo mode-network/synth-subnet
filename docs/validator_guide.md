@@ -63,12 +63,11 @@ Acquire a slot on the Bittensor subnet by registering the wallet:
 btcli subnet register \
   --wallet.name validator \
   --wallet.hotkey default \
-  --subtensor.network test \
-  --netuid 247
+  --netuid 50
 ```
 
 ```shell
-btcli root register --wallet.name validator --wallet.hotkey default --network test
+btcli root register --wallet.name validator --wallet.hotkey default
 ```
 
 4. Stake:
@@ -76,8 +75,7 @@ btcli root register --wallet.name validator --wallet.hotkey default --network te
 btcli stake add \
   --wallet.name validator \
   --wallet.hotkey default \
-  --subtensor.network test \
-  --netuid 247
+  --netuid 50
 ```
 
 **Step 4: Verify wallet registration (optional)**
@@ -86,15 +84,13 @@ Check the wallet has been registered:
 ```shell
 btcli wallet overview \
   --wallet.name validator \
-  --wallet.hotkey default \
-  --subtensor.network test
+  --wallet.hotkey default
 ```
 
 You can also check the network metagraph:
 ```shell
 btcli subnet metagraph \
-  --subtensor.network test \
-  --netuid 247
+  --netuid 50
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
