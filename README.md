@@ -15,8 +15,8 @@
 </h1>
 
 <div align="center">
-    <a href="https://app.mode.network" target="_blank">
-        <b>Dashboard</b>
+    <a href="https://www.mode.network/synth" target="_blank">
+        <b>Website</b>
     </a>
 ·
     <a href="" target="_blank">
