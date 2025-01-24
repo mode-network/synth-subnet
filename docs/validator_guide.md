@@ -73,19 +73,29 @@ btcli subnet metagraph \
 
 ## 2. Run the Validator
 
-**Step 1: Activate the Python virtual environment**
+**Step 1: Database setup**
+- Create a postgres database with the name "synth"
+- Rename the ".env.example" in the root of the repo to ".env"
+- Update the DB_URL in ".env" file to correct postgres server IP, username and password
+
+**Step 2: Activate the Python virtual environment**
 
 ```shell
 source bt_venv/bin/activate
 ```
 
-**Step 2: Start PM2 with the validator config**
+**Step 3: Run database migrations**
+```shell
+alembic upgrade head
+```
+
+**Step 4: Start PM2 with the validator config**
 
 ```shell
 pm2 start validator.config.js
 ```
 
-**Step 2: Check the validator is running (optional)**
+**Step 5: Check the validator is running (optional)**
 
 ```shell
 pm2 list
