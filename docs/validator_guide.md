@@ -142,7 +142,7 @@ The external port for the Axon component. This port is used to communicate to ot
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -160,7 +160,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --axon.port 8091
+pm2 start validator.config.js -- --axon.port 8091
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -174,7 +174,7 @@ Default: `2.0`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -192,7 +192,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --ewma.alpha 1.0
+pm2 start validator.config.js -- --ewma.alpha 1.0
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -206,7 +206,7 @@ Default: `2`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -224,7 +224,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --ewma.cutoff_days 1
+pm2 start validator.config.js -- --ewma.cutoff_days 1
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -238,7 +238,7 @@ Default: `1.0`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -256,7 +256,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --ewma.half_life_days 2.0
+pm2 start validator.config.js -- --ewma.half_life_days 2.0
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -268,7 +268,7 @@ Turn on bittensor debugging information.
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -286,7 +286,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --logging.debug
+pm2 start validator.config.js -- --logging.debug
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -298,7 +298,7 @@ Turn on bittensor info level information.
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -316,7 +316,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --logging.info
+pm2 start validator.config.js -- --logging.info
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -328,7 +328,7 @@ Turn on bittensor trace level information.
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -346,7 +346,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --logging.trace
+pm2 start validator.config.js -- --logging.trace
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -358,7 +358,7 @@ The netuid (network unique identifier) of the subnet within the root network, (e
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -376,7 +376,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --netuid 247
+pm2 start validator.config.js -- --netuid 247
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -390,7 +390,7 @@ Default: `false`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -408,7 +408,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.axon_off true
+pm2 start validator.config.js -- --neuron.axon_off true
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -420,7 +420,7 @@ The name of the device to run on.
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -438,7 +438,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.device cuda
+pm2 start validator.config.js -- --neuron.device cuda
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -452,7 +452,7 @@ Default: `false`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -470,7 +470,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.dont_save_events true
+pm2 start validator.config.js -- --neuron.dont_save_events true
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -484,7 +484,7 @@ Default: `false`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -502,7 +502,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.disable_set_weights true
+pm2 start validator.config.js -- --neuron.disable_set_weights true
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -514,7 +514,7 @@ The default epoch length (how often we set weights, measured in 12 second blocks
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -532,7 +532,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.epoch_length 100
+pm2 start validator.config.js -- --neuron.epoch_length 100
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -546,7 +546,7 @@ Default: `2147483648` (2GB)
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -564,7 +564,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.events_retention_size 2147483648
+pm2 start validator.config.js -- --neuron.events_retention_size 2147483648
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -578,7 +578,7 @@ Default: `0.1`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -596,7 +596,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.moving_average_alpha 0.3
+pm2 start validator.config.js -- --neuron.moving_average_alpha 0.3
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -610,7 +610,7 @@ Default: `miner`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -628,7 +628,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.name miner
+pm2 start validator.config.js -- --neuron.name miner
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -642,7 +642,7 @@ Default: `1`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -660,7 +660,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.num_concurrent_forwards 1
+pm2 start validator.config.js -- --neuron.num_concurrent_forwards 1
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -674,7 +674,7 @@ Default: `50`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -692,7 +692,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.sample_size 50
+pm2 start validator.config.js -- --neuron.sample_size 50
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -706,7 +706,7 @@ Default: `-`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -724,7 +724,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.timeout 120
+pm2 start validator.config.js -- --neuron.timeout 120
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -738,7 +738,7 @@ Default: `4096`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -756,7 +756,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --neuron.vpermit_tao_limit 1000
+pm2 start validator.config.js -- --neuron.vpermit_tao_limit 1000
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -768,7 +768,7 @@ The hotkey of the wallet.
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -786,7 +786,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --wallet.hotkey default
+pm2 start validator.config.js -- --wallet.hotkey default
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -798,7 +798,7 @@ The name of the wallet to use.
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -816,7 +816,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --wallet.name miner
+pm2 start validator.config.js -- --wallet.name miner
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -832,7 +832,7 @@ Default: `false`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -850,7 +850,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --wandb.enabled true
+pm2 start validator.config.js -- --wandb.enabled true
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -864,7 +864,7 @@ Default: `mode-synth`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -882,7 +882,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --wandb.entity mode-synth
+pm2 start validator.config.js -- --wandb.entity mode-synth
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -896,7 +896,7 @@ Default: `sn247-validators`
 Example:
 
 ```js
-// miner.config.js
+// validator.config.js
 module.exports = {
   apps: [
     {
@@ -914,7 +914,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --wandb.project_name sn247-validators
+pm2 start validator.config.js -- --wandb.project_name sn247-validators
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
