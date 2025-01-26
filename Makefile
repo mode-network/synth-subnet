@@ -18,13 +18,16 @@ ewma_alpha = 2.0
 ewma_half_life_days = 1.0
 ewma_cutoff_days = 2
 
+# Python virtual environment
+venv_python=bt_venv/bin/python
+
 
 # Commands
 metagraph:
 	btcli subnet metagraph --subtensor.network $(network) --netuid $(netuid)
 
 validator:
-	PYTHONPATH="." python3 ./neurons/validator.py \
+	$(venv_python) ./neurons/validator.py \
 		--wallet.name $(validator_coldkey_name) \
 		--wallet.hotkey $(validator_hotkey_name) \
 		--subtensor.network $(network) \
