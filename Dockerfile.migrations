@@ -6,6 +6,6 @@ WORKDIR /app
 # Copy the application code
 COPY . /app
 
-pip install sqlalchemy alembic python-dotenv psycopg2-binary
+RUN pip install sqlalchemy alembic python-dotenv psycopg2-binary
 
 CMD ["alembic", "upgrade", "head"]
