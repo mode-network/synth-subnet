@@ -1,7 +1,7 @@
 services:
   app:
     build:
-      context: ./app
+      context: .
     env_file:
       - .env.validator
     volumes:
@@ -14,7 +14,7 @@ services:
 
   migrations:
     build:
-      context: ./app
+      context: .
     env_file:
       - .env.validator
     command: alembic upgrade head
@@ -32,7 +32,7 @@ services:
     volumes:
       - postgres-validator-volume:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
