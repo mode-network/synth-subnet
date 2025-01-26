@@ -18,6 +18,8 @@ services:
       dockerfile: Dockerfile.migrations
     env_file:
       - .env.validator
+    environment:
+      POSTGRES_HOST: postgres
     depends_on:
       postgres:
         condition: service_healthy
