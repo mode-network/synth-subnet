@@ -18,7 +18,6 @@ services:
       dockerfile: Dockerfile.migrations
     env_file:
       - .env.validator
-    command: alembic upgrade head
     depends_on:
       postgres:
         condition: service_healthy
