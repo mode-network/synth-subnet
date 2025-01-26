@@ -7,11 +7,11 @@ mainnet_netuid = 50
 
 
 # Commands parameters
-network = $(main_network)
-netuid = $(mainnet_netuid)
+network = $(test_network)
+netuid = $(testnet_netuid)
 
 logging_level = debug
-validator_coldkey_name = validator
+validator_coldkey_name = validator-base
 validator_hotkey_name = default
 
 ewma_alpha = 2.0
