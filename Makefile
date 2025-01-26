@@ -21,10 +21,10 @@ ewma_cutoff_days = 2
 
 # Commands
 metagraph:
-    btcli subnet metagraph --subtensor.network $(network) --netuid $(netuid)
+	btcli subnet metagraph --subtensor.network $(network) --netuid $(netuid)
 
 validator:
-    python3 --name validator -- ./neurons/validator.py \
+	python3 --name validator -- ./neurons/validator.py \
 		--wallet.name $(validator_coldkey_name) \
 		--wallet.hotkey $(validator_hotkey_name) \
 		--subtensor.network $(network) \
