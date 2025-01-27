@@ -13,7 +13,7 @@ RUN add-apt-repository ppa:deadsnakes/ppa -y && \
 # Set environment variable to make Cargo available in PATH
 ENV PATH="/root/.cargo/bin:${PATH}"
 
-RUN apt-get install -y nodejs npm python3.10 python3.10-distutils pkg-config make
+RUN apt-get install -y nodejs npm python3.10 python3.10-distutils pkg-config make python3.10-venv
 
 # Set work directory
 WORKDIR /app
@@ -21,11 +21,16 @@ WORKDIR /app
 # Copy the application code
 COPY . /app
 
-RUN apt-get install -y python3.10-venv && \
-    python3.10 -m venv bt_venv
+#RUN apt-get install -y python3.10-venv && \
+#    python3.10 -m venv bt_venv
+#
+#RUN bash -c "source bt_venv/bin/activate" && \
+#    bt_venv/bin/pip install -r requirements.txt
 
-RUN bash -c "source bt_venv/bin/activate" && \
-    bt_venv/bin/pip install -r requirements.txt
+RUN python3.10 -m ensurepip --upgrade
+RUN python3.10 -m pip install --upgrade pip
+
+RUN python3.10 -m pip install -r requirements.txt
 
 ENV PYTHONPATH="."
 
