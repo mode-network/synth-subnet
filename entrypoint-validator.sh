@@ -11,10 +11,7 @@ ewma_alpha=2.0
 ewma_half_life_days=1.0
 ewma_cutoff_days=2
 
-#source bt_venv/bin/activate
-
-ls -la .
-which python3.10
+ls -la /root
 
 python3.10 ./neurons/validator.py \
 		--wallet.name $validator_coldkey_name \
