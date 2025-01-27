@@ -18,11 +18,11 @@ which python3.10
 
 python3.10 ./neurons/validator.py \
 		--wallet.name $validator_coldkey_name \
-		--wallet.hotkey validator_hotkey_name \
-		--subtensor.network network \
-		--netuid netuid \
+		--wallet.hotkey $validator_hotkey_name \
+		--subtensor.network $network \
+		--netuid $netuid \
 		--logging.logging_level \
 		--neuron.axon_off true \
-		--ewma.alpha ewma_alpha \
-		--ewma.half_life_days ewma_half_life_days \
-		--ewma.cutoff_days ewma_cutoff_days
+		--ewma.alpha $ewma_alpha \
+		--ewma.half_life_days $ewma_half_life_days \
+		--ewma.cutoff_days $ewma_cutoff_days
