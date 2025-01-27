@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_HOST: postgres
     volumes:
-      - /home/stas/.bittensor:/root/.bittensor
+      - ~/.bittensor:/root/.bittensor
     depends_on:
       migrations:
         condition: service_completed_successfully
