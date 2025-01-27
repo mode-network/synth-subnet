@@ -16,7 +16,7 @@ def setup(request):
         postgres.stop()
 
     request.addfinalizer(remove_container)
-    os.environ["DB_URL"] = postgres.get_connection_url()
+    os.environ["DB_URL_TEST"] = postgres.get_connection_url()
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -28,6 +28,6 @@ def apply_migrations(setup):
 
 @pytest.fixture(scope="module", autouse=True)
 def db_engine(setup):
-    engine = create_engine(os.environ["DB_URL"])
+    engine = create_engine(os.environ["DB_URL_TEST"])
     yield engine
     engine.dispose()
