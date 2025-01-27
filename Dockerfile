@@ -21,12 +21,6 @@ WORKDIR /app
 # Copy the application code
 COPY . /app
 
-#RUN apt-get install -y python3.10-venv && \
-#    python3.10 -m venv bt_venv
-#
-#RUN bash -c "source bt_venv/bin/activate" && \
-#    bt_venv/bin/pip install -r requirements.txt
-
 RUN python3.10 -m ensurepip --upgrade
 RUN python3.10 -m pip install --upgrade pip
 
