@@ -4,6 +4,8 @@ services:
       context: .
     env_file:
       - .env.validator
+    environment:
+      POSTGRES_HOST: postgres
     volumes:
       - ${HOME}/.bittensor:/root/.bittensor
     depends_on:
