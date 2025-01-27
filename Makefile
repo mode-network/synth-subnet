@@ -19,7 +19,7 @@ ewma_half_life_days = 1.0
 ewma_cutoff_days = 2
 
 # Python virtual environment
-venv_python=bt_venv/bin/python
+venv_python=bt_venv/bin/python3
 
 
 # Commands
