@@ -27,7 +27,7 @@ metagraph:
 	btcli subnet metagraph --subtensor.network $(network) --netuid $(netuid)
 
 validator:
-	python ./neurons/validator.py \
+	pm2 start -name validator -- ./neurons/validator.py \
 		--wallet.name $(validator_coldkey_name) \
 		--wallet.hotkey $(validator_hotkey_name) \
 		--subtensor.network $(network) \

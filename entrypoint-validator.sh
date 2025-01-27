@@ -1,7 +1,7 @@
 #!/bin/bash
 
-network=test
-netuid=247
+network=finney
+netuid=50
 
 vpermit_tao_limit=30000
 
