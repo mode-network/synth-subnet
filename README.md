@@ -62,7 +62,7 @@ Validators score miners on short-term and long-term prediction accuracy, with re
 <div align="center">
     <img
         alt="Overview diagram of the synth subnet"
-        src="docs/images/synth_diagram@800x450.png"
+        src="docs/images/synth_diagram@1920x1080.png"
     >
 </div>
 
