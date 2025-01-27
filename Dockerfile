@@ -30,4 +30,5 @@ RUN bash -c "source bt_venv/bin/activate" && \
 ENV PYTHONPATH="."
 
 # Run the application
-CMD ["sh", "-c", "source bt_venv/bin/activate && make validator"]
+RUN chmod +x entrypoint-validator.sh
+ENTRYPOINT ["entrypoint-validator.sh"]
