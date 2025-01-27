@@ -31,4 +31,4 @@ ENV PYTHONPATH="."
 
 # Run the application
 RUN chmod +x entrypoint-validator.sh
-ENTRYPOINT ["entrypoint-validator.sh"]
+ENTRYPOINT ["./entrypoint-validator.sh"]
