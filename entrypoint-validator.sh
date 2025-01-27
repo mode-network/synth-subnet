@@ -3,6 +3,8 @@
 network=test
 netuid=247
 
+vpermit_tao_limit=30000
+
 logging_level=debug
 validator_coldkey_name=validator-base
 validator_hotkey_name=default
@@ -21,4 +23,5 @@ python3.10 ./neurons/validator.py \
 		--neuron.axon_off true \
 		--ewma.alpha $ewma_alpha \
 		--ewma.half_life_days $ewma_half_life_days \
-		--ewma.cutoff_days $ewma_cutoff_days
+		--ewma.cutoff_days $ewma_cutoff_days \
+		--neuron.vpermit_tao_limit $vpermit_tao_limit
