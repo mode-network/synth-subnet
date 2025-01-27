@@ -27,7 +27,6 @@ metagraph:
 	btcli subnet metagraph --subtensor.network $(network) --netuid $(netuid)
 
 validator:
-	source bt_venv/bin/activate; \
 	python ./neurons/validator.py \
 		--wallet.name $(validator_coldkey_name) \
 		--wallet.hotkey $(validator_hotkey_name) \

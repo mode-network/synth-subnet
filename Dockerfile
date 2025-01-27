@@ -27,15 +27,7 @@ RUN apt-get install -y python3.10-venv && \
 RUN bash -c "source bt_venv/bin/activate" && \
     bt_venv/bin/pip install -r requirements.txt
 
-RUN echo "Listing bt_venv/bin/ directory:" && \
-  pwd
-
-RUN echo "Listing bt_venv/bin/ directory:" && \
-  ls -l bt_venv/bin/
-
-RUN pwd  # Check the current directory
-
 ENV PYTHONPATH="."
 
 # Run the application
-CMD ["make", "validator"]
+CMD ["sh", "-c", "source bt_venv/bin/activate && make validator"]
