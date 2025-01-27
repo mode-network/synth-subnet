@@ -11,15 +11,13 @@ ewma_alpha=2.0
 ewma_half_life_days=1.0
 ewma_cutoff_days=2
 
-ls -la /root/.bittensor/wallets
-ls -la /root/.bittensor/wallets/validator-base/hotkeys
-
 python3.10 ./neurons/validator.py \
 		--wallet.name $validator_coldkey_name \
 		--wallet.hotkey $validator_hotkey_name \
 		--subtensor.network $network \
 		--netuid $netuid \
 		--logging.logging_level \
+		--logging.trace \
 		--neuron.axon_off true \
 		--ewma.alpha $ewma_alpha \
 		--ewma.half_life_days $ewma_half_life_days \
