@@ -13,7 +13,9 @@ ewma_cutoff_days=2
 
 source bt_venv/bin/activate
 
-python ./neurons/validator.py \
+ls -la
+
+bt_venv/bin/python ./neurons/validator.py \
 		--wallet.name $validator_coldkey_name \
 		--wallet.hotkey validator_hotkey_name \
 		--subtensor.network network \
