@@ -3,27 +3,28 @@ import requests
 from synth.utils.helpers import from_iso_to_unix_time
 from datetime import datetime, timezone
 
-
 class PriceDataProvider:
     BASE_URL = "https://benchmarks.pyth.network/v1/shims/tradingview/history"
-
+    DEFAULT_TIME_INTERVAL = 5 # in seconds
+    DEFAULT_TIME_LENGTH = 86400 # 24 hours in seconds
     TOKEN_MAP = {"BTC": "Crypto.BTC/USD", "ETH": "Crypto.ETH/USD"}
-
-    one_day_seconds = 24 * 60 * 60
 
     def __init__(self, token):
         self.token = self._get_token_mapping(token)
 
-    def fetch_data(self, time_point: str):
+    def fetch_data(self, iso_start_time: str, time_length=None, time_interval=None):
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
 
+        :param iso_start_time: The time, in ISO 8601 format, to start fetch the data from.
+        :param time_length: The length of time, in seconds, to fetch the data to. Defaults to 24 hours (in seconds).
+        :param time_interval: An interval, in seconds, between each price point. Defaults to 5 seconds.
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        end_time = from_iso_to_unix_time(time_point)
-        start_time = end_time - self.one_day_seconds
+        end_time = from_iso_to_unix_time(iso_start_time)
+        start_time = end_time - (time_length if time_length and time_length > 0 else PriceDataProvider.DEFAULT_TIME_LENGTH)
 
         params = {
             "symbol": self.token,
@@ -36,12 +37,12 @@ class PriceDataProvider:
         response.raise_for_status()
 
         data = response.json()
-        transformed_data = self._transform_data(data)
+        transformed_data = self._transform_data(data, time_interval)
 
         return transformed_data
 
     @staticmethod
-    def _transform_data(data):
+    def _transform_data(data, time_interval=None):
         if data is None or len(data) == 0:
             return []
 
@@ -55,7 +56,7 @@ class PriceDataProvider:
                 ).isoformat(),
                 "price": float(close_prices[i]),
             }
-            for i in range(len(timestamps) - 1, -1, -5)
+            for i in range(len(timestamps) - 1, -1, -(time_interval if time_interval and time_interval > 0 else PriceDataProvider.DEFAULT_TIME_INTERVAL))
         ][::-1]
 
         return transformed_data
