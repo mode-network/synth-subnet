@@ -240,6 +240,20 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
+        "--neuron.price_data_interval",
+        type=int,
+        help="A non-negative time interval, in seconds, between each price point. Defaults to 5 seconds.",
+        default=5,
+    )
+
+    parser.add_argument(
+        "--neuron.price_data_length",
+        type=int,
+        help="A non-negative time length period, in seconds, of the price data to fetch. Defaults to 24 hours.",
+        default=86400,
+    )
+
+    parser.add_argument(
         "--wandb.enabled",
         type=bool,
         help="Boolean toggle for wandb integration",

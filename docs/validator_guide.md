@@ -23,6 +23,8 @@
     - [`--neuron.moving_average_alpha FLOAT`](#--neuronmoving_average_alpha-float)
     - [`--neuron.name TEXT`](#--neuronname-text)
     - [`--neuron.num_concurrent_forwards INTEGER`](#--neuronnum_concurrent_forwards-integer)
+    - [`--neuron.price_data_interval INTEGER`](#--neuronprice_data_interval-integer)
+    - [`--neuron.price_data_length INTEGER`](#--neuronprice_data_length-integer)
     - [`--neuron.sample_size INTEGER`](#--neuronsample_size-integer)
     - [`--neuron.timeout INTEGER`](#--neurontimeout-integer)
     - [`--neuron.vpermit_tao_limit INTEGER`](#--neuronvpermit_tao_limit-integer)
@@ -657,6 +659,70 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 ```shell
 pm2 start validator.config.js -- --neuron.num_concurrent_forwards 1
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### `--neuron.price_data_interval INTEGER`
+
+A non-negative time interval, in seconds, between each price point. Defaults to 5 seconds.
+
+Default: `5`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: 'validator',
+      interpreter: 'python3',
+      script: './neurons/validator.py',
+      args: '--neuron.price_data_interval 5',
+      env: {
+        PYTHONPATH: '.'
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+```shell
+pm2 start validator.config.js -- --neuron.price_data_interval 5
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### `--neuron.price_data_length INTEGER`
+
+A non-negative time length period, in seconds, of the price data to fetch. Defaults to 24 hours.
+
+Default: `86400`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: 'validator',
+      interpreter: 'python3',
+      script: './neurons/validator.py',
+      args: '--neuron.price_data_length 86400',
+      env: {
+        PYTHONPATH: '.'
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+```shell
+pm2 start validator.config.js -- --neuron.price_data_length 86400
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
