@@ -31,4 +31,4 @@ python3.10 ./neurons/validator.py \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
 		--wandb.enabled $wandb_enabled \
 		--wandb.project_name $wandb_project_name \
-		--wandb.entity $my_wandb_team
+		--wandb.entity $wandb_entity
