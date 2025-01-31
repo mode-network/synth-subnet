@@ -3,10 +3,11 @@ import requests
 from synth.utils.helpers import from_iso_to_unix_time
 from datetime import datetime, timezone
 
+
 class PriceDataProvider:
     BASE_URL = "https://benchmarks.pyth.network/v1/shims/tradingview/history"
-    DEFAULT_TIME_INTERVAL = 5 # in seconds
-    DEFAULT_TIME_LENGTH = 86400 # 24 hours in seconds
+    DEFAULT_TIME_INTERVAL = 5  # in seconds
+    DEFAULT_TIME_LENGTH = 86400  # 24 hours in seconds
     TOKEN_MAP = {"BTC": "Crypto.BTC/USD", "ETH": "Crypto.ETH/USD"}
 
     def __init__(self, token, time_length=None, time_interval=None):
@@ -17,8 +18,16 @@ class PriceDataProvider:
         :param time_length: A time length period, in seconds, of the price data to fetch. Defaults to 24 hours (in seconds).
         :param time_interval: A time interval, in seconds, between each price point. Defaults to 5 seconds.
         """
-        self.time_length = (time_length if time_length and time_length > 0 else PriceDataProvider.DEFAULT_TIME_LENGTH)
-        self.time_interval = (time_interval if time_interval and time_interval > 0 else PriceDataProvider.DEFAULT_TIME_INTERVAL)
+        self.time_length = (
+            time_length
+            if time_length and time_length > 0
+            else PriceDataProvider.DEFAULT_TIME_LENGTH
+        )
+        self.time_interval = (
+            time_interval
+            if time_interval and time_interval > 0
+            else PriceDataProvider.DEFAULT_TIME_INTERVAL
+        )
         self.token = self._get_token_mapping(token)
 
     def fetch_data(self, iso_start_time: str):
@@ -63,7 +72,15 @@ class PriceDataProvider:
                 ).isoformat(),
                 "price": float(close_prices[i]),
             }
-            for i in range(len(timestamps) - 1, -1, -(time_interval if time_interval and time_interval > 0 else PriceDataProvider.DEFAULT_TIME_INTERVAL))
+            for i in range(
+                len(timestamps) - 1,
+                -1,
+                -(
+                    time_interval
+                    if time_interval and time_interval > 0
+                    else PriceDataProvider.DEFAULT_TIME_INTERVAL
+                ),
+            )
         ][::-1]
 
         return transformed_data
