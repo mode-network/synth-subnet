@@ -93,9 +93,7 @@ class TestCalculateCrps(unittest.TestCase):
             [10000, 70000, 50000],
             [90000, 70000, 50000],
         ]
-        real_price_path = [
-            105165.69445825, 105016.21888945, 105066.94377502
-        ]
+        real_price_path = [105165.69445825, 105016.21888945, 105066.94377502]
 
         sum_all_scores, _ = calculate_crps_for_miner(
             np.array(predictions_path),
