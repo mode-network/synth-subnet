@@ -52,7 +52,11 @@ class Validator(BaseValidatorNeuron):
         self.load_state()
 
         self.miner_data_handler = MinerDataHandler()
-        self.price_data_provider = PriceDataProvider("BTC")
+        self.price_data_provider = PriceDataProvider(
+            "BTC",
+            self.config.neuron.price_data_length,
+            self.config.neuron.price_data_interval,
+        )
 
         # TODO(developer): Anything specific to your use case you can do here
 
