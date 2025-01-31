@@ -9,22 +9,29 @@ class PriceDataProvider:
     DEFAULT_TIME_LENGTH = 86400 # 24 hours in seconds
     TOKEN_MAP = {"BTC": "Crypto.BTC/USD", "ETH": "Crypto.ETH/USD"}
 
-    def __init__(self, token):
+    def __init__(self, token, time_length=None, time_interval=None):
+        """
+        Initializes the price data provider.
+
+        :param token: The symbol of the token to use. E.g. `BTC`.
+        :param time_length: A time length period, in seconds, of the price data to fetch. Defaults to 24 hours (in seconds).
+        :param time_interval: A time interval, in seconds, between each price point. Defaults to 5 seconds.
+        """
+        self.time_length = (time_length if time_length and time_length > 0 else PriceDataProvider.DEFAULT_TIME_LENGTH)
+        self.time_interval = (time_interval if time_interval and time_interval > 0 else PriceDataProvider.DEFAULT_TIME_INTERVAL)
         self.token = self._get_token_mapping(token)
 
-    def fetch_data(self, iso_start_time: str, time_length=None, time_interval=None):
+    def fetch_data(self, iso_start_time: str):
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
 
         :param iso_start_time: The time, in ISO 8601 format, to start fetch the data from.
-        :param time_length: The length of time, in seconds, to fetch the data to. Defaults to 24 hours (in seconds).
-        :param time_interval: An interval, in seconds, between each price point. Defaults to 5 seconds.
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
         end_time = from_iso_to_unix_time(iso_start_time)
-        start_time = end_time - (time_length if time_length and time_length > 0 else PriceDataProvider.DEFAULT_TIME_LENGTH)
+        start_time = end_time - self.time_length
 
         params = {
             "symbol": self.token,
@@ -37,7 +44,7 @@ class PriceDataProvider:
         response.raise_for_status()
 
         data = response.json()
-        transformed_data = self._transform_data(data, time_interval)
+        transformed_data = self._transform_data(data, self.time_interval)
 
         return transformed_data
 

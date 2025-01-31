@@ -5,7 +5,6 @@ from synth.validator.price_data_provider import PriceDataProvider
 
 class TestPriceDataProvider(unittest.TestCase):
     def setUp(self):
-        # self.dataProvider = PriceDataProvider("BTC")
         self.dataProvider = PriceDataProvider("BTC")
 
     def tearDown(self):
