@@ -697,7 +697,7 @@ pm2 start validator.config.js -- --neuron.price_data_interval 5
 
 #### `--neuron.price_data_length INTEGER`
 
-A non-negative time length period, in seconds, of the price data to fetch. Defaults to 24 hours.
+A non-negative time period, in seconds, of the price data to fetch. Defaults to 24 hours (in seconds).
 
 Default: `86400`
 
