@@ -1,7 +1,7 @@
 """add table for miner predictions
 
 Revision ID: 9f5c6d18896d
-Revises: 
+Revises:
 Create Date: 2024-12-07 20:10:49.131459
 
 """
