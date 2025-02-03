@@ -213,9 +213,14 @@ def _calculate_rewards_and_update_scores(
     # get latest prediction request from validator
     # for which we already have real prices data,
     # i.e. (start_time + time_length) < scored_time
+
+    bt.logging.info(f"In calculate rewards and update scores")
+
     validator_request_id = miner_data_handler.get_latest_prediction_request(
         scored_time, simulation_input
     )
+
+    bt.logging.info(f"In calculate rewards and update scores: {validator_request_id}")
 
     if validator_request_id is None:
         return False
