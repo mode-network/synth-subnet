@@ -83,7 +83,7 @@ def reward(
 
     try:
         score, detailed_crps_data = calculate_crps_for_miner(
-            np.array(predictions_path),
+            np.array(predictions_path).astype(float),
             np.array(real_price_path),
             simulation_input.time_increment,
         )
@@ -170,6 +170,7 @@ def compute_softmax(score_values: np.ndarray) -> np.ndarray:
 
     # Compute softmax scores only for valid values
     exp_scores = np.exp(beta * score_values[mask])
+    print("debug 173", score_values[mask])
     softmax_scores_valid = exp_scores / np.sum(exp_scores)
 
     # Create final softmax_scores with 0 where scores were -1
