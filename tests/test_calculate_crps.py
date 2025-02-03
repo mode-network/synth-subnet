@@ -102,3 +102,8 @@ class TestCalculateCrps(unittest.TestCase):
         )
 
         print(sum_all_scores)
+
+    def test_normalization(self):
+        result = compute_softmax(np.array([]))
+
+        self.assertEqual(result.tolist(), [])
