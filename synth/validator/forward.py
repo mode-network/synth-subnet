@@ -271,6 +271,7 @@ async def _query_available_miners_and_save_responses(
     )
 
     miner_predictions = {}
+    bt.logging.info("before enum responses")
     for i, synapse in enumerate(synapses):
         response = synapse.deserialize()
         process_time = synapse.dendrite.process_time
@@ -284,6 +285,7 @@ async def _query_available_miners_and_save_responses(
             process_time,
         )
 
+    bt.logging.info("after enum responses")
     if len(miner_predictions) > 0:
         miner_data_handler.save_responses(
             miner_predictions, simulation_input, request_time
