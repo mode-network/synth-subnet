@@ -81,11 +81,17 @@ def reward(
     ]
     real_price_path = [entry["price"] for entry in intersecting_real_price]
 
-    score, detailed_crps_data = calculate_crps_for_miner(
-        np.array(predictions_path),
-        np.array(real_price_path),
-        simulation_input.time_increment,
-    )
+    try:
+        score, detailed_crps_data = calculate_crps_for_miner(
+            np.array(predictions_path),
+            np.array(real_price_path),
+            simulation_input.time_increment,
+        )
+    except Exception as e:
+        bt.logging.error(
+            f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction_id}: {e}"
+        )
+        return -1, [], [], miner_prediction_id
 
     return score, detailed_crps_data, real_prices, miner_prediction_id
 
