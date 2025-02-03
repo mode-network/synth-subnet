@@ -100,6 +100,8 @@ async def forward(
         request_time=current_time,
     )
 
+    bt.logging.info("predictions saved")
+
     # ================= Step 3 ================= #
     # Calculate rewards based on historical predictions data
     # from the miner_predictions table:
@@ -287,6 +289,7 @@ async def _query_available_miners_and_save_responses(
 
     bt.logging.info("after enum responses")
     if len(miner_predictions) > 0:
+        bt.logging.info("going to save predictions")
         miner_data_handler.save_responses(
             miner_predictions, simulation_input, request_time
         )
