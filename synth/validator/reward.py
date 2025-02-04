@@ -170,7 +170,6 @@ def compute_softmax(score_values: np.ndarray) -> np.ndarray:
 
     # Compute softmax scores only for valid values
     exp_scores = np.exp(beta * score_values[mask])
-    print("debug 173", score_values[mask])
     softmax_scores_valid = exp_scores / np.sum(exp_scores)
 
     # Create final softmax_scores with 0 where scores were -1
