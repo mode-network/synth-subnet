@@ -34,6 +34,7 @@ def setup_events_logger(full_path, events_retention_size):
 
     return logger
 
+
 def setup_wandb_alert(wandb_run):
     class WandBHandler(logging.Handler):
         def emit(self, record):
