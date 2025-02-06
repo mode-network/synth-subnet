@@ -51,7 +51,9 @@ def setup_wandb_alert(wandb_run):
                         level=record.levelname,
                     )
             except Exception:
-                print("Error occurred while sending alert to wandb:", log_entry)
+                print(
+                    "Error occurred while sending alert to wandb:", log_entry
+                )
 
     wandb_handler = WandBHandler()
     wandb_handler.setLevel(logging.ERROR)
