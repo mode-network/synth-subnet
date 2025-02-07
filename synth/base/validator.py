@@ -164,6 +164,7 @@ class BaseValidatorNeuron(BaseNeuron):
             bt.logging.debug(
                 str(print_exception(type(err), err, err.__traceback__))
             )
+            bt.logging.debug("Scheduling validator to stop.")
             self.should_exit = True
 
     def run_in_background_thread(self):

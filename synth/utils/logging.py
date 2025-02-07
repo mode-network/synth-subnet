@@ -1,6 +1,9 @@
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+import bittensor as bt
+from traceback import print_exception
+
 
 EVENTS_LEVEL_NUM = 38
 DEFAULT_LOG_BACKUP_COUNT = 10
@@ -42,7 +45,8 @@ def setup_wandb_alert(wandb_run):
                 log_entry = self.format(record)
                 filter = "Perhaps it is too soon to set weights"
                 if filter in log_entry:
-                    print("Filtering out log entry:", log_entry)
+                    print(f"Filtering out log entry: ---{log_entry}---")
+                    bt.logging.debug(f"Filtering out log entry: ---{log_entry}---")
                     return
                 if record.levelno >= 40:
                     wandb_run.alert(
@@ -50,9 +54,10 @@ def setup_wandb_alert(wandb_run):
                         text=log_entry,
                         level=record.levelname,
                     )
-            except Exception:
-                print(
-                    "Error occurred while sending alert to wandb:", log_entry
+            except Exception as err:
+                bt.logging.warning(f"Error occurred while sending alert to wandb: ---{str(err)}--- then message: ---{log_entry}---")
+                bt.logging.warning(
+                    str(print_exception(type(err), err, err.__traceback__))
                 )
 
     wandb_handler = WandBHandler()
