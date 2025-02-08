@@ -44,18 +44,21 @@ def setup_wandb_alert(wandb_run):
             try:
                 log_entry = self.format(record)
                 filter = "Perhaps it is too soon to set weights"
-                if filter in log_entry:
-                    print(f"Filtering out log entry: ---{log_entry}---")
-                    bt.logging.debug(f"Filtering out log entry: ---{log_entry}---")
-                    return
                 if record.levelno >= 40:
+                    if filter in log_entry:
+                        bt.logging.debug(
+                            f"Filtering out log entry: ---{log_entry}---"
+                        )
+                        return
                     wandb_run.alert(
                         title="An error occurred",
                         text=log_entry,
                         level=record.levelname,
                     )
             except Exception as err:
-                bt.logging.warning(f"Error occurred while sending alert to wandb: ---{str(err)}--- then message: ---{log_entry}---")
+                bt.logging.warning(
+                    f"Error occurred while sending alert to wandb: ---{str(err)}--- then message: ---{log_entry}---"
+                )
                 bt.logging.warning(
                     str(print_exception(type(err), err, err.__traceback__))
                 )
