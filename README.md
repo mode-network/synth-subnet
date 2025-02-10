@@ -82,7 +82,7 @@ sequenceDiagram
 
     loop Every Hour
         Validator->>Miner: Request with input prompts
-        note left of Validator: asset, start_time, time_increment, etc.
+        note left of Validator: asset='BTC', start_time='2025-02-10T14:59:00', time_increment=300, etc.
         
         Miner-->>Validator: Prediction results
         note right of Miner: result: price prediction <br/> [[{"time": "2025-02-10T14:59:00+00:00", "price": 97352.60591372}, ...], ...]
