@@ -13,7 +13,7 @@ def generate_simulations(
     time_increment=300,
     time_length=86400,
     num_simulations=1,
-    sigma=0.01
+    sigma=0.01,
 ):
     """
     Generate simulated price paths.
