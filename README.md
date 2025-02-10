@@ -74,6 +74,27 @@ The Synth Subnet aims to become a key source of synthetic price data for AI Agen
 
 ### 1.2. Task Presented to the Miners
 
+```mermaid
+sequenceDiagram
+    participant Miner
+    participant Validator
+    participant Storage
+
+    loop Every Hour
+        Validator->>Miner: Request with input prompts
+        note left of Validator: asset, start_time, time_increment, etc.
+        
+        Miner-->>Validator: Prediction results
+        note right of Miner: result: price prediction <br/> [[{"time": ..., "price": ...}, ...], ...]
+
+        alt Validation error
+            Validator->>Storage: Save error
+        else No errors
+            Validator->>Storage: Save prediction results
+        end
+    end
+```
+
 Miners are tasked with providing probabilistic forecasts of a cryptocurrency's future price movements. Specifically, each miner is required to generate multiple simulated price paths for an asset, from the current time over specified time increments and time horizon. Initially all checking prompts will be to produce 100 simulated paths for the future price of bitcoin at 5-minute time increments for the next 24 hours. 
 
 Whereas other subnets ask miners to predict single values for future prices, we’re interested in the miners correctly quantifying uncertainty. We want their price paths to represent their view of the probability distribution of the future price, and we want their paths to encapsulate realistic price dynamics, such as volatility clustering and skewed fat tailed price change distributions. Subsequently we’ll expand to requesting forecasts for multiple assets, where modelling the correlations between the asset prices will be essential.
