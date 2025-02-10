@@ -1,0 +1,22 @@
+# Ignore all .git files and directories
+.git/
+
+# Ignore node_modules directory
+node_modules/
+
+# Ignore all log files
+*.log
+
+# Ignore any temporary or backup files
+*~   # files ending with ~
+*.bak # files ending with .bak
+
+# Ignore Dockerfile itself (if not required)
+Dockerfile
+
+# Ignore any local configuration files
+*.env
+
+# Ignore specific directories or files
+tests/
+docs/

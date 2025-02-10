@@ -142,9 +142,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--axon.port 8091',
       env: {
         PYTHONPATH: '.'
@@ -174,9 +174,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--ewma.alpha 1.0',
       env: {
         PYTHONPATH: '.'
@@ -206,9 +206,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--ewma.cutoff_days 1',
       env: {
         PYTHONPATH: '.'
@@ -238,9 +238,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--ewma.half_life_days 2.0',
       env: {
         PYTHONPATH: '.'
@@ -268,9 +268,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--logging.debug',
       env: {
         PYTHONPATH: '.'
@@ -298,9 +298,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--logging.info',
       env: {
         PYTHONPATH: '.'
@@ -328,9 +328,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--logging.trace',
       env: {
         PYTHONPATH: '.'
@@ -358,9 +358,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--netuid 247',
       env: {
         PYTHONPATH: '.'
@@ -390,9 +390,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.axon_off true',
       env: {
         PYTHONPATH: '.'
@@ -420,9 +420,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.device cuda',
       env: {
         PYTHONPATH: '.'
@@ -452,9 +452,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.dont_save_events true',
       env: {
         PYTHONPATH: '.'
@@ -484,9 +484,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.disable_set_weights true',
       env: {
         PYTHONPATH: '.'
@@ -514,9 +514,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.epoch_length 100',
       env: {
         PYTHONPATH: '.'
@@ -546,9 +546,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.events_retention_size 2147483648',
       env: {
         PYTHONPATH: '.'
@@ -578,9 +578,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.moving_average_alpha 0.3',
       env: {
         PYTHONPATH: '.'
@@ -601,7 +601,7 @@ pm2 start validator.config.js -- --neuron.moving_average_alpha 0.3
 
 Trials for this neuron go in neuron.root / (wallet_cold - wallet_hot) / neuron.name.
 
-Default: `miner`
+Default: `validator`
 
 Example:
 
@@ -610,10 +610,10 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--neuron.name miner',
+      script: './neurons/validator.py',
+      args: '--neuron.name validator',
       env: {
         PYTHONPATH: '.'
       },
@@ -624,7 +624,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start validator.config.js -- --neuron.name miner
+pm2 start validator.config.js -- --neuron.name validator
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -642,9 +642,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.num_concurrent_forwards 1',
       env: {
         PYTHONPATH: '.'
@@ -663,7 +663,7 @@ pm2 start validator.config.js -- --neuron.num_concurrent_forwards 1
 
 #### `--neuron.sample_size INTEGER`
 
-The number of miners to query in a single step.
+The number of validators to query in a single step.
 
 Default: `50`
 
@@ -674,9 +674,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.sample_size 50',
       env: {
         PYTHONPATH: '.'
@@ -695,7 +695,7 @@ pm2 start validator.config.js -- --neuron.sample_size 50
 
 #### `--neuron.timeout INTEGER`
 
-The maximum timeout in seconds of the miner neuron response, (e.g. 120).
+The maximum timeout in seconds of the validator neuron response, (e.g. 120).
 
 Default: `-`
 
@@ -706,9 +706,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.timeout 120',
       env: {
         PYTHONPATH: '.'
@@ -727,7 +727,7 @@ pm2 start validator.config.js -- --neuron.timeout 120
 
 #### `--neuron.vpermit_tao_limit INTEGER`
 
-The maximum number of TAO allowed that is allowed for the validator to process miner response, (e.g. 1000).
+The maximum number of TAO allowed that is allowed for the validator to process validator response, (e.g. 1000).
 
 Default: `4096`
 
@@ -738,9 +738,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--neuron.vpermit_tao_limit 1000',
       env: {
         PYTHONPATH: '.'
@@ -768,9 +768,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--wallet.hotkey default',
       env: {
         PYTHONPATH: '.'
@@ -798,10 +798,10 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--wallet.name miner',
+      script: './neurons/validator.py',
+      args: '--wallet.name validator',
       env: {
         PYTHONPATH: '.'
       },
@@ -812,7 +812,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start validator.config.js -- --wallet.name miner
+pm2 start validator.config.js -- --wallet.name validator
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -832,9 +832,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--wandb.enabled true',
       env: {
         PYTHONPATH: '.'
@@ -864,9 +864,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--wandb.entity mode-synth',
       env: {
         PYTHONPATH: '.'
@@ -896,9 +896,9 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
+      name: 'validator',
       interpreter: 'python3',
-      script: './neurons/miner.py',
+      script: './neurons/validator.py',
       args: '--wandb.project_name sn247-validators',
       env: {
         PYTHONPATH: '.'

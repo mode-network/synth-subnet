@@ -97,13 +97,11 @@ class BaseValidatorNeuron(BaseNeuron):
                 )
             except Exception as e:
                 bt.logging.error(f"Failed to serve Axon with exception: {e}")
-                pass
 
         except Exception as e:
             bt.logging.error(
                 f"Failed to create Axon initialize with exception: {e}"
             )
-            pass
 
     async def concurrent_forward(self):
         coroutines = [
@@ -166,6 +164,7 @@ class BaseValidatorNeuron(BaseNeuron):
             bt.logging.debug(
                 str(print_exception(type(err), err, err.__traceback__))
             )
+            self.should_exit = True
 
     def run_in_background_thread(self):
         """
@@ -208,12 +207,7 @@ class BaseValidatorNeuron(BaseNeuron):
             traceback: A traceback object encoding the stack trace.
                        None if the context was exited without an exception.
         """
-        if self.is_running:
-            bt.logging.debug("Stopping validator in background thread.")
-            self.should_exit = True
-            self.thread.join(5)
-            self.is_running = False
-            bt.logging.debug("Stopped")
+        self.stop_run_thread()
 
     def set_weights(self):
         """

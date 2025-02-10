@@ -1,0 +1,45 @@
+services:
+  app:
+    build:
+      context: .
+    env_file:
+      - .env.validator
+    environment:
+      POSTGRES_HOST: postgres
+    volumes:
+      - $HOME/.bittensor:/root/.bittensor
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrations
+    env_file:
+      - .env.validator
+    environment:
+      POSTGRES_HOST: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    container_name: postgres
+    image: postgres:15.8
+    env_file:
+      - .env.validator
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-validator-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-validator-volume:

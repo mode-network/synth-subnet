@@ -19,8 +19,14 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+# Get the individual environment variables
+if os.getenv('DB_URL_TEST') is not None:
+    db_url = os.getenv('DB_URL_TEST')
+else:
+    db_url = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+
 # Get database URL from environment variable
-config.set_main_option('sqlalchemy.url', os.getenv('DB_URL'))
+config.set_main_option('sqlalchemy.url', db_url)
 
 # add your model's MetaData object here
 # for 'autogenerate' support

@@ -19,14 +19,15 @@ from sqlalchemy.dialects.postgresql import JSONB
 def get_database_url():
     """Returns the database URL from environment variables."""
     load_dotenv()
-    return os.getenv("DB_URL")
+    db_url = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+    return db_url
 
 
 def create_database_engine():
     """Creates and returns a new database engine."""
     database_url = get_database_url()
     if not database_url:
-        raise ValueError("DB_URL is not set in environment variables.")
+        raise ValueError("invalid postgres environment variables.")
     engine = create_engine(database_url)
     return engine
 

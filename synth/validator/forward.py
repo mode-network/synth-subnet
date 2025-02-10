@@ -156,6 +156,9 @@ async def forward(
     wandb_on = base_neuron.config.wandb.enabled
     _log_to_wandb(wandb_on, filtered_miner_uids, filtered_rewards)
 
+    base_neuron.resync_metagraph()
+    base_neuron.set_weights()
+
     _wait_till_next_iteration()
 
 

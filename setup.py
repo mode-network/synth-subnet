@@ -55,7 +55,7 @@ with open(path.join(here, "README.md"), encoding="utf-8") as f:
 
 # loading version from setup.py
 with codecs.open(
-    os.path.join(here, "template/__init__.py"), encoding="utf-8"
+    os.path.join(here, "synth/__init__.py"), encoding="utf-8"
 ) as init_file:
     version_match = re.search(
         r"^__version__ = ['\"]([^'\"]*)['\"]", init_file.read(), re.M
@@ -68,7 +68,7 @@ setup(
     description="synth_subnet",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/mode-network/mode-subnet",
+    url="https://github.com/mode-network/synth-subnet",
     author="mode.network",
     packages=find_packages(),
     include_package_data=True,

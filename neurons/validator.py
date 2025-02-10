@@ -29,6 +29,7 @@ import wandb
 from synth.base.validator import BaseValidatorNeuron
 
 # Bittensor Validator Template:
+from synth.utils.logging import setup_wandb_alert
 from synth.validator import forward
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
@@ -73,7 +74,7 @@ class Validator(BaseValidatorNeuron):
                 "WANDB_API_KEY not found in environment variables."
             )
 
-        wandb.init(
+        run = wandb.init(
             project=f"{self.config.wandb.project_name}",
             mode=(
                 "disabled"
@@ -89,6 +90,9 @@ class Validator(BaseValidatorNeuron):
             dir=self.config.neuron.full_path,
             reinit=True,
         )
+        if self.config.wandb.enabled:
+            wandb_handler = setup_wandb_alert(run)
+            bt.logging._logger.addHandler(wandb_handler)
 
         bt.logging.info("calling forward()")
         return await forward(
@@ -99,6 +103,6 @@ class Validator(BaseValidatorNeuron):
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
     with Validator() as validator:
-        while True:
+        while not validator.should_exit:
             bt.logging.info(f"Validator running... {time.time()}")
             time.sleep(600)
