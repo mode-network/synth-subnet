@@ -169,20 +169,22 @@ The final score for a miner for a single checking prompt is the sum of these CRP
 
 ```mermaid
 sequenceDiagram
-    participant Validator
-    participant Storage
-    participant PricesProvider as Prices Provider
-    participant Bittensor
-
-    Validator->>Storage: Get prediction (at least 24 hours old)
-    Validator->>PricesProvider: Get real prices
-    Validator->>Validator: Calculate CRPS
-    Validator->>Validator: Normalize to calculate prompts_score
-    Validator->>Storage: Save prompts_score
-    Validator->>Storage: Get prompts_score for past days
-    Validator->>Validator: Calculate moving average (final weights)
-    Validator->>Storage: Save final weights
-    Validator->>Bittensor: Send final weights
+    loop Every Hour
+        participant Validator
+        participant Storage
+        participant PricesProvider as Prices Provider
+        participant Bittensor
+    
+        Validator->>Storage: Get prediction (at least 24 hours old)
+        Validator->>PricesProvider: Get real prices
+        Validator->>Validator: Calculate CRPS
+        Validator->>Validator: Normalize to calculate prompts_score
+        Validator->>Storage: Save prompts_score
+        Validator->>Storage: Get prompts_score for past days
+        Validator->>Validator: Calculate moving average (final weights)
+        Validator->>Storage: Save final weights
+        Validator->>Bittensor: Send final weights
+    end
 ```
 
 #### Normalization Using Softmax Function
