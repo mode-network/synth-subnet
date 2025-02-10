@@ -167,6 +167,24 @@ The final score for a miner for a single checking prompt is the sum of these CRP
 
 ### 1.4. Calculation of Leaderboard Score
 
+```mermaid
+sequenceDiagram
+    participant Validator
+    participant Storage
+    participant PricesProvider as Prices Provider
+    participant Bittensor
+
+    Validator->>Storage: Get prediction (at least 24 hours old)
+    Validator->>PricesProvider: Get real prices
+    Validator->>Validator: Calculate CRPS
+    Validator->>Validator: Normalize to calculate prompts_score
+    Validator->>Storage: Save prompts_score
+    Validator->>Storage: Get prompts_score for past days
+    Validator->>Validator: Calculate moving average (final weights)
+    Validator->>Storage: Save final weights
+    Validator->>Bittensor: Send final weights
+```
+
 #### Normalization Using Softmax Function
 
 After calculating the sum of the CRPS values, the validator normalizes these scores across all miners who submitted correctly formatted forecasts prior to the start time. The normalized score $S_i$ for miner $i$ is calculated as:
