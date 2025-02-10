@@ -86,6 +86,8 @@ sequenceDiagram
         
         Miner-->>Validator: Prediction results
         note right of Miner: result: price prediction <br/> [[{"time": "2025-02-10T14:59:00+00:00", "price": 97352.60591372}, ...], ...]
+        
+        Validator->>Validator: Run "prediction results" validation function
 
         alt Validation error
             Validator->>Storage: Save error
