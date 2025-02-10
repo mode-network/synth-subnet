@@ -36,12 +36,16 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
     for interval_name, interval_seconds in scoring_intervals.items():
         interval_steps = get_interval_steps(interval_seconds, time_increment)
 
-        # Calculate price changes over intervals 
+        # Calculate price changes over intervals
         simulated_changes = calculate_price_changes_over_intervals(
-            simulation_runs, interval_steps, absolute_price=interval_name.endswith('_abs')
+            simulation_runs,
+            interval_steps,
+            absolute_price=interval_name.endswith("_abs"),
         )
         real_changes = calculate_price_changes_over_intervals(
-            real_price_path.reshape(1, -1), interval_steps, absolute_price=interval_name.endswith('_abs')
+            real_price_path.reshape(1, -1),
+            interval_steps,
+            absolute_price=interval_name.endswith("_abs"),
         )[0]
 
         # Calculate CRPS over intervals
@@ -83,7 +87,9 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
     return sum_all_scores, detailed_crps_data
 
 
-def calculate_price_changes_over_intervals(price_paths, interval_steps, absolute_price=False):
+def calculate_price_changes_over_intervals(
+    price_paths, interval_steps, absolute_price=False
+):
     """
     Calculate price changes over specified intervals.
 
@@ -99,6 +105,6 @@ def calculate_price_changes_over_intervals(price_paths, interval_steps, absolute
     interval_prices = price_paths[:, ::interval_steps]
     # Calculate price changes over intervals
     if absolute_price:
-        return interval_prices[:,1:]
-    
+        return interval_prices[:, 1:]
+
     return np.diff(interval_prices, axis=1)
