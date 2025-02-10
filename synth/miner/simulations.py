@@ -13,6 +13,7 @@ def generate_simulations(
     time_increment=300,
     time_length=86400,
     num_simulations=1,
+    sigma=0.01
 ):
     """
     Generate simulated price paths.
@@ -23,6 +24,7 @@ def generate_simulations(
         time_increment (int): Time increment in seconds.
         time_length (int): Total time length in seconds.
         num_simulations (int): Number of simulation runs.
+        sigma (float): Standard deviation of the simulated price path.
 
     Returns:
         numpy.ndarray: Simulated price paths.
@@ -33,9 +35,6 @@ def generate_simulations(
     current_price = get_asset_price(asset)
     if current_price is None:
         raise ValueError(f"Failed to fetch current price for asset: {asset}")
-
-    # Standard deviation of the simulated price path
-    sigma = 0.01
 
     simulations = simulate_crypto_price_paths(
         current_price=current_price,

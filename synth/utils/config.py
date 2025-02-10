@@ -176,6 +176,13 @@ def add_miner_args(cls, parser):
         help="Wandb entity to log to.",
     )
 
+    parser.add_argument(
+        "--simulation.sigma",
+        type=float,
+        default=0.01,
+        help="Standard deviation of the simulated price path.",
+    )
+
 
 def add_validator_args(cls, parser: argparse.ArgumentParser):
     """Add validator specific arguments to the parser."""
