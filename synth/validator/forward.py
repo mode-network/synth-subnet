@@ -174,26 +174,22 @@ def _send_weights_to_bittensor_and_update_weights_history(
     base_neuron.resync_metagraph()
     result, msg = base_neuron.set_weights()
 
-    if result is True:
+    if result:
         bt.logging.info("set_weights on chain successfully!")
-        miner_data_handler.update_weights_history(
-            miner_uids=miner_uids,
-            miner_weights=miner_weights,
-            update_result="SUCCESS",
-            scored_time=scored_time,
-        )
+        msg = "SUCCESS"
     else:
         rate_limit_message = "Perhaps it is too soon to set weights"
         if rate_limit_message in msg:
             bt.logging.warning("set_weights failed", msg)
         else:
             bt.logging.error("set_weights failed", msg)
-        miner_data_handler.update_weights_history(
-            miner_uids=miner_uids,
-            miner_weights=miner_weights,
-            update_result=msg,
-            scored_time=scored_time,
-        )
+
+    miner_data_handler.update_weights_history(
+        miner_uids=miner_uids,
+        miner_weights=miner_weights,
+        update_result=msg,
+        scored_time=scored_time,
+    )
 
 
 def _wait_till_next_iteration():
