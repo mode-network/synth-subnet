@@ -236,3 +236,30 @@ class MinerDataHandler:
             bt.logging.error(
                 f"in update_miner_rewards (got an exception): {e}"
             )
+
+    def update_weights_history(
+        self,
+        miner_uids: list[int],
+        miner_weights: list[float],
+        update_result: str,
+        scored_time: str,
+    ):
+        update_weights_rows = {
+            "miner_uids": miner_uids,
+            "miner_weights": miner_weights,
+            "update_result": update_result,
+            "updated_at": scored_time,
+        }
+
+        try:
+            with self.engine.connect() as connection:
+                with connection.begin():  # Begin a transaction
+                    insert_stmt = miner_rewards.insert().values(
+                        update_weights_rows
+                    )
+                    connection.execute(insert_stmt)
+        except Exception as e:
+            connection.rollback()
+            bt.logging.error(
+                f"in update_weights_history (got an exception): {e}"
+            )

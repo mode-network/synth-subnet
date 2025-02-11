@@ -151,15 +151,49 @@ async def forward(
     # Send rewards calculated in the previous step
     # into bittensor consensus calculation
     # ========================================== #
-    base_neuron.update_scores(np.array(filtered_rewards), filtered_miner_uids)
 
-    wandb_on = base_neuron.config.wandb.enabled
-    _log_to_wandb(wandb_on, filtered_miner_uids, filtered_rewards)
-
-    base_neuron.resync_metagraph()
-    base_neuron.set_weights()
+    _send_weights_to_bittensor_and_update_weights_history(
+        base_neuron=base_neuron,
+        miner_uids=filtered_miner_uids,
+        miner_weights=filtered_rewards,
+        miner_data_handler=miner_data_handler,
+        scored_time=scored_time,
+    )
 
     _wait_till_next_iteration()
+
+
+def _send_weights_to_bittensor_and_update_weights_history(
+    base_neuron, miner_uids, miner_weights, miner_data_handler, scored_time
+):
+    base_neuron.update_scores(np.array(miner_weights), miner_uids)
+
+    wandb_on = base_neuron.config.wandb.enabled
+    _log_to_wandb(wandb_on, miner_uids, miner_weights)
+
+    base_neuron.resync_metagraph()
+    result, msg = base_neuron.set_weights()
+
+    if result is True:
+        bt.logging.info("set_weights on chain successfully!")
+        miner_data_handler.update_weights_history(
+            miner_uids=miner_uids,
+            miner_weights=miner_weights,
+            update_result="SUCCESS",
+            scored_time=scored_time,
+        )
+    else:
+        rate_limit_message = "Perhaps it is too soon to set weights"
+        if rate_limit_message in msg:
+            bt.logging.warning("set_weights failed", msg)
+        else:
+            bt.logging.error("set_weights failed", msg)
+        miner_data_handler.update_weights_history(
+            miner_uids=miner_uids,
+            miner_weights=miner_weights,
+            update_result=msg,
+            scored_time=scored_time,
+        )
 
 
 def _wait_till_next_iteration():

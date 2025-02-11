@@ -108,3 +108,14 @@ metagraph_history = Table(
     Column("hotkey", String, nullable=True),
     Column("updated_at", DateTime(timezone=True), nullable=False),
 )
+
+# Define the table
+weights_update_history = Table(
+    "weights_update_history",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("miner_uids", JSON, nullable=False),
+    Column("miner_weights", JSON, nullable=False),
+    Column("update_result", String, nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+)
