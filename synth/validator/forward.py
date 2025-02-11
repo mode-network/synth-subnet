@@ -178,7 +178,7 @@ def _send_weights_to_bittensor_and_update_weights_history(
         bt.logging.info("set_weights on chain successfully!")
         msg = "SUCCESS"
     else:
-        rate_limit_message = "Perhaps it is too soon to set weights"
+        rate_limit_message = "Perhaps it is too soon to commit weights"
         if rate_limit_message in msg:
             bt.logging.warning("set_weights failed", msg)
         else:
