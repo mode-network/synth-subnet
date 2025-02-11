@@ -10,7 +10,8 @@ from synth.db.models import (
     validator_requests,
     metagraph_history,
     miner_rewards,
-    get_engine, weights_update_history,
+    get_engine,
+    weights_update_history,
 )
 from synth.simulation_input import SimulationInput
 from synth.validator import response_validation
