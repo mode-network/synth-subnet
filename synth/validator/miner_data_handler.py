@@ -10,7 +10,7 @@ from synth.db.models import (
     validator_requests,
     metagraph_history,
     miner_rewards,
-    get_engine,
+    get_engine, weights_update_history,
 )
 from synth.simulation_input import SimulationInput
 from synth.validator import response_validation
@@ -254,7 +254,7 @@ class MinerDataHandler:
         try:
             with self.engine.connect() as connection:
                 with connection.begin():  # Begin a transaction
-                    insert_stmt = miner_rewards.insert().values(
+                    insert_stmt = weights_update_history.insert().values(
                         update_weights_rows
                     )
                     connection.execute(insert_stmt)
