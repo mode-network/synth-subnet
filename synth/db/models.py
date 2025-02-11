@@ -28,7 +28,7 @@ def create_database_engine():
     database_url = get_database_url()
     if not database_url:
         raise ValueError("invalid postgres environment variables.")
-    engine = create_engine(database_url)
+    engine = create_engine(database_url, echo=False)
     return engine
 
 
