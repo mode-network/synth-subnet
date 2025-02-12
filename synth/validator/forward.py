@@ -31,6 +31,7 @@ from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
     timeout_from_start_time,
+    convert_list_elements_to_str,
 )
 from synth.utils.uids import check_uid_availability
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -172,7 +173,7 @@ def _send_weights_to_bittensor_and_update_weights_history(
     _log_to_wandb(wandb_on, miner_uids, miner_weights)
 
     base_neuron.resync_metagraph()
-    result, msg = base_neuron.set_weights()
+    result, msg, uint_uids, uint_weights = base_neuron.set_weights()
 
     if result:
         bt.logging.info("set_weights on chain successfully!")
@@ -187,6 +188,8 @@ def _send_weights_to_bittensor_and_update_weights_history(
     miner_data_handler.update_weights_history(
         miner_uids=miner_uids,
         miner_weights=miner_weights,
+        norm_miner_uids=convert_list_elements_to_str(uint_uids),
+        norm_miner_weights=convert_list_elements_to_str(uint_weights),
         update_result=msg,
         scored_time=scored_time,
     )

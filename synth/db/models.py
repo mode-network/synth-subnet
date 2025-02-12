@@ -30,6 +30,7 @@ def create_database_engine():
     if not database_url:
         raise ValueError("invalid postgres environment variables.")
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
     engine = create_engine(database_url, echo=False)
     return engine
 
@@ -118,6 +119,8 @@ weights_update_history = Table(
     Column("id", BigInteger, primary_key=True),
     Column("miner_uids", JSON, nullable=False),
     Column("miner_weights", JSON, nullable=False),
+    Column("norm_miner_uids", JSON, nullable=False),
+    Column("norm_miner_weights", JSON, nullable=False),
     Column("update_result", String, nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
 )

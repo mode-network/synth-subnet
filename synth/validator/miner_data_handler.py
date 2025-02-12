@@ -242,12 +242,16 @@ class MinerDataHandler:
         self,
         miner_uids: list[int],
         miner_weights: list[float],
+        norm_miner_uids: list[int],
+        norm_miner_weights: list[int],
         update_result: str,
         scored_time: str,
     ):
         update_weights_rows = {
             "miner_uids": miner_uids,
             "miner_weights": miner_weights,
+            "norm_miner_uids": norm_miner_uids,
+            "norm_miner_weights": norm_miner_weights,
             "update_result": update_result,
             "updated_at": scored_time,
         }

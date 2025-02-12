@@ -260,7 +260,7 @@ class BaseValidatorNeuron(BaseNeuron):
         bt.logging.debug("uint_uids", uint_uids)
 
         # Set the weights on chain via our subtensor connection.
-        return self.subtensor.set_weights(
+        result, msg = self.subtensor.set_weights(
             wallet=self.wallet,
             netuid=self.config.netuid,
             uids=uint_uids,
@@ -269,6 +269,8 @@ class BaseValidatorNeuron(BaseNeuron):
             wait_for_inclusion=False,
             version_key=self.spec_version,
         )
+
+        return result, msg, uint_uids, uint_weights
 
     def resync_metagraph(self):
         """Resyncs the metagraph and updates the hotkeys and moving averages based on the new metagraph."""
