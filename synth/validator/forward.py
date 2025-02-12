@@ -187,8 +187,8 @@ def _send_weights_to_bittensor_and_update_weights_history(
     miner_data_handler.update_weights_history(
         miner_uids=miner_uids,
         miner_weights=miner_weights,
-        norm_miner_uids=uint_uids,
-        norm_miner_weights=uint_weights,
+        norm_miner_uids=uint_uids.tolist(),
+        norm_miner_weights=uint_weights.tolist(),
         update_result=msg,
         scored_time=scored_time,
     )

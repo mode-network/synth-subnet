@@ -30,6 +30,7 @@ def create_database_engine():
     if not database_url:
         raise ValueError("invalid postgres environment variables.")
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
     engine = create_engine(database_url, echo=False)
     return engine
 
