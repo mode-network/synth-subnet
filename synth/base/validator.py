@@ -340,10 +340,10 @@ class BaseValidatorNeuron(BaseNeuron):
             )
 
         bt.logging.info(
-            f"moving average: {self.config.ewma.standard_ma_enabled}"
+            f"moving average: {self.config.ewma.standard_ma_disabled}"
         )
 
-        if self.config.ewma.standard_ma_enabled:
+        if not self.config.ewma.standard_ma_disabled:
             # Compute forward pass rewards, assumes uids are mutually exclusive.
             # shape: [ metagraph.n ]
             scattered_rewards: np.ndarray = np.zeros_like(self.scores)
