@@ -339,10 +339,6 @@ class BaseValidatorNeuron(BaseNeuron):
                 f"cannot be broadcast to uids array of shape {uids_array.shape}"
             )
 
-        bt.logging.info(
-            f"moving average: {self.config.ewma.standard_ma_disabled}"
-        )
-
         if not self.config.ewma.standard_ma_disabled:
             # Compute forward pass rewards, assumes uids are mutually exclusive.
             # shape: [ metagraph.n ]
