@@ -23,7 +23,6 @@ python3.10 ./neurons/validator.py \
 		--subtensor.network $network \
 		--netuid $netuid \
 		--logging.logging_level \
-		--logging.trace \
 		--neuron.axon_off true \
 		--ewma.alpha $ewma_alpha \
 		--ewma.half_life_days $ewma_half_life_days \
