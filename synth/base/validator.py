@@ -350,7 +350,7 @@ class BaseValidatorNeuron(BaseNeuron):
             # shape: [ metagraph.n ]
             alpha: float = self.config.neuron.moving_average_alpha
             self.scores: np.ndarray = (
-                    alpha * scattered_rewards + (1 - alpha) * self.scores
+                alpha * scattered_rewards + (1 - alpha) * self.scores
             )
         else:
             # Directly update the scores for the given uids.
