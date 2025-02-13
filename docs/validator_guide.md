@@ -849,6 +849,38 @@ Alternatively, you can add the args directly to the command:
 pm2 start validator.config.js -- --wandb.enabled true
 ```
 
+### 3.3. Moving average algorithm
+
+#### `--ewma.standard_ma_disabled`
+
+Boolean toggle for standard moving average algorithm.
+
+Default: `true`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: 'validator',
+      interpreter: 'python3',
+      script: './neurons/validator.py',
+      args: '--ewma.standard_ma_disabled',
+      env: {
+        PYTHONPATH: '.'
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+```shell
+pm2 start validator.config.js -- --ewma.standard_ma_disabled
+```
+
 <sup>[Back to top ^][table-of-contents]</sup>
 
 #### `--wandb.entity TEXT`

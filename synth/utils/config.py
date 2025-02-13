@@ -288,6 +288,13 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
         default=2,
     )
 
+    parser.add_argument(
+        "--ewma.standard_ma_disabled",
+        action="store_true",
+        help="Boolean toggle for standard moving average algorithm",
+        default=False,
+    )
+
 
 def config(cls):
     """
