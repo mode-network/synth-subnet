@@ -851,7 +851,7 @@ pm2 start validator.config.js -- --wandb.enabled true
 
 ### 3.3. Moving average algorithm
 
-#### `--neuron.moving_average_enabled BOOLEAN`
+#### `--ewma.standard_ma_enabled`
 
 Boolean toggle for standard moving average algorithm.
 
@@ -867,7 +867,7 @@ module.exports = {
       name: 'validator',
       interpreter: 'python3',
       script: './neurons/validator.py',
-      args: '--neuron.moving_average_enabled false',
+      args: '--ewma.standard_ma_enabled',
       env: {
         PYTHONPATH: '.'
       },
@@ -878,7 +878,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start validator.config.js -- --neuron.moving_average_enabled false
+pm2 start validator.config.js -- --ewma.standard_ma_enabled
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
