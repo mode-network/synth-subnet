@@ -230,14 +230,6 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
-        "--neuron.moving_average_enabled",
-        "--moving_average_enabled",
-        action="store_true",
-        help="Boolean toggle for standard moving average algorithm",
-        default=True,
-    )
-
-    parser.add_argument(
         "--neuron.axon_off",
         "--axon_off",
         action="store_true",
@@ -294,6 +286,13 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
         type=int,
         help="The number of days against which to run the moving average",
         default=2,
+    )
+
+    parser.add_argument(
+        "--ewma.standard_ma_enabled",
+        action="store_true",
+        help="Boolean toggle for standard moving average algorithm",
+        default=True,
     )
 
 
