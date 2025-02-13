@@ -231,7 +231,8 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
 
     parser.add_argument(
         "--neuron.moving_average_enabled",
-        type=bool,
+        "moving_average_enabled",
+        action="store_true",
         help="Boolean toggle for standard moving average algorithm",
         default=True,
     )
