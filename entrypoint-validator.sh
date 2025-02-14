@@ -5,7 +5,6 @@ netuid=50
 
 vpermit_tao_limit=30000
 
-logging_level=debug
 validator_coldkey_name=validator
 validator_hotkey_name=default
 
@@ -22,7 +21,7 @@ python3.10 ./neurons/validator.py \
 		--wallet.hotkey $validator_hotkey_name \
 		--subtensor.network $network \
 		--netuid $netuid \
-		--logging.logging_level \
+		--logging.debug \
 		--neuron.axon_off true \
 		--ewma.alpha $ewma_alpha \
 		--ewma.half_life_days $ewma_half_life_days \
