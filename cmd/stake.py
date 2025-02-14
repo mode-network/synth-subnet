@@ -1,9 +1,8 @@
 import asyncio
 import logging
 import math
-import os
-import random
 from typing import List, Dict, Tuple
+from traceback import print_exception
 
 import yaml
 import bittensor as bt
@@ -259,9 +258,7 @@ async def stake_to_best_subnet(wallet: bt.wallet, allowed_subnets: List[int],
             logger.info(f"Subnet {netuid} - Yield: {stats[netuid]['raw_yield']:.4f}, Boost: {stats[netuid]['boost']:.4f}, Score: {score:.4f}")
         
         best_subnet = max(valid_subnets, key=lambda x: scores[x])
-        worst_subnet = min(valid_subnets, key=lambda x: scores[x])
-        logger.info(f"Chosen best subnet: {best_subnet} (Score: {scores[best_subnet]:.4f})")
-        logger.info(f"Chosen worst subnet: {worst_subnet} (Score: {scores[worst_subnet]:.4f})")
+        logger.info(f"Staking into subnet: {best_subnet} (Score: {scores[best_subnet]:.4f})")
         
         # Stake into the best subnet.
         try:
@@ -275,43 +272,10 @@ async def stake_to_best_subnet(wallet: bt.wallet, allowed_subnets: List[int],
             )
             logger.info(f"Staked {amount_staked:.4f} TAO to subnet {best_subnet}")
             TOTAL_ALLOCATED += amount_staked
-        except Exception as e:
-            logger.error(f"Failed to stake on subnet {best_subnet}: {e}")
-        
-        # Unstake from the worst subnet.
-        stake_info_before = await sub.get_stake_for_coldkey_and_hotkey(
-            hotkey_ss58=validator,
-            coldkey_ss58=wallet.coldkey.ss58_address,
-            netuids=allowed_subnets
-        )
-        worst_stake_obj = stake_info_before.get(worst_subnet)
-        if worst_stake_obj is not None and worst_subnet in stats:
-            current_stake = float(worst_stake_obj.stake)
-            if current_stake > 0:
-                price_worst = float(stats[worst_subnet]["price"])
-                # Calculate stake units to remove so that removed value equals amount_unstaked TAO.
-                unstake_target = amount_unstaked / price_worst
-                unstake_amt = min(current_stake, unstake_target)
-                if unstake_amt > 0:
-                    try:
-                        await sub.unstake(
-                            wallet=wallet,
-                            hotkey_ss58=validator,
-                            netuid=worst_subnet,
-                            amount=bt.Balance.from_tao(unstake_amt),
-                            wait_for_inclusion=False,
-                            wait_for_finalization=False
-                        )
-                        logger.info(f"Unstaked {unstake_amt:.4f} stake units from subnet {worst_subnet} (approx. {amount_unstaked:.4f} TAO value)")
-                    except Exception as e:
-                        logger.error(f"Failed to unstake from subnet {worst_subnet}: {e}")
-                else:
-                    logger.info(f"Unstake amount computed as zero for worst subnet {worst_subnet}.")
-            else:
-                logger.info(f"No stake on worst subnet {worst_subnet} to unstake.")
-        else:
-            logger.info(f"No stake info for worst subnet {worst_subnet}; nothing to unstake.")
-        
+        except Exception as err:
+            print_exception(type(err), err, err.__traceback__)
+            logger.error(f"Failed to stake on subnet {best_subnet}: {err}")
+
         # Retrieve updated stake info.
         stake_info = await sub.get_stake_for_coldkey_and_hotkey(
             hotkey_ss58=validator,
@@ -341,7 +305,7 @@ async def main():
     weight_dict = compute_weights_from_ranks(ranks, ranking_beta)
     allowed_subnets = ranks
 
-    logger.info(f"Starting staking service with {amount_staked:.4f} TAO staked and {amount_unstaked:.4f} TAO unstaked per block.")
+    logger.info(f"Starting staking service with {amount_staked:.4f} TAO staked")
     logger.info(f"Allowed subnets (from ranking): {allowed_subnets}")
     logger.info(f"Computed weights: {weight_dict}")
     logger.info(f"Drive factor: {drive}")
