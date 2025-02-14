@@ -3,6 +3,7 @@ import logging
 import math
 from typing import List, Dict, Tuple
 from traceback import print_exception
+from os import environ
 
 import yaml
 import bittensor as bt
@@ -312,8 +313,10 @@ async def main():
 
     wallet = bt.wallet(name=wallet_name)
     wallet.create_if_non_existent()
+    env_var_name = f"BT_PW_{wallet.coldkey_file.path.replace('/', '_').replace('.', '_').upper()}"
+    logger.info(f"please set the environment variable: {env_var_name}")
+    environ[env_var_name] = environ["BT_PW"]
     wallet.unlock_coldkey()
-
     logger.info(f"Using wallet: {wallet.name}")
 
     while True:
@@ -330,5 +333,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         logger.info("Service stopped by user.")
     except Exception as e:
+        print_exception(type(e), e, e.__traceback__)
         logger.critical(f"Critical error: {e}")
-
