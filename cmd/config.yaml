@@ -1,0 +1,7 @@
+wallet: "default" # Replace with your wallet. 
+amount_staked: 0.01 # AMount staked per block
+amount_unstaked: 0.001 # Amount unstaked per block
+validator: "5F4tQyWrhfGVcNhoqeiNsR6KjD4wMZ2kfhLj4oHYuyHbZAc3" # Stake to OTF.
+ranks_file: "ranks.yaml" 
+ranking_beta: 0.25 # How steep your ranking is
+drive: 5.0 # How aggressive you stake into the higher ranked subnets.
