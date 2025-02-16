@@ -3,8 +3,9 @@ import logging
 import math
 from typing import List, Dict, Tuple
 from traceback import print_exception
-from os import environ
+import os
 
+from dotenv import load_dotenv
 import yaml
 import bittensor as bt
 from bittensor.core.async_subtensor import get_async_subtensor
@@ -286,13 +287,18 @@ async def stake_to_best_subnet(wallet: bt.wallet, allowed_subnets: List[int],
         balance = float(await sub.get_balance(address=wallet.coldkey.ss58_address))
         print_table_rich(stake_info, allowed_subnets, stats, rank_dict, balance)
         
-        logger.info("Waiting for the next block...")
-        await sub.wait_for_block()
+        # logger.info("Waiting for the next block...")
+        # await sub.wait_for_block()
+
+        logger.info("waiting for 1 minute")
+        await asyncio.sleep(60)
     finally:
         await sub.close()
 
 async def main():
     config = read_config()
+    load_dotenv()
+
     wallet_name = config["wallet"]
     amount_staked = config["amount_staked"]
     amount_unstaked = config["amount_unstaked"]
@@ -313,9 +319,7 @@ async def main():
 
     wallet = bt.wallet(name=wallet_name)
     wallet.create_if_non_existent()
-    env_var_name = f"BT_PW_{wallet.coldkey_file.path.replace('/', '_').replace('.', '_').upper()}"
-    logger.info(f"please set the environment variable: {env_var_name}")
-    environ[env_var_name] = environ["BT_PW"]
+    wallet.coldkey_file.save_password_to_env(os.getenv('BT_PW'))
     wallet.unlock_coldkey()
     logger.info(f"Using wallet: {wallet.name}")
 
