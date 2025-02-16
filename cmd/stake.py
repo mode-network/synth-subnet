@@ -350,6 +350,9 @@ async def main():
     ranking_beta = config["ranking_beta"]
     drive = config.get("drive", 1.0)
 
+    bt.logging._logger.addHandler(logging.FileHandler("log-stake.log"))
+    print("file logger added")
+
     ranks = read_ranks_file(ranks_file)
     weight_dict = compute_weights_from_ranks(ranks, ranking_beta)
     allowed_subnets = ranks
