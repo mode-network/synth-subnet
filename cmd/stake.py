@@ -23,10 +23,7 @@ console = Console()
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler('staking.log'),
-        logging.StreamHandler()
-    ]
+    handlers=[logging.FileHandler("staking.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
@@ -38,6 +35,7 @@ last_volume_dict: Dict[int, float] = {}
 avg_vol_delta_dict: Dict[int, float] = {}
 # Smoothing factor for the moving average of volume delta.
 VOLUME_ALPHA = 0.1
+
 
 def read_config() -> Dict:
     """
@@ -59,6 +57,7 @@ def read_config() -> Dict:
         logger.critical(f"Failed to read config.yaml: {e}")
         raise
 
+
 def read_ranks_file(filename: str) -> List[int]:
     """
     Read a YAML file where the key 'ranks' contains an ordered list of subnet UIDs.
@@ -73,7 +72,10 @@ def read_ranks_file(filename: str) -> List[int]:
         logger.critical(f"Failed to read ranks file {filename}: {e}")
         raise
 
-def compute_weights_from_ranks(ranks: List[int], beta: float) -> Dict[int, float]:
+
+def compute_weights_from_ranks(
+    ranks: List[int], beta: float
+) -> Dict[int, float]:
     """
     Given an ordered list of subnet UIDs and a beta value, compute a weight for each.
     For a subnet at index idx, score = (N - idx) where N is total count.
@@ -86,11 +88,18 @@ def compute_weights_from_ranks(ranks: List[int], beta: float) -> Dict[int, float
     exp_scores = [math.exp(beta * s) for s in scores]
     total_exp = sum(exp_scores)
     normalized_weights = [s / total_exp for s in exp_scores]
-    weight_dict = {netuid: normalized_weights[i] for i, netuid in enumerate(ranks)}
+    weight_dict = {
+        netuid: normalized_weights[i] for i, netuid in enumerate(ranks)
+    }
     return weight_dict
 
-async def get_subnet_stats(sub, allowed_subnets: List[int],
-                           weight_dict: Dict[int, float], drive: float) -> Tuple[Dict[int, Dict], Dict[int, int]]:
+
+async def get_subnet_stats(
+    sub,
+    allowed_subnets: List[int],
+    weight_dict: Dict[int, float],
+    drive: float,
+) -> Tuple[Dict[int, Dict], Dict[int, int]]:
     """
     Fetch all subnet data and compute stats for each allowed subnet.
     For each subnet, compute:
@@ -106,7 +115,9 @@ async def get_subnet_stats(sub, allowed_subnets: List[int],
     all_subnets = await sub.all_subnets()
 
     # Rank subnets by price descending.
-    sorted_subnets = sorted(all_subnets, key=lambda s: float(s.price), reverse=True)
+    sorted_subnets = sorted(
+        all_subnets, key=lambda s: float(s.price), reverse=True
+    )
     rank_dict = {s.netuid: idx + 1 for idx, s in enumerate(sorted_subnets)}
 
     stats = {}
@@ -124,8 +135,14 @@ async def get_subnet_stats(sub, allowed_subnets: List[int],
         boost = weight * drive
         # Compute score using effective emission boost:
         score = (emission * (1 + boost) - price) / (emission * (1 + boost))
-        name = str(subnet.subnet_name) if hasattr(subnet, "subnet_name") else ""
-        volume = float(subnet.subnet_volume) if hasattr(subnet, "subnet_volume") else 0.0
+        name = (
+            str(subnet.subnet_name) if hasattr(subnet, "subnet_name") else ""
+        )
+        volume = (
+            float(subnet.subnet_volume)
+            if hasattr(subnet, "subnet_volume")
+            else 0.0
+        )
         stats[netuid] = {
             "price": price,
             "emission": emission,
@@ -134,16 +151,17 @@ async def get_subnet_stats(sub, allowed_subnets: List[int],
             "boost": 1 + boost,
             "score": score,
             "name": name,
-            "volume": volume
+            "volume": volume,
         }
     return stats, rank_dict
+
 
 def print_table_rich(
     stake_info: Dict,
     allowed_subnets: List[int],
     stats: Dict[int, Dict],
     rank_dict: Dict[int, int],
-    balance: float
+    balance: float,
 ):
     """
     Print a Rich table with columns:
@@ -156,7 +174,11 @@ def print_table_rich(
     total_stake_value = 0.0
     total_stake = 0.0
 
-    table = Table(title="Staking Allocations", header_style="bold white on dark_blue", box=box.SIMPLE_HEAVY)
+    table = Table(
+        title="Staking Allocations",
+        header_style="bold white on dark_blue",
+        box=box.SIMPLE_HEAVY,
+    )
     table.add_column("Subnet", justify="right", style="bright_cyan")
     table.add_column("Name", justify="left", style="white")
     table.add_column("Boost", justify="right", style="yellow")
@@ -211,7 +233,7 @@ def print_table_rich(
             f"{price:.4f}",
             f"{stake_amt:.4f}",
             f"{stake_value:.4f}",
-            str(rank)
+            str(rank),
         )
 
     table.add_row(
@@ -225,7 +247,7 @@ def print_table_rich(
         "",
         f"[bold]{total_stake:.4f}[/bold]",
         f"[bold]{total_stake_value:.4f}[/bold]",
-        ""
+        "",
     )
 
     summary = (
@@ -236,10 +258,15 @@ def print_table_rich(
     console.print(Panel(summary, style="bold white"))
     console.print(table)
 
-async def stake_to_best_subnet(wallet: bt.wallet, allowed_subnets: List[int],
-                                weight_dict: Dict[int, float],
-                                amount_staked: float, amount_unstaked: float,
-                                drive: float):
+
+async def stake_to_best_subnet(
+    wallet: bt.wallet,
+    allowed_subnets: List[int],
+    weight_dict: Dict[int, float],
+    amount_staked: float,
+    amount_unstaked: float,
+    drive: float,
+):
     """
     Compute stats for allowed subnets, then:
       - Select the subnet with the highest score and stake amount_staked TAO.
@@ -249,19 +276,27 @@ async def stake_to_best_subnet(wallet: bt.wallet, allowed_subnets: List[int],
     global TOTAL_ALLOCATED
     sub = await get_async_subtensor("finney")
     try:
-        stats, rank_dict = await get_subnet_stats(sub, allowed_subnets, weight_dict, drive)
-        valid_subnets = [netuid for netuid in allowed_subnets if netuid in stats]
+        stats, rank_dict = await get_subnet_stats(
+            sub, allowed_subnets, weight_dict, drive
+        )
+        valid_subnets = [
+            netuid for netuid in allowed_subnets if netuid in stats
+        ]
         if not valid_subnets:
             logger.warning("No allowed subnets with valid stats found.")
             return
 
         scores = {netuid: stats[netuid]["score"] for netuid in valid_subnets}
         for netuid, score in scores.items():
-            logger.info(f"Subnet {netuid} - Yield: {stats[netuid]['raw_yield']:.4f}, Boost: {stats[netuid]['boost']:.4f}, Score: {score:.4f}")
-        
+            logger.info(
+                f"Subnet {netuid} - Yield: {stats[netuid]['raw_yield']:.4f}, Boost: {stats[netuid]['boost']:.4f}, Score: {score:.4f}"
+            )
+
         best_subnet = max(valid_subnets, key=lambda x: scores[x])
-        logger.info(f"Staking into subnet: {best_subnet} (Score: {scores[best_subnet]:.4f})")
-        
+        logger.info(
+            f"Staking into subnet: {best_subnet} (Score: {scores[best_subnet]:.4f})"
+        )
+
         # Stake into the best subnet.
         try:
             await sub.add_stake(
@@ -270,9 +305,11 @@ async def stake_to_best_subnet(wallet: bt.wallet, allowed_subnets: List[int],
                 netuid=best_subnet,
                 amount=bt.Balance.from_tao(amount_staked),
                 wait_for_inclusion=False,
-                wait_for_finalization=False
+                wait_for_finalization=False,
             )
-            logger.info(f"Staked {amount_staked:.4f} TAO to subnet {best_subnet}")
+            logger.info(
+                f"Staked {amount_staked:.4f} TAO to subnet {best_subnet}"
+            )
             TOTAL_ALLOCATED += amount_staked
         except Exception as err:
             print_exception(type(err), err, err.__traceback__)
@@ -282,11 +319,15 @@ async def stake_to_best_subnet(wallet: bt.wallet, allowed_subnets: List[int],
         stake_info = await sub.get_stake_for_coldkey_and_hotkey(
             hotkey_ss58=validator,
             coldkey_ss58=wallet.coldkey.ss58_address,
-            netuids=allowed_subnets
+            netuids=allowed_subnets,
         )
-        balance = float(await sub.get_balance(address=wallet.coldkey.ss58_address))
-        print_table_rich(stake_info, allowed_subnets, stats, rank_dict, balance)
-        
+        balance = float(
+            await sub.get_balance(address=wallet.coldkey.ss58_address)
+        )
+        print_table_rich(
+            stake_info, allowed_subnets, stats, rank_dict, balance
+        )
+
         # logger.info("Waiting for the next block...")
         # await sub.wait_for_block()
 
@@ -294,6 +335,7 @@ async def stake_to_best_subnet(wallet: bt.wallet, allowed_subnets: List[int],
         await asyncio.sleep(60)
     finally:
         await sub.close()
+
 
 async def main():
     config = read_config()
@@ -312,24 +354,33 @@ async def main():
     weight_dict = compute_weights_from_ranks(ranks, ranking_beta)
     allowed_subnets = ranks
 
-    logger.info(f"Starting staking service with {amount_staked:.4f} TAO staked")
+    logger.info(
+        f"Starting staking service with {amount_staked:.4f} TAO staked"
+    )
     logger.info(f"Allowed subnets (from ranking): {allowed_subnets}")
     logger.info(f"Computed weights: {weight_dict}")
     logger.info(f"Drive factor: {drive}")
 
     wallet = bt.wallet(name=wallet_name)
     wallet.create_if_non_existent()
-    wallet.coldkey_file.save_password_to_env(os.getenv('BT_PW'))
+    wallet.coldkey_file.save_password_to_env(os.getenv("BT_PW"))
     wallet.unlock_coldkey()
     logger.info(f"Using wallet: {wallet.name}")
 
     while True:
         try:
-            await stake_to_best_subnet(wallet, allowed_subnets, weight_dict,
-                                       amount_staked, amount_unstaked, drive)
+            await stake_to_best_subnet(
+                wallet,
+                allowed_subnets,
+                weight_dict,
+                amount_staked,
+                amount_unstaked,
+                drive,
+            )
         except Exception as e:
             logger.error(f"Error in main loop: {e}")
             await asyncio.sleep(12)
+
 
 if __name__ == "__main__":
     try:
