@@ -44,11 +44,11 @@ def read_config() -> Dict:
       drive: float (drive factor multiplier)
     """
     try:
-        with open("cmd/config.yaml", "r") as f:
+        with open("dca/config.yaml", "r") as f:
             config = yaml.safe_load(f)
         return config
     except Exception as e:
-        logger.critical(f"Failed to read cmd/config.yaml: {e}")
+        logger.critical(f"Failed to read dac/config.yaml: {e}")
         raise
 
 

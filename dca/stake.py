@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import bittensor as bt
 from bittensor.core.async_subtensor import get_async_subtensor
 
-from cmd.utils import (
+from dca.utils import (
     logger,
     compute_weights_from_ranks,
     get_subnet_stats,
