@@ -163,6 +163,14 @@ def add_miner_args(cls, parser):
     )
 
     parser.add_argument(
+        "--blacklist.validator_exceptions",
+        type=int,
+        nargs="+",
+        default=[],
+        help="List of validator exceptions (e.g., --blacklist.validator_exceptions 1 3 10)",
+    )
+
+    parser.add_argument(
         "--wandb.project_name",
         type=str,
         default="template-miners",
