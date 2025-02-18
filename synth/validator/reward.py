@@ -166,6 +166,8 @@ def compute_softmax(score_values: np.ndarray, beta: float) -> np.ndarray:
     # Mask out invalid scores (e.g., -1)
     mask = score_values != -1  # True for values to include in computation
 
+    bt.logging.info(f"Going to use the following value of beta: {beta}")
+
     # Compute softmax scores only for valid values
     exp_scores = np.exp(beta * score_values[mask])
     softmax_scores_valid = exp_scores / np.sum(exp_scores)
