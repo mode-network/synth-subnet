@@ -34,7 +34,7 @@ def test_compute_softmax_1():
     score_values = np.array([1000, 1500, 2000])
     expected_score = np.array([0.506, 0.307, 0.186])
 
-    actual_score = compute_softmax(score_values, -0.002)
+    actual_score = compute_softmax(score_values, -0.001)
 
     assert_almost_equal(actual_score, expected_score, decimal=3)
 
@@ -43,7 +43,7 @@ def test_compute_softmax_2():
     score_values = np.array([1000, 1500, 2000, -1])
     expected_score = np.array([0.506, 0.307, 0.186, 0])
 
-    actual_score = compute_softmax(score_values, -0.002)
+    actual_score = compute_softmax(score_values, -0.001)
 
     assert_almost_equal(actual_score, expected_score, decimal=3)
 
