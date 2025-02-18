@@ -257,6 +257,38 @@ pm2 start validator.config.js -- --ewma.half_life_days 2.0
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
+#### `--softmax.beta FLOAT`
+
+Negative beta to give higher weight to lower scores.
+
+Default: `-0.002`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: 'validator',
+      interpreter: 'python3',
+      script: './neurons/validator.py',
+      args: '--softmax.beta -0.002',
+      env: {
+        PYTHONPATH: '.'
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+```shell
+pm2 start validator.config.js -- --softmax.beta -0.002
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
 #### `--logging.debug`
 
 Turn on bittensor debugging information.

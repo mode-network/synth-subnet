@@ -102,6 +102,7 @@ def get_rewards(
     simulation_input: SimulationInput,
     miner_uids: List[int],
     validator_request_id: int,
+    softmax_beta: float,
 ) -> (np.ndarray, []):
     """
     Returns an array of rewards for the given query and responses.
@@ -135,7 +136,7 @@ def get_rewards(
         prediction_id_list.append(miner_prediction_id)
 
     score_values = np.array(scores)
-    softmax_scores = compute_softmax(score_values)
+    softmax_scores = compute_softmax(score_values, softmax_beta)
 
     # gather all the detailed information
     # for log and debug purposes
@@ -161,12 +162,9 @@ def get_rewards(
     return softmax_scores, detailed_info
 
 
-def compute_softmax(score_values: np.ndarray) -> np.ndarray:
+def compute_softmax(score_values: np.ndarray, beta: float) -> np.ndarray:
     # Mask out invalid scores (e.g., -1)
     mask = score_values != -1  # True for values to include in computation
-
-    # --- Softmax Normalization ---
-    beta = -1 / 1000.0  # Negative beta to give higher weight to lower scores
 
     # Compute softmax scores only for valid values
     exp_scores = np.exp(beta * score_values[mask])

@@ -124,6 +124,7 @@ async def forward(
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
+        softmax_beta=base_neuron.config.softmax.beta,
     )
 
     if not success:
@@ -240,6 +241,7 @@ def _calculate_rewards_and_update_scores(
     price_data_provider,
     scored_time,
     simulation_input,
+    softmax_beta: float,
 ) -> bool:
     # get latest prediction request from validator
     # for which we already have real prices data,
@@ -262,6 +264,7 @@ def _calculate_rewards_and_update_scores(
         simulation_input=simulation_input,
         miner_uids=miner_uids,
         validator_request_id=validator_request_id,
+        softmax_beta=softmax_beta,
     )
 
     bt.logging.info(f"Scored responses: {rewards}")
