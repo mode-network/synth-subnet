@@ -5,3 +5,5 @@ validator: "5FFApaS75bv5pJHfAp2FVLBj9ZaXuFDjEypsaBNc1wCfe52v" # Stake to TR21.
 ranks_file: "ranks.yaml" 
 ranking_beta: 0.25 # How steep your ranking is
 drive: 5.0 # How aggressive you stake into the higher ranked subnets.
+delay: 60
+netuid: 50

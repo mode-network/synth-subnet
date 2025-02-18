@@ -1,5 +1,4 @@
 import asyncio
-import logging
 from typing import List, Dict
 from traceback import print_exception
 import os
@@ -9,70 +8,56 @@ import bittensor as bt
 from bittensor.core.async_subtensor import get_async_subtensor
 
 from cmd.utils import (
-    logger,
     compute_weights_from_ranks,
     get_subnet_stats,
     print_table_rich,
     read_config,
     read_ranks_file,
+    logger,
 )
 
-# Global variable to record the total TAO allocated by the script.
-TOTAL_ALLOCATED = 0.0
+# Global variable to record the total TAO unstaked by the script.
+TOTAL_UNSTAKED = 0.0
 
 
-async def stake(
+async def unstake(
     wallet: bt.wallet,
     delay: int,
     validator: str,
+    netuid: int,
     allowed_subnets: List[int],
     weight_dict: Dict[int, float],
-    amount_staked: float,
+    amount_unstaked: float,
     drive: float,
 ):
-    global TOTAL_ALLOCATED
+    global TOTAL_UNSTAKED
     sub = await get_async_subtensor("finney")
     try:
         stats, rank_dict = await get_subnet_stats(
             sub, allowed_subnets, weight_dict, drive
         )
-        valid_subnets = [
-            netuid for netuid in allowed_subnets if netuid in stats
-        ]
-        if not valid_subnets:
-            logger.warning("No allowed subnets with valid stats found.")
-            return
 
-        scores = {netuid: stats[netuid]["score"] for netuid in valid_subnets}
-        for netuid, score in scores.items():
-            logger.info(
-                f"Subnet {netuid} - Yield: {stats[netuid]['raw_yield']:.4f}, Boost: {stats[netuid]['boost']:.4f}, Score: {score:.4f}"
-            )
+        logger.info(f"Unstaking from subnet: {netuid}, validator: {validator}")
+        logger.info(f"Unstaking {amount_unstaked:.4f} TAO")
 
-        best_subnet = max(valid_subnets, key=lambda x: scores[x])
-        logger.info(
-            f"Staking into subnet: {best_subnet} (Score: {scores[best_subnet]:.4f})"
-        )
-
-        # Stake into the best subnet.
         try:
-            await sub.add_stake(
+            await sub.unstake(
                 wallet=wallet,
                 hotkey_ss58=validator,
-                netuid=best_subnet,
-                amount=bt.Balance.from_tao(amount_staked),
+                netuid=netuid,
+                amount=bt.Balance.from_tao(0.01),
                 wait_for_inclusion=False,
                 wait_for_finalization=False,
             )
             logger.info(
-                f"Staked {amount_staked:.4f} TAO to subnet {best_subnet}"
+                f"Unstaked {amount_unstaked:.4f} TAO to subnet {netuid}"
             )
-            TOTAL_ALLOCATED += amount_staked
+            TOTAL_UNSTAKED += amount_unstaked
         except Exception as err:
             logger.debug(
                 str(print_exception(type(err), err, err.__traceback__))
             )
-            logger.error(f"Failed to stake on subnet {best_subnet}: {err}")
+            logger.error(f"Failed to stake on subnet {netuid}: {err}")
 
         # Retrieve updated stake info.
         stake_info = await sub.get_stake_for_coldkey_and_hotkey(
@@ -89,7 +74,7 @@ async def stake(
             stats,
             rank_dict,
             balance,
-            TOTAL_ALLOCATED,
+            TOTAL_UNSTAKED,
         )
 
         # logger.info("Waiting for the next block...")
@@ -107,21 +92,19 @@ async def main():
 
     wallet_name = config["wallet"]
     delay = config["delay"]
-    amount_staked = config["amount_staked"]
+    amount_unstaked = config["amount_unstaked"]
     validator = config["validator"]
+    netuid = config["netuid"]
     ranks_file = config["ranks_file"]
     ranking_beta = config["ranking_beta"]
     drive = config.get("drive", 1.0)
-
-    bt.logging._logger.addHandler(logging.FileHandler("log-stake.log"))
-    print("file logger added")
 
     ranks = read_ranks_file(ranks_file)
     weight_dict = compute_weights_from_ranks(ranks, ranking_beta)
     allowed_subnets = ranks
 
     logger.info(
-        f"Starting staking service with {amount_staked:.4f} TAO staked"
+        f"Starting unstaking service with {amount_unstaked:.4f} TAO staked"
     )
     logger.info(f"Allowed subnets (from ranking): {allowed_subnets}")
     logger.info(f"Computed weights: {weight_dict}")
@@ -136,13 +119,14 @@ async def main():
 
     while True:
         try:
-            await stake(
+            await unstake(
                 wallet,
                 delay,
                 validator,
+                netuid,
                 allowed_subnets,
                 weight_dict,
-                amount_staked,
+                amount_unstaked,
                 drive,
             )
         except Exception as e:
