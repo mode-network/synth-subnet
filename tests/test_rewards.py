@@ -126,6 +126,7 @@ def test_get_rewards(db_engine):
         ),
         [miner_id],  # TODO: add another test with more miners
         validator_request_id,
+        softmax_beta=-0.002,
     )
 
     assert len(softmax_scores) == 2
