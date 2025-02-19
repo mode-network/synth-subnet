@@ -51,7 +51,9 @@ class PriceDataProvider:
         transformed_data = []
 
         for t, c in zip(timestamps, close_prices):
-            if t >= start_time and (t - start_time) % 300 == 0:  # 300s = 5 minutes
+            if (
+                t >= start_time and (t - start_time) % 300 == 0
+            ):  # 300s = 5 minutes
                 transformed_data.append(
                     {
                         "time": datetime.fromtimestamp(
