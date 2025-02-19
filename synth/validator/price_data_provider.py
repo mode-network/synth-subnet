@@ -36,27 +36,30 @@ class PriceDataProvider:
         response.raise_for_status()
 
         data = response.json()
-        transformed_data = self._transform_data(data)
+        transformed_data = self._transform_data(data, start_time)
 
         return transformed_data
 
     @staticmethod
-    def _transform_data(data):
+    def _transform_data(data, start_time):
         if data is None or len(data) == 0:
             return []
 
         timestamps = data["t"]
         close_prices = data["c"]
 
-        transformed_data = [
-            {
-                "time": datetime.fromtimestamp(
-                    timestamps[i], timezone.utc
-                ).isoformat(),
-                "price": float(close_prices[i]),
-            }
-            for i in range(len(timestamps) - 1, -1, -5)
-        ][::-1]
+        transformed_data = []
+
+        for t, c in zip(timestamps, close_prices):
+            if t >= start_time and (t - start_time) % 300 == 0:  # 300s = 5 minutes
+                transformed_data.append(
+                    {
+                        "time": datetime.fromtimestamp(
+                            t, timezone.utc
+                        ).isoformat(),
+                        "price": float(c),
+                    }
+                )
 
         return transformed_data
 
