@@ -197,14 +197,14 @@ $$
 
 where:
 - $CRPS_i$ is the sum of CRPS values for miner $i$ on that day
-- $\beta = \frac{1}{1000}$ is the scaling factor
+- $\beta = \frac{1}{500}$ is the scaling factor
 - The negative sign ensures better forecasts (lower CRPS) receive higher scores
 
 Any miners who didn’t submit a correct prediction are allocated a normalised score of 0 for that prompt.
 
 #### Exponentially Decaying Time-Weighted Average (Leaderboard Score)
 
-The validator is required to store the historic request scores for each miner. After each new request is scored, the validator recalculates the ‘leaderboard score’ for each miner, using an exponentially decaying time-weighted average over their past **per request** scores, up to a threshold of 30 days in the past.
+The validator is required to store the historic request scores for each miner. After each new request is scored, the validator recalculates the ‘leaderboard score’ for each miner, using an exponentially decaying time-weighted average over their past **per request** scores, up to a threshold of 4 days in the past.
 
 This approach emphasizes recent performance while still accounting for historical scores. 
 The leaderboard score for miner $i$ at time $t$ is calculated as:
@@ -218,11 +218,11 @@ where:
 - $S_{i,j}$ is the normalized score of miner $i$ at request $j$.
 - $w_j = e^{-\lambda (t - t_j)}$ is the weight assigned to the score $S_{i,j}$.
 - $t_j$ is the time of request $j$.
-- $\lambda = \dfrac{\ln 2}{h}$ is the decay constant, with half-life $h = 10$ days.
-- The sum runs over all requests $j$ such that $t - t_j \leq T$, where $T = 30$ days is the threshold time.
+- $\lambda = \dfrac{\ln 2}{h}$ is the decay constant, with half-life $h = 2$ days.
+- The sum runs over all requests $j$ such that $t - t_j \leq T$, where $T = 4$ days is the threshold time.
 
 #### Allocation of Emissions 
-At the end of each day, the leaderboard scores are then raised to the power of an exponent $\alpha$ (e.g., $\alpha = 2$) to amplify performance differences. The adjusted scores determine each miner's share of the total emissions for that day
+At the end of each day, the leaderboard scores are then raised to the power of an exponent $\alpha$ (e.g., $\alpha = 4$) to amplify performance differences. The adjusted scores determine each miner's share of the total emissions for that day
 
 Adjusted Scores:
 
@@ -252,7 +252,7 @@ The system creates a competitive environment through:
    - Evaluates both short-term and long-term predictions
 
 4. **Normalizing Scores**
-   - Ensures fair comparison using softmax function ($\beta = \frac{1}{1000}$)
+   - Ensures fair comparison using softmax function ($\beta = \frac{1}{500}$)
 
 5. **Calculating Leaderboard Scores and Allocating Emissions**
    - Rewards consistent performance and encourages competition
