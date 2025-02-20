@@ -349,7 +349,9 @@ def _get_available_miners_and_update_metagraph_history(
                 "stake": float(base_neuron.metagraph.S[uid]),
                 "trust": float(base_neuron.metagraph.T[uid]),
                 "emission": float(base_neuron.metagraph.E[uid]),
-                "pruning_score": float(base_neuron.metagraph.pruning_score[uid]),
+                "pruning_score": float(
+                    base_neuron.metagraph.pruning_score[uid]
+                ),
                 "coldkey": base_neuron.metagraph.coldkeys[uid],
                 "hotkey": base_neuron.metagraph.hotkeys[uid],
                 "updated_at": start_time,
