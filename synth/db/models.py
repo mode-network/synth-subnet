@@ -107,6 +107,7 @@ metagraph_history = Table(
     Column("stake", Float, nullable=True),
     Column("trust", Float, nullable=True),
     Column("emission", Float, nullable=True),
+    Column("pruning_score", Float, nullable=True),
     Column("coldkey", String, nullable=True),
     Column("hotkey", String, nullable=True),
     Column("updated_at", DateTime(timezone=True), nullable=False),
