@@ -12,11 +12,11 @@ def test_moving_average_1():
     half_life_days = 2
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_name = 'cutoff_data_4_days.csv'
+    file_name = "cutoff_data_4_days.csv"
     file_path = os.path.join(current_dir, file_name)
 
     df = pd.read_csv(file_path)
-    df['scored_time'] = pd.to_datetime(df['scored_time'])
+    df["scored_time"] = pd.to_datetime(df["scored_time"])
 
     moving_averages_data = compute_weighted_averages(
         input_df=df,
@@ -29,7 +29,14 @@ def test_moving_average_1():
     target_uid = 144
 
     # Select the element by miner_uid
-    selected_miner = next((item for item in moving_averages_data if item['miner_uid'] == target_uid), None)
+    selected_miner = next(
+        (
+            item
+            for item in moving_averages_data
+            if item["miner_uid"] == target_uid
+        ),
+        None,
+    )
 
     # Print the selected miner
     print(selected_miner)
@@ -41,11 +48,11 @@ def test_moving_average_2():
     half_life_days = 1
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    file_name = 'cutoff_data_2_days.csv'
+    file_name = "cutoff_data_2_days.csv"
     file_path = os.path.join(current_dir, file_name)
 
     df = pd.read_csv(file_path)
-    df['scored_time'] = pd.to_datetime(df['scored_time'])
+    df["scored_time"] = pd.to_datetime(df["scored_time"])
 
     moving_averages_data = compute_weighted_averages(
         input_df=df,
@@ -58,7 +65,14 @@ def test_moving_average_2():
     target_uid = 144
 
     # Select the element by miner_uid
-    selected_miner = next((item for item in moving_averages_data if item['miner_uid'] == target_uid), None)
+    selected_miner = next(
+        (
+            item
+            for item in moving_averages_data
+            if item["miner_uid"] == target_uid
+        ),
+        None,
+    )
 
     # Print the selected miner
     print(selected_miner)
