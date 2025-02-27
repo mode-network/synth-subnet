@@ -19,12 +19,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.drop_index("ix_miner_uid", table_name="miner_predictions_old")
-    op.create_index(
-        "ix_miner_predictions_old_miner_uid",
-        "miner_predictions_old",
-        ["miner_uid"],
-    )
     op.create_index(
         "ix_miner_predictions_miner_uid", "miner_predictions", ["miner_uid"]
     )
@@ -34,8 +28,3 @@ def downgrade() -> None:
     op.drop_index(
         "ix_miner_predictions_miner_uid", table_name="miner_predictions"
     )
-    op.drop_index(
-        "ix_miner_predictions_old_miner_uid",
-        table_name="miner_predictions_old",
-    )
-    op.create_index("ix_miner_uid", "miner_predictions_old", ["miner_uid"])
