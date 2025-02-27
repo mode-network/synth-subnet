@@ -1,0 +1,9 @@
+wallet: "default" # Replace with your wallet. 
+amount_staked: 0.01 # AMount staked per block
+amount_unstaked: 0.001 # Amount unstaked per block
+validator: "5FFApaS75bv5pJHfAp2FVLBj9ZaXuFDjEypsaBNc1wCfe52v" # Stake to TR21.
+ranks_file: "dca/ranks.yaml" 
+ranking_beta: 0.25 # How steep your ranking is
+drive: 5.0 # How aggressive you stake into the higher ranked subnets.
+delay: 60
+netuid: 50
