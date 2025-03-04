@@ -194,7 +194,8 @@ class MinerDataHandler:
                     )
                     connection.execute(insert_stmt)
         except Exception as e:
-            connection.rollback()
+            if connection:
+                connection.rollback()
             bt.logging.error(
                 f"in update_metagraph_history (got an exception): {e}"
             )
