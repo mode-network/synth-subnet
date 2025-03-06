@@ -40,7 +40,8 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
         # if only the initial price is present, then decrease the interval step
         if interval_name.endswith("_abs"):
             while (
-                real_price_path[::interval_steps].shape[0] == 1 and interval_steps > 1
+                real_price_path[::interval_steps].shape[0] == 1
+                and interval_steps > 1
             ):
                 interval_steps -= 1
 
