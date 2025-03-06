@@ -185,6 +185,9 @@ async def query_available_miners_and_save_responses(
     # axon is a server application that accepts requests on the miner side
     # ======================================================
 
+    # shuffle the miners before sending request prompts
+    random.shuffle(miner_uids)
+
     semaphore = asyncio.Semaphore(50)
     uid_to_query_task = {
         uid: asyncio.create_task(
