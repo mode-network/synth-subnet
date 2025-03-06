@@ -2,7 +2,7 @@
 # Copyright © 2023 Yuma Rao
 # TODO(developer): Set your name
 # Copyright © 2023 <your name>
-
+import asyncio
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
@@ -299,12 +299,19 @@ async def _query_available_miners_and_save_responses(
     # ======================================================
     # axon is a server application that accepts requests on the miner side
     # ======================================================
-    synapses = await base_neuron.dendrite(
-        axons=[base_neuron.metagraph.axons[uid] for uid in miner_uids],
-        synapse=synapse,
-        deserialize=False,
-        timeout=timeout,
-    )
+
+    semaphore = asyncio.Semaphore(50)
+    uid_to_query_task = {
+        uid: asyncio.create_task(_query_miner(semaphore, base_neuron, synapse, uid, timeout)) for uid in miner_uids
+    }
+    synapses = await asyncio.gather(*uid_to_query_task.values())
+
+    # synapses = await base_neuron.dendrite(
+    #     axons=[base_neuron.metagraph.axons[uid] for uid in miner_uids],
+    #     synapse=synapse,
+    #     deserialize=False,
+    #     timeout=timeout,
+    # )
 
     miner_predictions = {}
     for i, synapse in enumerate(synapses):
@@ -326,6 +333,24 @@ async def _query_available_miners_and_save_responses(
         )
     else:
         bt.logging.info("skip saving because no prediction")
+
+
+async def _query_miner(
+    semaphore: asyncio.Semaphore,
+    base_neuron: BaseValidatorNeuron,
+    synapse: bt.Synapse,
+    uid: int,
+    timeout: float,
+) -> bt.Synapse:
+    async with semaphore:
+        result = await base_neuron.dendrite.forward(
+            axons=base_neuron.metagraph.axons[uid],
+            synapse=synapse,
+            timeout=timeout,
+            deserialize=False,
+            streaming=False,
+        )
+    return result
 
 
 def _get_available_miners_and_update_metagraph_history(
