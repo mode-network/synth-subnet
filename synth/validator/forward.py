@@ -3,6 +3,7 @@
 # TODO(developer): Set your name
 # Copyright © 2023 <your name>
 import asyncio
+import random
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -300,6 +301,9 @@ async def _query_available_miners_and_save_responses(
     # ======================================================
     # axon is a server application that accepts requests on the miner side
     # ======================================================
+
+    # shuffle the miners before sending request prompts
+    random.shuffle(miner_uids)
 
     semaphore = asyncio.Semaphore(50)
     uid_to_query_task = {
