@@ -3,6 +3,7 @@
 # TODO(developer): Set your name
 # Copyright © 2023 <your name>
 import asyncio
+
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
 # the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
@@ -302,7 +303,10 @@ async def _query_available_miners_and_save_responses(
 
     semaphore = asyncio.Semaphore(50)
     uid_to_query_task = {
-        uid: asyncio.create_task(_query_miner(semaphore, base_neuron, synapse, uid, timeout)) for uid in miner_uids
+        uid: asyncio.create_task(
+            _query_miner(semaphore, base_neuron, synapse, uid, timeout)
+        )
+        for uid in miner_uids
     }
     synapses = await asyncio.gather(*uid_to_query_task.values())
 
