@@ -47,6 +47,7 @@
   - [2.2. Setup](#22-setup)
   - [2.3. Miners](#23-miners)
   - [2.4. Validators](#24-validators)
+  - [2.5. Develop](#25-develop)
 * [3. License](#-3-license)
 
 ## 🔭 1. Overview
@@ -347,6 +348,15 @@ Please refer to this [guide](./docs/miner_guide.md) for detailed instructions on
 ### 2.4. Validators
 
 Please refer to this [guide](./docs/validator_guide.md) for detailed instructions on getting a validator up and running.
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 2.5 Develop
+
+```shell
+pip install -r requirements-dev.txt
+pre-commit install
+```
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
