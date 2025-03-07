@@ -124,7 +124,6 @@ async def forward(
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
-        softmax_beta=base_neuron.config.softmax.beta,
     )
 
     if not success:
@@ -139,9 +138,11 @@ async def forward(
 
     filtered_miner_uids, filtered_rewards = (
         _calculate_moving_average_and_update_rewards(
-            base_neuron=base_neuron,
             miner_data_handler=miner_data_handler,
             scored_time=scored_time,
+            cutoff_days=base_neuron.config.ewma.cutoff_days,
+            half_life_days=base_neuron.config.ewma.half_life_days,
+            softmax_beta=base_neuron.config.softmax.beta,
         )
     )
 
@@ -201,21 +202,23 @@ def _wait_till_next_iteration():
 
 
 def _calculate_moving_average_and_update_rewards(
-    base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
     scored_time: str,
+    cutoff_days: int,
+    half_life_days: float,
+    softmax_beta: float,
 ) -> tuple[list, list]:
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(
         scored_time_str=scored_time,
-        cutoff_days=base_neuron.config.ewma.cutoff_days,
+        cutoff_days=cutoff_days,
     )
 
     moving_averages_data = compute_weighted_averages(
         input_df=miner_scores_df,
-        half_life_days=base_neuron.config.ewma.half_life_days,
-        alpha=base_neuron.config.ewma.alpha,
+        half_life_days=half_life_days,
         validation_time_str=scored_time,
+        softmax_beta=softmax_beta,
     )
 
     bt.logging.info(
@@ -241,7 +244,6 @@ def _calculate_rewards_and_update_scores(
     price_data_provider,
     scored_time,
     simulation_input,
-    softmax_beta: float,
 ) -> bool:
     # get latest prediction request from validator
     # for which we already have real prices data,
@@ -258,19 +260,18 @@ def _calculate_rewards_and_update_scores(
     # this is the function we need to implement for our incentives mechanism,
     # it returns an array of floats that determines how good a particular miner was at price predictions:
     # example: [0.2, 0.7, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
-    rewards, rewards_detailed_info = get_rewards(
+    prompt_scores_v2, detailed_info = get_rewards(
         miner_data_handler=miner_data_handler,
         price_data_provider=price_data_provider,
         simulation_input=simulation_input,
         miner_uids=miner_uids,
         validator_request_id=validator_request_id,
-        softmax_beta=softmax_beta,
     )
 
-    bt.logging.info(f"Scored responses: {rewards}")
+    bt.logging.info(f"Scored responses: {prompt_scores_v2}")
 
     miner_data_handler.set_reward_details(
-        reward_details=rewards_detailed_info, scored_time=scored_time
+        reward_details=detailed_info, scored_time=scored_time
     )
 
     return True

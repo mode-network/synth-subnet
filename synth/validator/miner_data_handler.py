@@ -86,12 +86,14 @@ class MinerDataHandler:
                 "miner_uid": row["miner_uid"],
                 "scored_time": scored_time,
                 "miner_predictions_id": row["miner_prediction_id"],
-                "score_details": {
-                    "score": row["score"],
-                    "softmax_score": row["softmax_score"],
+                "score_details_v2": {
+                    "total_crps": row["total_crps"],
+                    "percentile90": row["percentile90"],
+                    "lowest_score": row["lowest_score"],
+                    "prompt_score_v2": row["prompt_score_v2"],
                     "crps_data": row["crps_data"],
                 },
-                "prompt_score": row["softmax_score"],
+                "prompt_score_v2": row["prompt_score_v2"],
                 "real_prices": row["real_prices"],
             }
             for row in reward_details
@@ -209,8 +211,9 @@ class MinerDataHandler:
                 query = (
                     select(
                         miner_scores.c.miner_uid,
-                        miner_scores.c.prompt_score,
+                        miner_scores.c.prompt_score_v2,
                         miner_scores.c.scored_time,
+                        miner_scores.c.score_details_v2,
                     )
                     .select_from(miner_scores)
                     .where(miner_scores.c.scored_time > min_scored_time)
