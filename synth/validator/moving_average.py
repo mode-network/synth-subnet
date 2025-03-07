@@ -8,7 +8,7 @@ def compute_weighted_averages(
     input_df: DataFrame,
     half_life_days: float,
     alpha: float,
-    validation_time_str: str,
+    scored_time_str: str,
 ) -> list[dict]:
     """
     Reads a TSV file of miner rewards, computes an exponentially weighted
@@ -25,12 +25,12 @@ def compute_weighted_averages(
     :param input_df: Dataframe of miner rewards.
     :param half_life_days: The half-life in days for the exponential decay.
     :param alpha: The exponent to raise the EWMA to, before normalization.
-    :param validation_time_str: The current time when validator does the scoring.
+    :param scored_time_str: The current time when validator does the scoring.
     """
     if input_df.empty:
         return None
 
-    validation_time = datetime.fromisoformat(validation_time_str).replace(
+    validation_time = datetime.fromisoformat(scored_time_str).replace(
         tzinfo=timezone.utc
     )
 
@@ -83,7 +83,7 @@ def compute_weighted_averages(
             "miner_uid": miner_uid,
             "smoothed_score": float(ewma_val),
             "reward_weight": float(norm_val),
-            "updated_at": validation_time_str,
+            "updated_at": scored_time_str,
         }
         rewards.append(reward_item)
 

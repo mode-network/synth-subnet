@@ -21,7 +21,7 @@ def test_moving_average_1():
         input_df=df,
         half_life_days=half_life_days,
         alpha=alpha,
-        validation_time_str=scored_time,
+        scored_time_str=scored_time,
     )
 
     # The miner_uid you want to search for
@@ -57,7 +57,7 @@ def test_moving_average_2():
         input_df=df,
         half_life_days=half_life_days,
         alpha=alpha,
-        validation_time_str=scored_time,
+        scored_time_str=scored_time,
     )
 
     # The miner_uid you want to search for
