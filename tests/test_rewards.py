@@ -14,7 +14,11 @@ from synth.validator import response_validation
 from synth.validator.forward import remove_zero_rewards
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
-from synth.validator.reward import compute_softmax, get_rewards
+from synth.validator.reward import (
+    compute_prompt_scores_v2,
+    compute_softmax,
+    get_rewards,
+)
 from tests.utils import generate_values
 
 
@@ -46,6 +50,19 @@ def test_compute_softmax_2():
     actual_score = compute_softmax(score_values, -0.001)
 
     assert_almost_equal(actual_score, expected_score, decimal=3)
+
+
+def test_compute_prompt_scores_v2():
+    score_values = np.array([1000, 1500, 2000, -1])
+    expected_score = np.array([0, 500, 850, 850])
+
+    actual_score, percentile90, lowest_score = compute_prompt_scores_v2(
+        score_values
+    )
+
+    assert np.array_equal(actual_score, expected_score)
+    assert percentile90 == 1850
+    assert lowest_score == 1000
 
 
 def test_remove_zero_rewards():
@@ -114,7 +131,7 @@ def test_get_rewards(db_engine):
         scored_time, simulation_input
     )
 
-    softmax_scores = get_rewards(
+    prompt_scores_v2 = get_rewards(
         handler,
         price_data_provider,
         SimulationInput(
@@ -126,11 +143,10 @@ def test_get_rewards(db_engine):
         ),
         [miner_id],  # TODO: add another test with more miners
         validator_request_id,
-        softmax_beta=-0.002,
     )
 
-    assert len(softmax_scores) == 2
-    assert softmax_scores[1][0]["miner_uid"] == miner_id
-    assert softmax_scores[1][0]["softmax_score"] == 1.0
-    assert len(softmax_scores[1][0]["crps_data"]) == 72
+    assert len(prompt_scores_v2) == 2
+    assert prompt_scores_v2[1][0]["miner_uid"] == miner_id
+    assert prompt_scores_v2[1][0]["prompt_score_v2"] == 0
+    assert len(prompt_scores_v2[1][0]["crps_data"]) == 72
     # TODO: assert the scores
