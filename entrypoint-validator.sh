@@ -8,10 +8,9 @@ vpermit_tao_limit=999999
 validator_coldkey_name=validator
 validator_hotkey_name=default
 
-ewma_alpha=4.0
 ewma_half_life_days=2.0
 ewma_cutoff_days=4
-softmax_beta=-0.002
+softmax_beta=-0.003
 
 wandb_enabled=false
 wandb_project_name=my_wandb_project
@@ -24,7 +23,6 @@ python3.10 ./neurons/validator.py \
 		--netuid $netuid \
 		--logging.debug \
 		--neuron.axon_off true \
-		--ewma.alpha $ewma_alpha \
 		--ewma.half_life_days $ewma_half_life_days \
 		--ewma.cutoff_days $ewma_cutoff_days \
 		--ewma.standard_ma_disabled \

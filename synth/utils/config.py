@@ -276,13 +276,6 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
-        "--ewma.alpha",
-        type=float,
-        help="The exponent to raise the EWMA to, before normalization.",
-        default=2.0,
-    )
-
-    parser.add_argument(
         "--ewma.half_life_days",
         type=float,
         help="The half-life in days for the exponential decay.",
@@ -307,7 +300,7 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
         "--softmax.beta",
         type=float,
         help="Negative beta to give higher weight to lower scores.",
-        default=-0.002,
+        default=-0.003,
     )
 
 

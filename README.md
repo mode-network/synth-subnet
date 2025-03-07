@@ -222,23 +222,6 @@ where:
 - $\lambda = \dfrac{\ln 2}{h}$ is the decay constant, with half-life $h = 2$ days.
 - The sum runs over all requests $j$ such that $t - t_j \leq T$, where $T = 4$ days is the threshold time.
 
-#### Allocation of Emissions 
-At the end of each day, the leaderboard scores are then raised to the power of an exponent $\alpha$ (e.g., $\alpha = 4$) to amplify performance differences. The adjusted scores determine each miner's share of the total emissions for that day
-
-Adjusted Scores:
-
-$$
-AdjScore_{i,t} = (L_{i,t})^\alpha
-$$
-
-Emissions Allocation:
-
-$$
-P_{i,t} = \frac{AdjScore_{i,t}}{\sum_j AdjScore_{j,t}} \times Total
-$$
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
 ### 1.5. Overall Purpose
 
 The system creates a competitive environment through:
