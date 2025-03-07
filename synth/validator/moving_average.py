@@ -1,30 +1,25 @@
 from datetime import datetime, timezone
 
-import pandas as pd
+import numpy as np
 from pandas import DataFrame
+
+from synth.validator.reward import compute_softmax
 
 
 def compute_weighted_averages(
     input_df: DataFrame,
     half_life_days: float,
-    alpha: float,
     scored_time_str: str,
+    softmax_beta: float,
 ) -> list[dict]:
     """
-    Reads a TSV file of miner rewards, computes an exponentially weighted
+    Computes an exponentially weighted
     moving average (EWMA) with a user-specified half-life, then outputs:
       1) The EWMA of each miner's reward
-      2) EWMA^alpha, normalized across miners
-
-    The file must have columns:
-       - 'miner_uid'
-       - 'reward'
-       - 'scored_time'
-    and be tab-separated.
+      2) Softmax of the EWMA to get the reward scores
 
     :param input_df: Dataframe of miner rewards.
     :param half_life_days: The half-life in days for the exponential decay.
-    :param alpha: The exponent to raise the EWMA to, before normalization.
     :param scored_time_str: The current time when validator does the scoring.
     """
     if input_df.empty:
@@ -44,45 +39,33 @@ def compute_weighted_averages(
         weighted_reward_sum = 0.0
 
         for _, row in group_df.iterrows():
-            if pd.isna(row["prompt_score"]):
-                continue  # skip missing or invalid reward
+            prompt_score = row["prompt_score_v2"]
+            if prompt_score is None or np.isnan(prompt_score):
+                continue
 
             w = compute_weight(
                 row["scored_time"], validation_time, half_life_days
             )
             total_weight += w
-            weighted_reward_sum += w * row["prompt_score"]
+            weighted_reward_sum += w * prompt_score
 
         ewma = (
             weighted_reward_sum / total_weight
             if total_weight > 0
-            else float("nan")
+            else float("inf")
         )
         results.append((miner_uid, ewma))
 
-    # Now compute EWMA^alpha for each miner and normalize
-    # If the EWMA is NaN, treat it as 0 for the power-sum.
-    miner_uids = [r[0] for r in results]
-    ewm_as = [r[1] for r in results]
-
-    # Convert NaN to 0.0 for the exponent operation and sum
-    ewm_as_nonan = [0.0 if pd.isna(x) else x for x in ewm_as]
-    ewm_as_pow = [x**alpha for x in ewm_as_nonan]  # raise to alpha (default=2)
-
-    pow_sum = sum(ewm_as_pow)
-
-    # Avoid division by zero if all are zero
-    if pow_sum <= 0:
-        norm_scores = [0.0] * len(ewm_as_pow)
-    else:
-        norm_scores = [x / pow_sum for x in ewm_as_pow]
+    # Now compute soft max to get the reward_scores
+    ewma_list = [r[1] for r in results]
+    reward_weight_list = compute_softmax(np.array(ewma_list), softmax_beta)
 
     rewards = []
-    for (miner_uid, ewma_val), norm_val in zip(results, norm_scores):
+    for (miner_uid, ewma), reward_weight in zip(results, reward_weight_list):
         reward_item = {
             "miner_uid": miner_uid,
-            "smoothed_score": float(ewma_val),
-            "reward_weight": float(norm_val),
+            "smoothed_score": float(ewma),
+            "reward_weight": float(reward_weight),
             "updated_at": scored_time_str,
         }
         rewards.append(reward_item)

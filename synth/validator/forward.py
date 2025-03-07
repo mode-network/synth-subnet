@@ -124,7 +124,6 @@ async def forward(
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
-        softmax_beta=base_neuron.config.softmax.beta,
     )
 
     if not success:
@@ -139,9 +138,11 @@ async def forward(
 
     filtered_miner_uids, filtered_rewards = (
         _calculate_moving_average_and_update_rewards(
-            base_neuron=base_neuron,
             miner_data_handler=miner_data_handler,
             scored_time=scored_time,
+            cutoff_days=base_neuron.config.ewma.cutoff_days,
+            half_life_days=base_neuron.config.ewma.half_life_days,
+            softmax_beta=base_neuron.config.softmax.beta,
         )
     )
 
@@ -166,7 +167,11 @@ async def forward(
 
 
 def _send_weights_to_bittensor_and_update_weights_history(
-    base_neuron, miner_uids, miner_weights, miner_data_handler, scored_time
+    base_neuron: BaseValidatorNeuron,
+    miner_uids,
+    miner_weights,
+    miner_data_handler,
+    scored_time,
 ):
     base_neuron.update_scores(np.array(miner_weights), miner_uids)
 
@@ -201,21 +206,23 @@ def _wait_till_next_iteration():
 
 
 def _calculate_moving_average_and_update_rewards(
-    base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
     scored_time: str,
+    cutoff_days: int,
+    half_life_days: float,
+    softmax_beta: float,
 ) -> tuple[list, list]:
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(
         scored_time_str=scored_time,
-        cutoff_days=base_neuron.config.ewma.cutoff_days,
+        cutoff_days=cutoff_days,
     )
 
     moving_averages_data = compute_weighted_averages(
         input_df=miner_scores_df,
-        half_life_days=base_neuron.config.ewma.half_life_days,
-        alpha=base_neuron.config.ewma.alpha,
+        half_life_days=half_life_days,
         scored_time_str=scored_time,
+        softmax_beta=softmax_beta,
     )
 
     bt.logging.info(

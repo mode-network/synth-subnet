@@ -7,7 +7,6 @@
 * [3. Options](#3-options)
   - [3.1. Common Options](#31-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
-    - [`--ewma.alpha FLOAT`](#--ewmaalpha-float)
     - [`--ewma.cutoff_days INTEGER`](#--ewmacutoff_days-integer)
     - [`--ewma.half_life_days FLOAT`](#--ewmahalf_life_days-float)
     - [`--logging.debug`](#--loggingdebug)
@@ -161,38 +160,6 @@ pm2 start validator.config.js -- --axon.port 8091
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-#### `--ewma.alpha FLOAT`
-
-The exponent to raise the EWMA to, before normalization, (e.g. 1.0).
-
-Default: `2.0`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--ewma.alpha 1.0',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-```shell
-pm2 start validator.config.js -- --ewma.alpha 1.0
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
 #### `--ewma.cutoff_days INTEGER`
 
 The number of days against which to run the moving average, (e.g. 1).
@@ -273,7 +240,7 @@ module.exports = {
       name: 'validator',
       interpreter: 'python3',
       script: './neurons/validator.py',
-      args: '--softmax.beta -0.002',
+      args: '--softmax.beta -0.003',
       env: {
         PYTHONPATH: '.'
       },
@@ -284,7 +251,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start validator.config.js -- --softmax.beta -0.002
+pm2 start validator.config.js -- --softmax.beta -0.003
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

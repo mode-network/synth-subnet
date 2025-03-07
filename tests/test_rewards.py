@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
@@ -10,16 +8,14 @@ from synth.db.models import (
     miner_scores,
 )
 from synth.simulation_input import SimulationInput
-from synth.validator import response_validation
 from synth.validator.forward import remove_zero_rewards
-from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.reward import (
     compute_prompt_scores_v2,
     compute_softmax,
     get_rewards,
 )
-from tests.utils import generate_values
+from tests.utils import prepare_random_predictions
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -45,7 +41,7 @@ def test_compute_softmax_1():
 
 def test_compute_softmax_2():
     score_values = np.array([1000, 1500, 2000, -1])
-    expected_score = np.array([0.506, 0.307, 0.186, 0])
+    expected_score = np.array([0.213, 0.129, 0.078, 0.58])
 
     actual_score = compute_softmax(score_values, -0.001)
 
@@ -53,14 +49,14 @@ def test_compute_softmax_2():
 
 
 def test_compute_prompt_scores_v2():
-    score_values = np.array([1000, 1500, 2000, -1])
-    expected_score = np.array([0, 500, 850, 850])
+    crps_scores = np.array([1000, 1500, 2000, -1])
+    expected_prompt_scores = np.array([0, 500, 850, 850])
 
     actual_score, percentile90, lowest_score = compute_prompt_scores_v2(
-        score_values
+        crps_scores
     )
 
-    assert np.array_equal(actual_score, expected_score)
+    assert np.array_equal(actual_score, expected_prompt_scores)
     assert percentile90 == 1850
     assert lowest_score == 1000
 
@@ -106,32 +102,22 @@ def test_remove_zero_rewards():
 
 
 def test_get_rewards(db_engine):
-    miner_id = 0
     start_time = "2024-11-26T00:00:00+00:00"
     scored_time = "2024-11-28T00:00:00+00:00"
 
-    simulation_input = SimulationInput(
-        asset="BTC",
-        start_time=start_time,
-        time_increment=300,
-        time_length=86400,
-        num_simulations=1,
+    handler, simulation_input, miner_uids = prepare_random_predictions(
+        db_engine, start_time
     )
 
-    handler = MinerDataHandler(db_engine)
     price_data_provider = PriceDataProvider(
         "BTC"
     )  # TODO: add a mock instead of the real provider
-
-    values = generate_values(datetime.fromisoformat(start_time))
-    simulation_data = {miner_id: (values, response_validation.CORRECT, "1.2")}
-    handler.save_responses(simulation_data, simulation_input, datetime.now())
 
     validator_request_id = handler.get_latest_prediction_request(
         scored_time, simulation_input
     )
 
-    prompt_scores_v2 = get_rewards(
+    prompt_scores_v2, detailed_info = get_rewards(
         handler,
         price_data_provider,
         SimulationInput(
@@ -141,12 +127,25 @@ def test_get_rewards(db_engine):
             time_length=3600,  # default: 1 day
             num_simulations=1,  # default: 100
         ),
-        [miner_id],  # TODO: add another test with more miners
+        miner_uids,
         validator_request_id,
     )
 
-    assert len(prompt_scores_v2) == 2
-    assert prompt_scores_v2[1][0]["miner_uid"] == miner_id
-    assert prompt_scores_v2[1][0]["prompt_score_v2"] == 0
-    assert len(prompt_scores_v2[1][0]["crps_data"]) == 72
-    # TODO: assert the scores
+    percentile90 = detailed_info[0]["percentile90"]
+
+    # find the lowest crps value
+    crps_values = [item["total_crps"] for item in detailed_info]
+    lowest_crps = float("inf")
+    for crps in crps_values:
+        # -1 is an invalid prediction
+        if crps < lowest_crps and crps != -1:
+            lowest_crps = crps
+
+    assert len(prompt_scores_v2) == len(miner_uids)
+    assert min(prompt_scores_v2) == 0
+
+    # the max score is the percentile90 - lowest_crps
+    assert max(prompt_scores_v2) == percentile90 - lowest_crps
+
+    assert detailed_info[0]["miner_uid"] == miner_uids[0]
+    assert len(detailed_info[0]["crps_data"]) == 72
