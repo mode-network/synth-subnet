@@ -35,7 +35,10 @@ from synth.utils.helpers import (
 )
 from synth.utils.uids import check_uid_availability
 from synth.validator.miner_data_handler import MinerDataHandler
-from synth.validator.moving_average import compute_weighted_averages
+from synth.validator.moving_average import (
+    compute_weighted_averages,
+    prepare_df_for_moving_average,
+)
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.response_validation import validate_responses
 from synth.validator.reward import get_rewards
@@ -214,8 +217,10 @@ def _calculate_moving_average_and_update_rewards(
         cutoff_days=cutoff_days,
     )
 
+    df = prepare_df_for_moving_average(miner_scores_df)
+
     moving_averages_data = compute_weighted_averages(
-        input_df=miner_scores_df,
+        input_df=df,
         half_life_days=half_life_days,
         validation_time_str=scored_time,
         softmax_beta=softmax_beta,
@@ -240,10 +245,10 @@ def _calculate_moving_average_and_update_rewards(
 
 def _calculate_rewards_and_update_scores(
     miner_data_handler: MinerDataHandler,
-    miner_uids,
-    price_data_provider,
-    scored_time,
-    simulation_input,
+    miner_uids: list,
+    price_data_provider: PriceDataProvider,
+    scored_time: str,
+    simulation_input: SimulationInput,
 ) -> bool:
     # get latest prediction request from validator
     # for which we already have real prices data,
