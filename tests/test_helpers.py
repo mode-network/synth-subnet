@@ -11,12 +11,6 @@ from synth.utils.helpers import (
 
 
 class TestHelpers(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_get_current_time(self):
         current_time = get_current_time()
         print(current_time)
