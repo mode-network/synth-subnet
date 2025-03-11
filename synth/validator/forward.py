@@ -60,10 +60,10 @@ async def forward(
         price_data_provider (:obj:`synth.validator.PriceDataProvider`): The PriceDataProvider returns real prices data for a specific token.
     """
     # getting current validation time
-    current_time = get_current_time()
+    request_time = get_current_time()
 
     # round validation time to the closest minute and add 1 extra minute
-    start_time = round_time_to_minutes(current_time, 60, 60)
+    start_time = round_time_to_minutes(request_time, 60, 60)
 
     # ================= Step 1 ================= #
     # Getting available miners from metagraph and saving information about them
@@ -101,7 +101,7 @@ async def forward(
         miner_data_handler=miner_data_handler,
         miner_uids=miner_uids,
         simulation_input=simulation_input,
-        request_time=current_time,
+        request_time=request_time,
     )
 
     # ================= Step 3 ================= #
@@ -262,6 +262,7 @@ def _calculate_rewards_and_update_scores(
     )
 
     if validator_request_id is None:
+        bt.logging.warning("No prediction requests found")
         return False
 
     # Adjust the scores based on responses from miners.
@@ -278,6 +279,10 @@ def _calculate_rewards_and_update_scores(
     )
 
     bt.logging.info(f"Scored responses: {prompt_scores_v2}")
+
+    if prompt_scores_v2 is None:
+        bt.logging.warning("No rewards calculated")
+        return False
 
     miner_data_handler.set_reward_details(
         reward_details=detailed_info, scored_time=scored_time
@@ -364,7 +369,7 @@ def _get_available_miners_and_update_metagraph_history(
                 ),
                 "coldkey": base_neuron.metagraph.coldkeys[uid],
                 "hotkey": base_neuron.metagraph.hotkeys[uid],
-                "updated_at": start_time,
+                "updated_at": start_time,  # TODO: let the database fill this with default value now()
             }
             miner_uids.append(uid)
             metagraph_info.append(metagraph_item)

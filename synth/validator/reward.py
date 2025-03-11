@@ -139,6 +139,9 @@ def get_rewards(
         score_values
     )
 
+    if prompt_scores_v2 is None:
+        return None, []
+
     # gather all the detailed information
     # for log and debug purposes
     detailed_info = [
@@ -165,8 +168,11 @@ def get_rewards(
     return prompt_scores_v2, detailed_info
 
 
-def compute_prompt_scores_v2(score_values: np.ndarray) -> np.ndarray:
-    percentile90 = np.percentile(score_values, 90)
+def compute_prompt_scores_v2(score_values: np.ndarray):
+    if np.all(score_values == -1):
+        return None, 0, 0
+    score_values_valid = score_values[score_values != -1]
+    percentile90 = np.percentile(score_values_valid, 90)
     capped_scores = np.minimum(score_values, percentile90)
     capped_scores = np.where(score_values == -1, percentile90, capped_scores)
     lowest_score = np.min(capped_scores)

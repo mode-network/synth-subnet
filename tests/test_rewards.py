@@ -50,15 +50,15 @@ def test_compute_softmax_2():
 
 def test_compute_prompt_scores_v2():
     crps_scores = np.array([1000, 1500, 2000, -1])
-    expected_prompt_scores = np.array([0, 500, 850, 850])
+    expected_prompt_scores = np.array([0, 500, 900, 900])
 
     actual_score, percentile90, lowest_score = compute_prompt_scores_v2(
         crps_scores
     )
 
-    assert np.array_equal(actual_score, expected_prompt_scores)
-    assert percentile90 == 1850
+    assert percentile90 == 1900.0
     assert lowest_score == 1000
+    assert np.array_equal(actual_score, expected_prompt_scores)
 
 
 def test_remove_zero_rewards():
@@ -102,7 +102,7 @@ def test_remove_zero_rewards():
 
 
 def test_get_rewards(db_engine):
-    start_time = "2024-11-26T00:00:00+00:00"
+    start_time = "2024-11-25T23:58:00+00:00"
     scored_time = "2024-11-28T00:00:00+00:00"
 
     handler, simulation_input, miner_uids = prepare_random_predictions(
@@ -122,7 +122,7 @@ def test_get_rewards(db_engine):
         price_data_provider,
         SimulationInput(
             asset="BTC",
-            start_time=scored_time,
+            start_time=start_time,
             time_increment=60,  # default: 5 mins
             time_length=3600,  # default: 1 day
             num_simulations=1,  # default: 100
@@ -130,6 +130,8 @@ def test_get_rewards(db_engine):
         miner_uids,
         validator_request_id,
     )
+
+    assert prompt_scores_v2 is not None
 
     percentile90 = detailed_info[0]["percentile90"]
 

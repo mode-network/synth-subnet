@@ -12,7 +12,7 @@ from tests.utils import prepare_random_predictions
 
 
 def test_calculate_rewards_and_update_scores(db_engine):
-    start_time = "2024-11-26T00:00:00+00:00"
+    start_time = "2024-11-25T23:58:00+00:00"
     scored_time = "2024-11-28T00:00:00+00:00"
 
     handler, simulation_input, miner_uids = prepare_random_predictions(
@@ -43,7 +43,7 @@ def test_calculate_rewards_and_update_scores(db_engine):
 
 
 def test_calculate_moving_average_and_update_rewards(db_engine):
-    start_time = "2024-11-26T00:00:00+00:00"
+    start_time = "2024-11-25T23:58:00+00:00"
     scored_time = "2024-11-28T00:00:00+00:00"
 
     handler, simulation_input, miner_uids = prepare_random_predictions(
@@ -78,7 +78,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine):
 
 def test_calculate_moving_average_and_update_rewards_new_miner(db_engine):
     handler = MinerDataHandler(db_engine)
-    start_time_str = "2024-11-26T00:00:00+00:00"
+    start_time_str = "2024-11-25T23:58:00+00:00"
     num_predictions = 6
     for i in range(num_predictions):
         miner_uids = [0, 1, 2, 3, 4, 5]
@@ -86,6 +86,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(db_engine):
             tzinfo=timezone.utc
         ) + timedelta(hours=i)
         start_time_str = start_time.isoformat()
+        print("start time", start_time_str)
         simulation_input = SimulationInput(
             asset="BTC",
             start_time=start_time_str,
@@ -138,11 +139,9 @@ def test_calculate_moving_average_and_update_rewards_new_miner(db_engine):
 
         price_data_provider = PriceDataProvider("BTC")
 
-        # scored time is start time + 24 hours
-        scored_time = start_time + timedelta(days=1)
-        # adding 1 sec because comparison is with < and not <=
-        # TODO: check if this is the correct way to do it (MOD-1357)
-        scored_time += timedelta(seconds=1)
+        # scored time is start time + 24 hours + 2 minutes because start_time
+        scored_time = start_time + timedelta(days=1, minutes=2)
+        print("scored time", scored_time.isoformat())
 
         assert _calculate_rewards_and_update_scores(
             miner_data_handler=handler,
