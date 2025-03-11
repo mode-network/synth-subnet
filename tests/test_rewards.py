@@ -61,6 +61,21 @@ def test_compute_prompt_scores_v2():
     assert np.array_equal(actual_score, expected_prompt_scores)
 
 
+def test_compute_prompt_scores_v2_only_one_miner():
+    crps_scores = np.array([1000, -1, -1, -1])
+    expected_prompt_scores = np.array(
+        [0, 0, 0, 0]
+    )  # TODO: not ideal but it's the current behavior
+
+    actual_score, percentile90, lowest_score = compute_prompt_scores_v2(
+        crps_scores
+    )
+
+    assert percentile90 == 1000
+    assert lowest_score == 1000
+    assert np.array_equal(actual_score, expected_prompt_scores)
+
+
 def test_remove_zero_rewards():
     moving_average_rewards = [
         {
