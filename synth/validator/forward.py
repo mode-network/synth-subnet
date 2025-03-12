@@ -19,6 +19,7 @@
 
 import time
 from datetime import datetime
+import random
 
 import bittensor as bt
 import numpy as np
@@ -63,7 +64,7 @@ async def forward(
     request_time = get_current_time()
 
     # round validation time to the closest minute and add 1 extra minute
-    start_time = round_time_to_minutes(request_time, 60, 60)
+    start_time = round_time_to_minutes(request_time, 60, 120)
 
     # ================= Step 1 ================= #
     # Getting available miners from metagraph and saving information about them
@@ -302,6 +303,9 @@ async def _query_available_miners_and_save_responses(
         base_neuron.config.neuron.timeout, simulation_input.start_time
     )
 
+    # shuffle the miners to avoid bias (keep miner_uids the same order)
+    miner_uids_shuffled = random.sample(miner_uids, len(miner_uids))
+
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
     # prices for a chosen asset)
@@ -315,7 +319,9 @@ async def _query_available_miners_and_save_responses(
     # axon is a server application that accepts requests on the miner side
     # ======================================================
     synapses = await base_neuron.dendrite(
-        axons=[base_neuron.metagraph.axons[uid] for uid in miner_uids],
+        axons=[
+            base_neuron.metagraph.axons[uid] for uid in miner_uids_shuffled
+        ],
         synapse=synapse,
         deserialize=False,
         timeout=timeout,
