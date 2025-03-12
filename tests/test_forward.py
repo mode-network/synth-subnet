@@ -12,8 +12,8 @@ from tests.utils import prepare_random_predictions
 
 
 def test_calculate_rewards_and_update_scores(db_engine):
-    start_time = "2024-11-25T23:58:00+00:00"
-    scored_time = "2024-11-28T00:00:00+00:00"
+    start_time = "2024-11-26T00:00:00+00:00"
+    scored_time = "2024-11-27T00:04:00+00:00"
 
     handler, simulation_input, miner_uids = prepare_random_predictions(
         db_engine, start_time
@@ -43,8 +43,8 @@ def test_calculate_rewards_and_update_scores(db_engine):
 
 
 def test_calculate_moving_average_and_update_rewards(db_engine):
-    start_time = "2024-11-25T23:58:00+00:00"
-    scored_time = "2024-11-28T00:00:00+00:00"
+    start_time = "2024-11-26T00:00:00+00:00"
+    scored_time = "2024-11-27T00:04:00+00:00"
 
     handler, simulation_input, miner_uids = prepare_random_predictions(
         db_engine, start_time
@@ -78,7 +78,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine):
 
 def test_calculate_moving_average_and_update_rewards_new_miner(db_engine):
     handler = MinerDataHandler(db_engine)
-    start_time_str = "2024-11-25T23:58:00+00:00"
+    start_time_str = "2024-11-26T00:00:00+00:00"
     num_predictions = 6
     for i in range(num_predictions):
         miner_uids = [0, 1, 2, 3, 4, 5]
