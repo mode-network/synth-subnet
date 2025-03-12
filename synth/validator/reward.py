@@ -138,6 +138,28 @@ def get_rewards(
     score_values = np.array(scores)
     softmax_scores = compute_softmax(score_values, softmax_beta)
 
+
+    # apply sigmoid function to the softmax scores
+    valid_scores_mask = score_values != -1
+    miner_scores = list(zip(miner_uids, score_values))
+    valid_miner_scores = [ms for ms, mask in zip(miner_scores, valid_scores_mask) if mask]
+    valid_miner_scores.sort(key=lambda x: x[1], reverse=True)
+    rank_mapping = {uid: rank + 1 for rank, (uid, _) in enumerate(valid_miner_scores)}
+    
+    ranks = np.zeros_like(softmax_scores)
+    for i, (uid, _) in enumerate(miner_scores):
+        if valid_scores_mask[i]:
+            ranks[i] = rank_mapping[uid]
+    
+    n_valid = np.sum(valid_scores_mask)
+    normalized_ranks = (ranks - 1) / (n_valid - 1) if n_valid > 1 else ranks
+    
+    steepness = 10  # mark how sharp the s-curve is
+    sigmoid_rewards = 1 / (1 + np.exp(-steepness * (normalized_ranks - 0.5)))
+
+    softmax_scores = sigmoid_rewards
+
+
     # gather all the detailed information
     # for log and debug purposes
     detailed_info = [
