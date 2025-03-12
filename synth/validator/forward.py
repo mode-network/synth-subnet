@@ -65,7 +65,7 @@ async def forward(
     request_time = get_current_time()
 
     # round validation time to the closest minute and add 1 extra minute
-    start_time = round_time_to_minutes(request_time, 60, 60)
+    start_time = round_time_to_minutes(request_time, 60, 120)
 
     # ================= Step 1 ================= #
     # Getting available miners from metagraph and saving information about them
