@@ -33,4 +33,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_column("miner_scores", "prompt_score_v2")
     op.drop_column("miner_scores", "score_details_v2")
-    op.alter_column("miner_scores", "score_details", nullable=True)
