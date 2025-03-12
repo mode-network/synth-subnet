@@ -27,6 +27,7 @@ import wandb
 from synth.base.validator import BaseValidatorNeuron
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
+from synth.utils.constants import DELAY_BETWEEN_ITERATIONS
 from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
@@ -205,7 +206,7 @@ def _send_weights_to_bittensor_and_update_weights_history(
 
 
 def _wait_till_next_iteration():
-    time.sleep(3600)  # wait for an hour
+    time.sleep(DELAY_BETWEEN_ITERATIONS)  # wait for an hour
 
 
 def _calculate_moving_average_and_update_rewards(

@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import bittensor as bt
 import pandas as pd
 from sqlalchemy import select, text
+from sqlalchemy.dialects import postgresql
 
 from synth.db.models import (
     miner_predictions as miner_predictions_model,
@@ -14,6 +15,7 @@ from synth.db.models import (
     weights_update_history,
 )
 from synth.simulation_input import SimulationInput
+from synth.utils.constants import DELAY_BETWEEN_ITERATIONS
 from synth.validator import response_validation
 
 
@@ -164,6 +166,13 @@ class MinerDataHandler:
                             * validator_requests.c.time_length
                         )
                         < scored_time,
+                        scored_time
+                        - (
+                            validator_requests.c.start_time
+                            + text("INTERVAL '1 second'")
+                            * validator_requests.c.time_length
+                        )
+                        < timedelta(seconds=DELAY_BETWEEN_ITERATIONS),
                         validator_requests.c.asset == simulation_input.asset,
                         validator_requests.c.time_increment
                         == simulation_input.time_increment,

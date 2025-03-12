@@ -117,8 +117,8 @@ def test_remove_zero_rewards():
 
 
 def test_get_rewards(db_engine):
-    start_time = "2024-11-25T23:58:00+00:00"
-    scored_time = "2024-11-28T00:00:00+00:00"
+    start_time = "2024-11-26T00:00:00+00:00"
+    scored_time = "2024-11-27T00:04:00+00:00"
 
     handler, simulation_input, miner_uids = prepare_random_predictions(
         db_engine, start_time
