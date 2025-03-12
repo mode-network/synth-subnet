@@ -6,7 +6,9 @@ from synth.db.models import miner_predictions, validator_requests
 from synth.validator import response_validation
 from synth.simulation_input import SimulationInput
 from synth.validator.miner_data_handler import MinerDataHandler
-from tests.utils import generate_values
+from synth.validator.price_data_provider import PriceDataProvider
+from synth.validator.reward import get_rewards
+from tests.utils import generate_values, prepare_random_predictions
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -303,3 +305,38 @@ def test_get_values_incorrect_format(db_engine):
 
     assert len(prediction) == 0
     assert format_validation == error_string
+
+
+def test_set_get_scores(db_engine):
+    handler = MinerDataHandler(db_engine)
+    price_data_provider = PriceDataProvider("BTC")
+    start_time = "2024-11-25T23:58:00+00:00"
+    scored_time = "2024-11-27T00:00:00+00:00"
+    handler, simulation_input, miner_uids = prepare_random_predictions(
+        db_engine, start_time
+    )
+
+    validator_request_id = handler.get_latest_prediction_request(
+        scored_time, simulation_input
+    )
+
+    prompt_scores_v2, detailed_info = get_rewards(
+        handler,
+        price_data_provider,
+        simulation_input,
+        miner_uids,
+        validator_request_id,
+    )
+
+    assert prompt_scores_v2 is not None
+
+    handler.set_reward_details(
+        reward_details=detailed_info, scored_time=scored_time
+    )
+
+    miner_scores_df = handler.get_miner_scores(
+        scored_time_str=scored_time,
+        cutoff_days=4,
+    )
+
+    print(miner_scores_df)

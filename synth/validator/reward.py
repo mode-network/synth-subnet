@@ -102,8 +102,7 @@ def get_rewards(
     simulation_input: SimulationInput,
     miner_uids: List[int],
     validator_request_id: int,
-    softmax_beta: float,
-) -> (np.ndarray, []):
+) -> tuple[np.ndarray, list]:
     """
     Returns an array of rewards for the given query and responses.
 
@@ -136,50 +135,61 @@ def get_rewards(
         prediction_id_list.append(miner_prediction_id)
 
     score_values = np.array(scores)
-    softmax_scores = compute_softmax(score_values, softmax_beta)
+    prompt_scores_v2, percentile90, lowest_score = compute_prompt_scores_v2(
+        score_values
+    )
+
+    if prompt_scores_v2 is None:
+        return None, []
 
     # gather all the detailed information
     # for log and debug purposes
     detailed_info = [
         {
             "miner_uid": miner_uid,
-            "score": score,
-            "crps_data": clean_numpy_in_crps_data(crps_data),
-            "softmax_score": float(softmax_score),
-            "real_prices": real_prices,
+            "prompt_score_v2": float(prompt_score_v2),
+            "percentile90": float(percentile90),
+            "lowest_score": float(lowest_score),
             "miner_prediction_id": miner_prediction_id,
+            "total_crps": float(score),
+            "crps_data": clean_numpy_in_crps_data(crps_data),
+            "real_prices": real_prices,
         }
-        for miner_uid, score, crps_data, softmax_score, real_prices, miner_prediction_id in zip(
+        for miner_uid, score, crps_data, prompt_score_v2, real_prices, miner_prediction_id in zip(
             miner_uids,
             scores,
             detailed_crps_data_list,
-            softmax_scores,
+            prompt_scores_v2,
             real_prices_list,
             prediction_id_list,
         )
     ]
 
-    return softmax_scores, detailed_info
+    return prompt_scores_v2, detailed_info
+
+
+def compute_prompt_scores_v2(score_values: np.ndarray):
+    if np.all(score_values == -1):
+        return None, 0, 0
+    score_values_valid = score_values[score_values != -1]
+    percentile90 = np.percentile(score_values_valid, 90)
+    capped_scores = np.minimum(score_values, percentile90)
+    capped_scores = np.where(score_values == -1, percentile90, capped_scores)
+    lowest_score = np.min(capped_scores)
+    return capped_scores - lowest_score, percentile90, lowest_score
 
 
 def compute_softmax(score_values: np.ndarray, beta: float) -> np.ndarray:
-    # Mask out invalid scores (e.g., -1)
-    mask = score_values != -1  # True for values to include in computation
-
     bt.logging.info(f"Going to use the following value of beta: {beta}")
 
-    # Compute softmax scores only for valid values
-    exp_scores = np.exp(beta * score_values[mask])
+    exp_scores = np.exp(beta * score_values)
     softmax_scores_valid = exp_scores / np.sum(exp_scores)
-
-    # Create final softmax_scores with 0 where scores were -1
-    softmax_scores = np.zeros_like(score_values, dtype=float)
-    softmax_scores[mask] = softmax_scores_valid
+    softmax_scores = softmax_scores_valid
 
     return softmax_scores
 
 
-def clean_numpy_in_crps_data(crps_data: []) -> []:
+def clean_numpy_in_crps_data(crps_data: list) -> list:
     cleaned_crps_data = [
         {
             key: (float(value) if isinstance(value, np.float64) else value)

@@ -11,12 +11,6 @@ from synth.utils.helpers import (
 
 
 class TestHelpers(unittest.TestCase):
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_get_current_time(self):
         current_time = get_current_time()
         print(current_time)
@@ -90,6 +84,19 @@ class TestHelpers(unittest.TestCase):
 
         self.assertEqual(result_1, "2024-11-25T19:05:00")
         self.assertEqual(result_2, "2024-11-25T19:05:00")
+
+    def test_round_time_to_minutes_plus_two_extra(self):
+        dt_str_1 = "2024-11-25T19:01:59.940515"
+        result_1 = round_time_to_minutes(
+            datetime.fromisoformat(dt_str_1), 60, 120
+        )
+        self.assertEqual(result_1, "2024-11-25T19:04:00")
+
+        dt_str_2 = "2024-11-25T19:03:09.659353"
+        result_2 = round_time_to_minutes(
+            datetime.fromisoformat(dt_str_2), 60, 120
+        )
+        self.assertEqual(result_2, "2024-11-25T19:06:00")
 
     def test_round_time_to_two_minutes(self):
         time_increment = 120

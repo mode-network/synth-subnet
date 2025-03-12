@@ -34,6 +34,5 @@ validator:
 		--netuid $(netuid) \
 		--logging.$(logging_level) \
 		--neuron.axon_off true \
-		--ewma.alpha $(ewma_alpha) \
 		--ewma.half_life_days $(ewma_half_life_days) \
 		--ewma.cutoff_days $(ewma_cutoff_days)
