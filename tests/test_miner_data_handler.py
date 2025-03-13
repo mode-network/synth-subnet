@@ -21,7 +21,7 @@ def setup_data(db_engine):
             connection.execute(vr)
 
 
-def test_get_values_within_range(db_engine):
+def test_get_values_too_old(db_engine):
     """
     Test retrieving values within the valid time range.
     2024-11-20T00:00:00       2024-11-20T23:55:00
@@ -49,11 +49,44 @@ def test_get_values_within_range(db_engine):
     validator_request_id = handler.get_latest_prediction_request(
         scored_time, simulation_input
     )
-    result = handler.get_miner_prediction(miner_id, validator_request_id)
+    miner_predictions_id, _, _ = handler.get_miner_prediction(
+        miner_id, validator_request_id
+    )
 
-    # get only second element from the result tuple
-    # that corresponds to the prediction result
-    prediction = result[1]
+    assert miner_predictions_id is None
+
+
+def test_get_values_within_range(db_engine):
+    """
+    Test retrieving values within the valid time range.
+    2024-11-20T00:00:00       2024-11-20T23:55:00
+             |-------------------------|                       (Prediction range)
+
+                                2024-11-21T00:04:00
+                                        |-|        (Scored Time)
+    """
+    miner_id = 1
+    start_time = "2024-11-20T00:00:00"
+    scored_time = "2024-11-21T00:04:00"
+    simulation_input = SimulationInput(
+        asset="BTC",
+        start_time=start_time,
+        time_increment=300,
+        time_length=86400,
+        num_simulations=1,
+    )
+
+    values = generate_values(datetime.fromisoformat(start_time))
+    simulation_data = {miner_id: (values, response_validation.CORRECT, "12")}
+    handler = MinerDataHandler(db_engine)
+    handler.save_responses(simulation_data, simulation_input, datetime.now())
+
+    validator_request_id = handler.get_latest_prediction_request(
+        scored_time, simulation_input
+    )
+    _, prediction, _ = handler.get_miner_prediction(
+        miner_id, validator_request_id
+    )
 
     assert len(prediction) == 1
     assert len(prediction[0]) == 288
@@ -93,11 +126,9 @@ def test_get_values_ongoing_range(db_engine):
     validator_request_id = handler.get_latest_prediction_request(
         scored_time, simulation_input
     )
-    result = handler.get_miner_prediction(miner_id, validator_request_id)
-
-    # get only second element from the result tuple
-    # that corresponds to the prediction result
-    prediction = result[1]
+    _, prediction, _ = handler.get_miner_prediction(
+        miner_id, validator_request_id
+    )
 
     assert len(prediction) == 0
 
@@ -113,13 +144,13 @@ def test_multiple_records_for_same_miner(db_engine):
                   2024-11-20T12:00:00       2024-11-21T11:55:00
                            |-------------------------|               (Prediction range 2)
 
-                                                  2024-11-21T15:00:00
+                                                  2024-11-21T12:04:00
                                                           |-|        (Current Time)
     """
     miner_id = 1
     start_time_1 = "2024-11-20T00:00:00+00:00"
     start_time_2 = "2024-11-20T12:00:00+00:00"
-    scored_time = "2024-11-21T15:00:00+00:00"
+    scored_time = "2024-11-21T12:04:00+00:00"
 
     simulation_input_1 = SimulationInput(
         asset="BTC",
@@ -158,11 +189,9 @@ def test_multiple_records_for_same_miner(db_engine):
     validator_request_id = handler.get_latest_prediction_request(
         scored_time, simulation_input_1
     )
-    result = handler.get_miner_prediction(miner_id, validator_request_id)
-
-    # get only second element from the result tuple
-    # that corresponds to the prediction result
-    prediction = result[1]
+    _, prediction, _ = handler.get_miner_prediction(
+        miner_id, validator_request_id
+    )
 
     assert len(prediction) == 1
     assert len(prediction[0]) == 288
@@ -187,13 +216,13 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
                   2024-11-20T12:00:00       2024-11-21T11:55:00
                            |-------------------------|               (Prediction range 2)
 
-                                    2024-11-21T03:00:00
+                                    2024-11-21T00:04:00
                                             |-|                      (Scored Time)
     """
     miner_id = 1
     start_time_1 = "2024-11-20T00:00:00+00:00"
     start_time_2 = "2024-11-20T12:00:00+00:00"
-    scored_time = "2024-11-21T03:00:00+00:00"
+    scored_time = "2024-11-21T00:04:00+00:00"
 
     simulation_input_1 = SimulationInput(
         asset="BTC",
@@ -232,11 +261,9 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
     validator_request_id = handler.get_latest_prediction_request(
         scored_time, simulation_input_1
     )
-    result = handler.get_miner_prediction(miner_id, validator_request_id)
-
-    # get only second element from the result tuple
-    # that corresponds to the prediction result
-    prediction = result[1]
+    _, prediction, _ = handler.get_miner_prediction(
+        miner_id, validator_request_id
+    )
 
     assert len(prediction) == 1
     assert len(prediction[0]) == 288
@@ -276,12 +303,12 @@ def test_get_values_incorrect_format(db_engine):
     2024-11-20T00:00:00       2024-11-20T23:55:00
              |-------------------------|                       (Prediction range)
 
-                                            2024-11-22T00:00:00
-                                                    |-|        (Scored Time)
+                                2024-11-21T00:04:00
+                                        |-|        (Scored Time)
     """
     miner_id = 1
     start_time = "2024-11-20T00:00:00"
-    scored_time = "2024-11-22T00:00:00"
+    scored_time = "2024-11-21T00:04:00"
     simulation_input = SimulationInput(
         asset="BTC",
         start_time=start_time,
@@ -298,10 +325,9 @@ def test_get_values_incorrect_format(db_engine):
     validator_request_id = handler.get_latest_prediction_request(
         scored_time, simulation_input
     )
-    result = handler.get_miner_prediction(miner_id, validator_request_id)
-
-    prediction = result[1]
-    format_validation = result[2]
+    _, prediction, format_validation = handler.get_miner_prediction(
+        miner_id, validator_request_id
+    )
 
     assert len(prediction) == 0
     assert format_validation == error_string
