@@ -51,7 +51,7 @@ def setup_wandb_alert(wandb_run):
                     )
             except Exception as err:
                 bt.logging.warning(
-                    f"Error occurred while sending alert to wandb: ---{str(err)}--- then message: ---{log_entry}---"
+                    f"Error occurred while sending alert to wandb: ---{str(err)}--- the message: ---{log_entry}---"
                 )
                 bt.logging.warning(
                     str(print_exception(type(err), err, err.__traceback__))

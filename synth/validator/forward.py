@@ -378,6 +378,8 @@ def _get_available_miners_and_update_metagraph_history(
     if len(metagraph_info) > 0:
         miner_data_handler.update_metagraph_history(metagraph_info)
 
+    random.shuffle(miner_uids)
+
     return miner_uids
 
 
