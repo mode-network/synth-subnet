@@ -2,10 +2,13 @@ from datetime import datetime, timedelta
 
 import bittensor as bt
 import pandas as pd
-from sqlalchemy import select, text
+from sqlalchemy import insert, select, text
+from sqlalchemy.types import String, TIMESTAMP, JSON
+from sqlalchemy.sql import bindparam
 
 from synth.db.models import (
     miner_predictions as miner_predictions_model,
+    miners as miners_model,
     miner_scores,
     validator_requests,
     metagraph_history,
@@ -24,12 +27,13 @@ class MinerDataHandler:
 
     def save_responses(
         self,
-        miner_predictions: dict[tuple],
+        miner_predictions: dict,
         simulation_input: SimulationInput,
         request_time: datetime,
     ):
         """Save miner predictions and simulation input."""
 
+        # Prepare the validator_requests row from the simulation input:
         validator_requests_row = {
             "start_time": simulation_input.start_time,
             "asset": simulation_input.asset,
@@ -41,44 +45,100 @@ class MinerDataHandler:
 
         try:
             with self.engine.connect() as connection:
-                with connection.begin():  # Begin a transaction
-                    insert_stmt_validator_requests = (
-                        validator_requests.insert().values(
-                            validator_requests_row
-                        )
+                with connection.begin():
+                    # 1. Insert into validator_requests and get its ID
+                    insert_stmt_validator = insert(validator_requests).values(
+                        validator_requests_row
                     )
-                    result = connection.execute(insert_stmt_validator_requests)
+                    result = connection.execute(insert_stmt_validator)
                     validator_requests_id = result.inserted_primary_key[0]
 
-                    miner_prediction_records = []
+                    # 2. Build lists for each parameter from miner_predictions, which maps miner_uid -> (prediction, format_validation, process_time)
+                    miner_uids = []
+                    predictions = []
+                    validations = []
+                    process_times = []
                     for miner_uid, (
                         prediction,
                         format_validation,
                         process_time,
                     ) in miner_predictions.items():
-                        # If the format is not correct, we don't save the prediction
-                        if format_validation != response_validation.CORRECT:
-                            prediction = []
-
-                        miner_prediction_records.append(
-                            {
-                                "validator_requests_id": validator_requests_id,
-                                "miner_uid": miner_uid,
-                                "prediction": prediction,
-                                "format_validation": format_validation,
-                                "process_time": process_time,
-                            }
+                        miner_uids.append(miner_uid)
+                        predictions.append(
+                            prediction
+                            if format_validation == response_validation.CORRECT
+                            else []
                         )
+                        validations.append(format_validation)
+                        process_times.append(process_time)
 
-                    insert_stmt_miner_predictions = (
-                        miner_predictions_model.insert().values(
-                            miner_prediction_records
-                        )
+                    # 3. Create a text-based subquery using unnest
+                    # We use cast hints in the SQL to indicate the expected types.
+                    # Note: Adjust the type casts (e.g., ::text[], ::json[], etc.) as needed
+                    unnest_sql = text(
+                        """
+                        SELECT *
+                        FROM unnest(
+                            :miner_uid::text[],
+                            :prediction::json[],
+                            :validation::text[],
+                            :process_time::timestamp[]
+                        ) AS vals(miner_uid, prediction, format_validation, process_time)
+                        """
+                    ).bindparams(
+                        bindparam("miner_uid", value=miner_uids),
+                        bindparam("prediction", value=predictions),
+                        bindparam("validation", value=validations),
+                        bindparam("process_time", value=process_times),
                     )
-                    connection.execute(insert_stmt_miner_predictions)
-            # return validator_requests_id # TODO: finish this: refactor to add the validator_requests_id in the score and reward table
+
+                    # Tell SQLAlchemy about the columns of our text subquery.
+                    values_subquery = unnest_sql.columns(
+                        miner_uid=String,
+                        prediction=JSON,
+                        format_validation=String,
+                        process_time=TIMESTAMP,
+                    ).alias("vals")
+
+                    # 4. Create an INSERT FROM SELECT statement.
+                    # Here we join the miner table (to resolve miner.id by miner_uid)
+                    insert_stmt_mp = insert(
+                        miner_predictions_model
+                    ).from_select(
+                        [
+                            "validator_requests_id",
+                            "miner_id",  # will be looked up via join
+                            "prediction",
+                            "format_validation",
+                            "process_time",
+                        ],
+                        select(
+                            bindparam(
+                                "validator_requests_id",
+                                value=validator_requests_id,
+                            ),
+                            miners_model.c.id,
+                            values_subquery.c.prediction,
+                            values_subquery.c.format_validation,
+                            values_subquery.c.process_time,
+                        ).select_from(
+                            miners_model.join(
+                                values_subquery,
+                                miners_model.c.miner_uid
+                                == values_subquery.c.miner_uid,
+                            )
+                        ),
+                    )
+
+                    # 5. Execute the bulk insert statement
+                    connection.execute(insert_stmt_mp)
+
+            # Optionally, you can return validator_requests_id if needed.
+            # return validator_requests_id
+
         except Exception as e:
-            connection.rollback()
+            # With context-managed transactions the rollback happens automatically,
+            # but we log the error for debugging.
             bt.logging.error(f"in save_responses (got an exception): {e}")
 
     def set_reward_details(self, reward_details: list[dict], scored_time: str):
