@@ -279,6 +279,8 @@ def _calculate_rewards_and_update_scores(
         bt.logging.warning("No prediction requests found")
         return False
 
+    bt.logging.trace(f"validator_request_id: {validator_request_id}")
+
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
     # this is the function we need to implement for our incentives mechanism,
