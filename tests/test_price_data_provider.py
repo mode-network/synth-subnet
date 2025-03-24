@@ -379,4 +379,4 @@ class TestPriceDataProvider(unittest.TestCase):
 
     def test_fetch_data(self):
         result = self.dataProvider.fetch_data("2025-02-18T04:32:00")
-        print(result)
+        print("result", result)

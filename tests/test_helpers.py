@@ -13,7 +13,7 @@ from synth.utils.helpers import (
 class TestHelpers(unittest.TestCase):
     def test_get_current_time(self):
         current_time = get_current_time()
-        print(current_time)
+        print("current_time", current_time)
 
     def test_convert_prices_to_time_format(self):
         prices = [[45.67, 56.78, 34.89, 62.15]]
