@@ -2,7 +2,6 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 import bittensor as bt
-from traceback import print_exception
 
 
 EVENTS_LEVEL_NUM = 38
@@ -50,12 +49,12 @@ def setup_wandb_alert(wandb_run):
                         level=record.levelname,
                     )
             except Exception as err:
-                bt.logging.warning(
-                    f"Error occurred while sending alert to wandb: ---{str(err)}--- the message: ---{log_entry}---"
-                )
-                bt.logging.warning(
-                    str(print_exception(type(err), err, err.__traceback__))
-                )
+                filter = "will be ignored. Please make sure that you are using an active run"
+                msg = f"Error occurred while sending alert to wandb: ---{str(err)}--- the message: ---{log_entry}---"
+                if filter not in str(err):
+                    bt.logging.trace(msg)
+                else:
+                    bt.logging.warning(msg)
 
     wandb_handler = WandBHandler()
     wandb_handler.setLevel(logging.ERROR)
