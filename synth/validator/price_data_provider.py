@@ -1,7 +1,18 @@
+import logging
 import requests
+from datetime import datetime, timezone
+
+
+from tenacity import (
+    before_log,
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)
+import bittensor as bt
+
 
 from synth.utils.helpers import from_iso_to_unix_time
-from datetime import datetime, timezone
 
 
 class PriceDataProvider:
@@ -14,6 +25,12 @@ class PriceDataProvider:
     def __init__(self, token):
         self.token = self._get_token_mapping(token)
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_random_exponential(multiplier=5),
+        reraise=True,
+        before=before_log(bt.logging._logger, logging.DEBUG),
+    )
     def fetch_data(self, time_point: str):
         """
         Fetch real prices data from an external REST service.
