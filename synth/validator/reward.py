@@ -120,12 +120,12 @@ def get_rewards(
     detailed_crps_data_list = []
     real_prices_list = []
     prediction_id_list = []
-    for i, miner_id in enumerate(miner_uids):
+    for miner_uid in miner_uids:
         # function that calculates a score for an individual miner
         score, detailed_crps_data, real_prices, miner_prediction_id = reward(
             miner_data_handler,
             price_data_provider,
-            miner_id,
+            miner_uid,
             simulation_input,
             validator_request_id,
         )

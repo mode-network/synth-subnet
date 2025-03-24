@@ -122,6 +122,8 @@ async def forward(
     #               from the database of previous prediction data
     scored_time = start_time
 
+    # TODO: here we should get the list of miner_uids from the database, table miners
+
     success = _calculate_rewards_and_update_scores(
         miner_data_handler=miner_data_handler,
         miner_uids=miner_uids,
@@ -174,7 +176,7 @@ def _send_weights_to_bittensor_and_update_weights_history(
     base_neuron: BaseValidatorNeuron,
     miner_uids: list,
     miner_weights: list,
-    miner_data_handler,
+    miner_data_handler: MinerDataHandler,
     scored_time,
 ):
     base_neuron.update_scores(np.array(miner_weights), miner_uids)
@@ -224,11 +226,22 @@ def _calculate_moving_average_and_update_rewards(
 
     df = prepare_df_for_moving_average(miner_scores_df)
 
+    # bt.logging.debug(df)
+
     moving_averages_data = compute_weighted_averages(
         input_df=df,
         half_life_days=half_life_days,
         scored_time_str=scored_time,
         softmax_beta=softmax_beta,
+    )
+
+    if moving_averages_data is None:
+        return [], []
+
+    moving_averages_data = (
+        miner_data_handler.populate_miner_uid_in_miner_rewards(
+            moving_averages_data
+        )
     )
 
     bt.logging.info(
@@ -285,7 +298,7 @@ def _calculate_rewards_and_update_scores(
         bt.logging.warning("No rewards calculated")
         return False
 
-    miner_data_handler.set_reward_details(
+    miner_data_handler.set_miner_scores(
         reward_details=detailed_info, scored_time=scored_time
     )
 
@@ -377,6 +390,7 @@ def _get_available_miners_and_update_metagraph_history(
 
     if len(metagraph_info) > 0:
         miner_data_handler.update_metagraph_history(metagraph_info)
+        miner_data_handler.insert_new_miners(metagraph_info)
 
     random.shuffle(miner_uids)
 
@@ -401,7 +415,10 @@ def remove_zero_rewards(moving_averages_data):
     miners = []
     rewards = []
     for rewards_item in moving_averages_data:
-        if rewards_item["reward_weight"] != 0:
+        if (
+            rewards_item["reward_weight"] != 0
+            and rewards_item["miner_uid"] is not None
+        ):
             miners.append(rewards_item["miner_uid"])
             rewards.append(rewards_item["reward_weight"])
     return rewards, miners

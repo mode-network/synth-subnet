@@ -50,8 +50,8 @@ def prepare_df_for_moving_average(df):
             group = group.set_index("scored_time")
             group = group.reindex(new_index)
 
-            # Fill in miner_uid (assumed constant for the miner)
-            group["miner_uid"] = group["miner_uid"].ffill().bfill().astype(int)
+            # Fill in miner_id (assumed constant for the miner)
+            group["miner_id"] = group["miner_id"].ffill().bfill().astype(int)
 
             # For missing prompt_score_v2, use the corresponding worst_score from the mapping.
             # Note: group.index is the scored_time.
@@ -61,17 +61,14 @@ def prepare_df_for_moving_average(df):
 
             # Fill in score_details_v2:
             group["score_details_v2"] = [
-                global_score_details_v2_mapping.get(t)
-                for t, x in zip(group.index, group["score_details_v2"])
+                global_score_details_v2_mapping.get(t) for t in group.index
             ]
 
             group = group.reset_index()
         return group
 
-    df = df.groupby("miner_uid", group_keys=False).apply(
-        fill_missing_for_miner
-    )
-    df = df.sort_values(by=["scored_time", "miner_uid"])
+    df = df.groupby("miner_id", group_keys=False).apply(fill_missing_for_miner)
+    df = df.sort_values(by=["scored_time", "miner_id"])
 
     return df
 
@@ -99,12 +96,12 @@ def compute_weighted_averages(
         tzinfo=timezone.utc
     )
 
-    # Group by miner_uid
-    grouped = input_df.groupby("miner_uid")
+    # Group by miner_id
+    grouped = input_df.groupby("miner_id")
 
-    results = []  # will hold tuples of (miner_uid, ewma)
+    results = []  # will hold tuples of (miner_id, ewma)
 
-    for miner_uid, group_df in grouped:
+    for miner_id, group_df in grouped:
         total_weight = 0.0
         weighted_reward_sum = 0.0
 
@@ -124,16 +121,16 @@ def compute_weighted_averages(
             if total_weight > 0
             else float("inf")
         )
-        results.append((miner_uid, ewma))
+        results.append((miner_id, ewma))
 
     # Now compute soft max to get the reward_scores
     ewma_list = [r[1] for r in results]
     reward_weight_list = compute_softmax(np.array(ewma_list), softmax_beta)
 
     rewards = []
-    for (miner_uid, ewma), reward_weight in zip(results, reward_weight_list):
+    for (miner_id, ewma), reward_weight in zip(results, reward_weight_list):
         reward_item = {
-            "miner_uid": miner_uid,
+            "miner_id": miner_id,
             "smoothed_score": float(ewma),
             "reward_weight": float(reward_weight),
             "updated_at": scored_time_str,

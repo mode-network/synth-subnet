@@ -25,21 +25,21 @@ def test_moving_average_1():
         softmax_beta=-0.003,
     )
 
-    # The miner_uid you want to search for
-    target_uid = 144
+    # The miner id you want to search for
+    target_id = 144
 
-    # Select the element by miner_uid
+    # Select the element by miner id
     selected_miner = next(
         (
             item
             for item in moving_averages_data
-            if item["miner_uid"] == target_uid
+            if item["miner_id"] == target_id
         ),
         None,
     )
 
     # Print the selected miner
-    print(selected_miner)
+    print("selected_miner", selected_miner)
 
 
 def test_moving_average_2():
@@ -56,20 +56,20 @@ def test_moving_average_2():
         softmax_beta=-0.003,
     )
 
-    # The miner_uid you want to search for
-    target_uid = 144
+    # The miner id you want to search for
+    target_id = 144
 
-    # Select the element by miner_uid
+    # Select the element by miner id
     selected_miner = next(
         (
             item
             for item in moving_averages_data
-            if item["miner_uid"] == target_uid
+            if item["miner_id"] == target_id
         ),
         None,
     )
 
-    print(selected_miner)
+    print("selected_miner", selected_miner)
 
 
 def test_get_miner_scores():
@@ -86,18 +86,18 @@ def test_get_miner_scores():
         softmax_beta=-0.003,
     )
 
-    # The miner_uid you want to search for
-    target_uid = 144
+    # The miner id you want to search for
+    target_id = 144
 
-    # Select the element by miner_uid
+    # Select the element by miner id
     selected_miner = next(
         (
             item
             for item in moving_averages_data
-            if item["miner_uid"] == target_uid
+            if item["miner_id"] == target_id
         ),
         None,
     )
 
     # Print the selected miner
-    print(selected_miner)
+    print("selected_miner", selected_miner)
