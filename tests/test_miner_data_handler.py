@@ -67,7 +67,7 @@ def test_get_values_within_range(db_engine):
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
-    prediction = result[1]
+    prediction = result.prediction
 
     assert len(prediction) == 1
     assert len(prediction[0]) == 288
@@ -117,11 +117,7 @@ def test_get_values_ongoing_range(db_engine):
     )
     result = handler.get_miner_prediction(miner_uid, validator_request_id)
 
-    # get only second element from the result tuple
-    # that corresponds to the prediction result
-    prediction = result[1]
-
-    assert len(prediction) == 0
+    assert result is None
 
 
 def test_multiple_records_for_same_miner(db_engine):
@@ -192,7 +188,7 @@ def test_multiple_records_for_same_miner(db_engine):
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
-    prediction = result[1]
+    prediction = result.prediction
 
     assert len(prediction) == 1
     assert len(prediction[0]) == 288
@@ -274,7 +270,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
-    prediction = result[1]
+    prediction = result.prediction
 
     assert len(prediction) == 1
     assert len(prediction[0]) == 288
@@ -346,8 +342,8 @@ def test_get_values_incorrect_format(db_engine):
     )
     result = handler.get_miner_prediction(miner_uid, validator_request_id)
 
-    prediction = result[1]
-    format_validation = result[2]
+    prediction = result.prediction
+    format_validation = result.format_validation
 
     assert len(prediction) == 0
     assert format_validation == error_string

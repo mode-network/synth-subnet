@@ -19,6 +19,7 @@ from typing import List
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 import numpy as np
+import pandas as pd
 
 from synth.simulation_input import SimulationInput
 from synth.utils.helpers import get_intersecting_arrays
@@ -45,31 +46,34 @@ def reward(
     - float: The reward value for the miner.
     """
 
-    miner_prediction_id, predictions, format_validation = (
-        miner_data_handler.get_miner_prediction(
-            miner_uid, validator_request_id
-        )
+    miner_prediction = miner_data_handler.get_miner_prediction(
+        miner_uid, validator_request_id
     )
 
-    if format_validation != response_validation.CORRECT:
+    if miner_prediction is None:
+        return -1, [], [], None
+
+    if miner_prediction.format_validation != response_validation.CORRECT:
         return (
             -1,
             [],
             [],
-            miner_prediction_id,
+            miner_prediction,
         )  # represents no prediction data from the miner
 
     # get last time in predictions
-    end_time = predictions[0][len(predictions[0]) - 1]["time"]
+    end_time = miner_prediction.prediction[0][
+        len(miner_prediction.prediction[0]) - 1
+    ]["time"]
     real_prices = price_data_provider.fetch_data(end_time)
 
     if len(real_prices) == 0:
-        return -1, [], [], miner_prediction_id
+        return -1, [], [], miner_prediction
 
     # in case some of the time points is not overlapped
     intersecting_predictions = []
     intersecting_real_price = real_prices
-    for prediction in predictions:
+    for prediction in miner_prediction.prediction:
         intersecting_prediction, intersecting_real_price = (
             get_intersecting_arrays(prediction, intersecting_real_price)
         )
@@ -89,11 +93,11 @@ def reward(
         )
     except Exception as e:
         bt.logging.error(
-            f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction_id}: {e}"
+            f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction.id}: {e}"
         )
-        return -1, [], [], miner_prediction_id
+        return -1, [], [], miner_prediction
 
-    return score, detailed_crps_data, real_prices, miner_prediction_id
+    return score, detailed_crps_data, real_prices, miner_prediction
 
 
 def get_rewards(
@@ -119,10 +123,10 @@ def get_rewards(
     scores = []
     detailed_crps_data_list = []
     real_prices_list = []
-    prediction_id_list = []
+    miner_prediction_list = []
     for miner_uid in miner_uids:
         # function that calculates a score for an individual miner
-        score, detailed_crps_data, real_prices, miner_prediction_id = reward(
+        score, detailed_crps_data, real_prices, miner_prediction = reward(
             miner_data_handler,
             price_data_provider,
             miner_uid,
@@ -132,7 +136,7 @@ def get_rewards(
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
         real_prices_list.append(real_prices)
-        prediction_id_list.append(miner_prediction_id)
+        miner_prediction_list.append(miner_prediction)
 
     score_values = np.array(scores)
     prompt_scores_v2, percentile90, lowest_score = compute_prompt_scores_v2(
@@ -150,18 +154,28 @@ def get_rewards(
             "prompt_score_v2": float(prompt_score_v2),
             "percentile90": float(percentile90),
             "lowest_score": float(lowest_score),
-            "miner_prediction_id": miner_prediction_id,
+            "miner_prediction_id": (
+                miner_prediction.id if miner_prediction else None
+            ),
+            "format_validation": (
+                miner_prediction.format_validation
+                if miner_prediction
+                else None
+            ),
+            "process_time": (
+                miner_prediction.process_time if miner_prediction else None
+            ),
             "total_crps": float(score),
             "crps_data": clean_numpy_in_crps_data(crps_data),
             "real_prices": real_prices,
         }
-        for miner_uid, score, crps_data, prompt_score_v2, real_prices, miner_prediction_id in zip(
+        for miner_uid, score, crps_data, prompt_score_v2, real_prices, miner_prediction in zip(
             miner_uids,
             scores,
             detailed_crps_data_list,
             prompt_scores_v2,
             real_prices_list,
-            prediction_id_list,
+            miner_prediction_list,
         )
     ]
 
@@ -198,3 +212,12 @@ def clean_numpy_in_crps_data(crps_data: list) -> list:
         for item in crps_data
     ]
     return cleaned_crps_data
+
+
+def print_scores_df(prompt_scores_v2, detailed_info):
+    bt.logging.info(f"Scored responses: {prompt_scores_v2}")
+
+    df = pd.DataFrame.from_dict(detailed_info)
+    df = df.drop(columns=["crps_data"])
+    df = df.drop(columns=["real_prices"])
+    bt.logging.info(df.to_string())
