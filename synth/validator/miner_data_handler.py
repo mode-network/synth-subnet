@@ -298,15 +298,6 @@ class MinerDataHandler:
 
         try:
             with self.engine.connect() as connection:
-                print(
-                    connection.execute(
-                        select(
-                            miner_scores.c.miner_predictions_id,
-                            miner_scores.c.prompt_score_v2,
-                            miner_scores.c.scored_time,
-                        ).select_from(miner_scores)
-                    ).fetchall()
-                )
                 query = (
                     select(
                         miner_predictions_model.c.miner_id,
