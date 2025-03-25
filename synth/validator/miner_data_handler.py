@@ -264,9 +264,11 @@ class MinerDataHandler:
                                 for miner in metagraph_info
                             ]
                         )
-                        .on_conflict_do_nothing(
+                        .on_conflict_do_update(
                             # index_elements=["miner_uid", "coldkey", "hotkey"],
-                            constraint="uq_miners_miner_uid_coldkey_hotkey"
+                            constraint="uq_miners_miner_uid_coldkey_hotkey",
+                            # update the updated_at column
+                            set_={"updated_at": datetime.now()},
                         )
                     )
                     connection.execute(insert_stmt)
