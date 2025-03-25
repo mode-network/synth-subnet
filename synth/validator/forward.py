@@ -42,7 +42,7 @@ from synth.validator.moving_average import (
 )
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.response_validation import validate_responses
-from synth.validator.reward import get_rewards
+from synth.validator.reward import get_rewards, print_scores_df
 
 
 async def forward(
@@ -294,7 +294,7 @@ def _calculate_rewards_and_update_scores(
         validator_request_id=validator_request_id,
     )
 
-    bt.logging.info(f"Scored responses: {prompt_scores_v2}")
+    print_scores_df(prompt_scores_v2, detailed_info)
 
     if prompt_scores_v2 is None:
         bt.logging.warning("No rewards calculated")

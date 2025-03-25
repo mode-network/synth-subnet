@@ -175,6 +175,7 @@ class MinerDataHandler:
                         miner_predictions_model.c.id,
                         miner_predictions_model.c.prediction,
                         miner_predictions_model.c.format_validation,
+                        miner_predictions_model.c.process_time,
                     )
                     .select_from(miner_predictions_model)
                     .join(
@@ -193,19 +194,15 @@ class MinerDataHandler:
                 result = connection.execute(query).fetchone()
 
             if result is None:
-                return None, [], ""
+                return None
 
-            record_id = result.id
-            prediction = result.prediction
-            format_validation = result.format_validation
-
-            return record_id, prediction, format_validation
+            return result
         except Exception as e:
             bt.logging.error(
                 f"in get_miner_prediction (got an exception): {e}"
             )
             traceback.print_exc(file=sys.stderr)
-            return None, [], ""
+            return None
 
     def get_latest_prediction_request(
         self, scored_time_str: str, simulation_input: SimulationInput
@@ -299,6 +296,15 @@ class MinerDataHandler:
 
         try:
             with self.engine.connect() as connection:
+                print(
+                    connection.execute(
+                        select(
+                            miner_scores.c.miner_predictions_id,
+                            miner_scores.c.prompt_score_v2,
+                            miner_scores.c.scored_time,
+                        ).select_from(miner_scores)
+                    ).fetchall()
+                )
                 query = (
                     select(
                         miner_predictions_model.c.miner_id,
