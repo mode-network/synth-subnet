@@ -39,6 +39,7 @@ from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.moving_average import (
     compute_weighted_averages,
     prepare_df_for_moving_average,
+    print_rewards_df,
 )
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.response_validation import validate_responses
@@ -244,9 +245,7 @@ def _calculate_moving_average_and_update_rewards(
         )
     )
 
-    bt.logging.info(
-        f"Scored responses moving averages: {moving_averages_data}"
-    )
+    print_rewards_df(moving_averages_data)
 
     if moving_averages_data is None:
         return [], []

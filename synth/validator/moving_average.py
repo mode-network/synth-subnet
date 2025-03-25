@@ -1,8 +1,11 @@
 from datetime import datetime, timezone
 
+
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+import bittensor as bt
+
 
 from synth.validator.reward import compute_softmax
 
@@ -152,3 +155,9 @@ def compute_weight(
         24.0 * 3600.0
     )
     return 0.5 ** (delta_days / half_life_days)
+
+
+def print_rewards_df(moving_averages_data):
+    bt.logging.info("Scored responses moving averages:")
+    df = pd.DataFrame.from_dict(moving_averages_data)
+    bt.logging.info(df.to_string())
