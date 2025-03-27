@@ -166,6 +166,41 @@ class MinerDataHandler:
             bt.logging.error(f"in set_miner_scores (got an exception): {e}")
             traceback.print_exc(file=sys.stderr)
 
+    def get_miner_uid_of_prediction_request(
+        self, validator_request_id: int
+    ) -> list[tuple[int]]:
+        """Retrieve the miner_uid of the given validator_request_id."""
+        try:
+            with self.engine.connect() as connection:
+                query = (
+                    select(
+                        miners_model.c.miner_uid,
+                    )
+                    .select_from(miner_predictions_model)
+                    .join(
+                        miners_model,
+                        miners_model.c.id
+                        == miner_predictions_model.c.miner_id,
+                    )
+                    .where(
+                        miner_predictions_model.c.validator_requests_id
+                        == validator_request_id
+                    )
+                )
+
+                data = connection.execute(query).fetchall()
+                result = []
+                for row in data:
+                    result.append(row.miner_uid)
+
+            return result
+        except Exception as e:
+            bt.logging.error(
+                f"in get_miner_uid_of_prediction_request (got an exception): {e}"
+            )
+            traceback.print_exc(file=sys.stderr)
+            return None
+
     def get_miner_prediction(self, miner_uid: int, validator_request_id: int):
         """Retrieve the record with the longest valid interval for the given miner_id."""
         try:
@@ -192,9 +227,6 @@ class MinerDataHandler:
                 )
 
                 result = connection.execute(query).fetchone()
-
-            if result is None:
-                return None
 
             return result
         except Exception as e:
