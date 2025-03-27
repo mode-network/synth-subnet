@@ -31,7 +31,6 @@ def test_calculate_rewards_and_update_scores(db_engine):
 
     success = _calculate_rewards_and_update_scores(
         miner_data_handler=handler,
-        miner_uids=miner_uids,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
@@ -54,7 +53,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine):
     start_time = "2024-09-25T23:58:00+00:00"
     scored_time = "2024-09-28T00:00:00+00:00"
 
-    handler, simulation_input, miner_uids = prepare_random_predictions(
+    handler, simulation_input, _ = prepare_random_predictions(
         db_engine, start_time
     )
 
@@ -62,7 +61,6 @@ def test_calculate_moving_average_and_update_rewards(db_engine):
 
     success = _calculate_rewards_and_update_scores(
         miner_data_handler=handler,
-        miner_uids=miner_uids,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
@@ -159,7 +157,6 @@ def test_calculate_moving_average_and_update_rewards_new_miner(db_engine):
 
         success = _calculate_rewards_and_update_scores(
             miner_data_handler=handler,
-            miner_uids=miner_uids,
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
             simulation_input=simulation_input,
@@ -290,7 +287,6 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
 
         success = _calculate_rewards_and_update_scores(
             miner_data_handler=handler,
-            miner_uids=miner_uids,
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
             simulation_input=simulation_input,
@@ -301,7 +297,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             cutoff_days=4,
         )
 
-        print("miner_scores_df", miner_scores_df)
+        print("miner_scores_df: ", miner_scores_df)
 
         assert success
 
@@ -396,7 +392,6 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(db_engine):
 
         success = _calculate_rewards_and_update_scores(
             miner_data_handler=handler,
-            miner_uids=miner_uids,
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
             simulation_input=simulation_input,
