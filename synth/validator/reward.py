@@ -33,10 +33,10 @@ import bittensor as bt
 
 def reward(
     miner_data_handler: MinerDataHandler,
-    price_data_provider: PriceDataProvider,
     miner_uid: int,
     simulation_input: SimulationInput,
     validator_request_id: int,
+    real_prices: List[float],
 ):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
@@ -51,24 +51,14 @@ def reward(
     )
 
     if miner_prediction is None:
-        return -1, [], [], None
+        return -1, [], None
 
     if miner_prediction.format_validation != response_validation.CORRECT:
-        return (
-            -1,
-            [],
-            [],
-            miner_prediction,
-        )  # represents no prediction data from the miner
-
-    # get last time in predictions
-    end_time = miner_prediction.prediction[0][
-        len(miner_prediction.prediction[0]) - 1
-    ]["time"]
-    real_prices = price_data_provider.fetch_data(end_time)
+        # represents no prediction data from the miner
+        return -1, [], miner_prediction
 
     if len(real_prices) == 0:
-        return -1, [], [], miner_prediction
+        return -1, [], miner_prediction
 
     # in case some of the time points is not overlapped
     intersecting_predictions = []
@@ -95,9 +85,9 @@ def reward(
         bt.logging.error(
             f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction.id}: {e}"
         )
-        return -1, [], [], miner_prediction
+        return -1, [], miner_prediction
 
-    return score, detailed_crps_data, real_prices, miner_prediction
+    return score, detailed_crps_data, miner_prediction
 
 
 def get_rewards(
@@ -121,22 +111,22 @@ def get_rewards(
         validator_request_id
     )
 
+    real_prices = price_data_provider.fetch_data(simulation_input)
+
     scores = []
     detailed_crps_data_list = []
-    real_prices_list = []
     miner_prediction_list = []
     for miner_uid in miner_uids:
         # function that calculates a score for an individual miner
-        score, detailed_crps_data, real_prices, miner_prediction = reward(
+        score, detailed_crps_data, miner_prediction = reward(
             miner_data_handler,
-            price_data_provider,
             miner_uid,
             simulation_input,
             validator_request_id,
+            real_prices,
         )
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
-        real_prices_list.append(real_prices)
         miner_prediction_list.append(miner_prediction)
 
     score_values = np.array(scores)
@@ -170,12 +160,11 @@ def get_rewards(
             "crps_data": clean_numpy_in_crps_data(crps_data),
             "real_prices": real_prices,
         }
-        for miner_uid, score, crps_data, prompt_score_v2, real_prices, miner_prediction in zip(
+        for miner_uid, score, crps_data, prompt_score_v2, miner_prediction in zip(
             miner_uids,
             scores,
             detailed_crps_data_list,
             prompt_scores_v2,
-            real_prices_list,
             miner_prediction_list,
         )
     ]

@@ -1,6 +1,7 @@
 import unittest
 from unittest.mock import patch
 
+from synth.simulation_input import SimulationInput
 from synth.validator.price_data_provider import PriceDataProvider
 
 
@@ -44,7 +45,12 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data("2025-02-20T14:12:00+00:00")
+            result = self.dataProvider.fetch_data(
+                SimulationInput(
+                    start_time="2025-02-19T14:12:00+00:00",
+                    time_length=86400,
+                )
+            )
 
             assert result == [
                 {
@@ -73,7 +79,12 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data("2025-02-20T14:12:00+00:00")
+            result = self.dataProvider.fetch_data(
+                SimulationInput(
+                    start_time="2025-02-19T14:12:00+00:00",
+                    time_length=86400,
+                )
+            )
 
             assert result == [
                 {
@@ -102,7 +113,12 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data("2025-02-20T14:12:00+00:00")
+            result = self.dataProvider.fetch_data(
+                SimulationInput(
+                    start_time="2025-02-19T14:12:00+00:00",
+                    time_length=86400,
+                )
+            )
 
             assert result == [
                 {
@@ -145,7 +161,12 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data("2025-02-20T14:12:00+00:00")
+            result = self.dataProvider.fetch_data(
+                SimulationInput(
+                    start_time="2025-02-19T14:12:00+00:00",
+                    time_length=86400,
+                )
+            )
 
             assert result == [
                 {
@@ -167,7 +188,12 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data("2025-02-20T14:12:00+00:00")
+            result = self.dataProvider.fetch_data(
+                SimulationInput(
+                    start_time="2025-02-19T14:12:00+00:00",
+                    time_length=86400,
+                )
+            )
 
             assert result == []
 
@@ -191,7 +217,12 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data("2025-02-20T14:12:00+00:00")
+            result = self.dataProvider.fetch_data(
+                SimulationInput(
+                    start_time="2025-02-19T14:12:00+00:00",
+                    time_length=86400,
+                )
+            )
 
             assert result == [
                 {
@@ -242,7 +273,12 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data("2025-02-20T14:12:00+00:00")
+            result = self.dataProvider.fetch_data(
+                SimulationInput(
+                    start_time="2025-02-19T14:12:00+00:00",
+                    time_length=86400,
+                )
+            )
 
             assert result == [
                 {
@@ -300,7 +336,12 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data("2025-02-20T14:12:00+00:00")
+            result = self.dataProvider.fetch_data(
+                SimulationInput(
+                    start_time="2025-02-19T14:12:00+00:00",
+                    time_length=86400,
+                )
+            )
 
             assert result == [
                 {
@@ -360,7 +401,12 @@ class TestPriceDataProvider(unittest.TestCase):
         with patch("requests.get") as mock_get:
             mock_get.return_value.json.return_value = mock_response
 
-            result = self.dataProvider.fetch_data("2025-02-20T14:12:00+00:00")
+            result = self.dataProvider.fetch_data(
+                SimulationInput(
+                    start_time="2025-02-19T14:12:00+00:00",
+                    time_length=86400,
+                )
+            )
 
             assert result == [
                 {
@@ -378,5 +424,10 @@ class TestPriceDataProvider(unittest.TestCase):
             ]
 
     def test_fetch_data(self):
-        result = self.dataProvider.fetch_data("2025-02-18T04:32:00")
+        result = self.dataProvider.fetch_data(
+            SimulationInput(
+                start_time="2025-02-19T14:12:00+00:00",
+                time_length=86400,
+            )
+        )
         print("result", result)

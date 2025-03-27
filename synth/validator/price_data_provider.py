@@ -1,6 +1,6 @@
 import logging
 import requests
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 
 from tenacity import (
@@ -12,6 +12,7 @@ from tenacity import (
 import bittensor as bt
 
 
+from synth.simulation_input import SimulationInput
 from synth.utils.helpers import from_iso_to_unix_time
 
 
@@ -19,8 +20,6 @@ class PriceDataProvider:
     BASE_URL = "https://benchmarks.pyth.network/v1/shims/tradingview/history"
 
     TOKEN_MAP = {"BTC": "Crypto.BTC/USD", "ETH": "Crypto.ETH/USD"}
-
-    one_day_seconds = 24 * 60 * 60
 
     def __init__(self, token):
         self.token = self._get_token_mapping(token)
@@ -31,7 +30,7 @@ class PriceDataProvider:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
-    def fetch_data(self, time_point: str):
+    def fetch_data(self, simulation_input: SimulationInput):
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
@@ -39,8 +38,11 @@ class PriceDataProvider:
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        end_time = from_iso_to_unix_time(time_point)
-        start_time = end_time - self.one_day_seconds
+        start_time = from_iso_to_unix_time(simulation_input.start_time)
+        end_time = datetime.fromisoformat(
+            simulation_input.start_time
+        ) + timedelta(seconds=simulation_input.time_length)
+        end_time = from_iso_to_unix_time(end_time.isoformat())
 
         params = {
             "symbol": self.token,

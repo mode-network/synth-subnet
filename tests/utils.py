@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 
-from sqlalchemy import insert
+from sqlalchemy import Engine, insert
 
 
 from synth.miner.simulations import generate_simulations
@@ -22,7 +22,7 @@ def generate_values(start_time: datetime):
     return [values]
 
 
-def prepare_random_predictions(db_engine, start_time):
+def prepare_random_predictions(db_engine: Engine, start_time: str):
     handler = MinerDataHandler(db_engine)
     miner_uids = [0, 1, 2, 3]
 
