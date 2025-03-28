@@ -4,7 +4,7 @@ import traceback, sys
 
 import bittensor as bt
 import pandas as pd
-from sqlalchemy import Connection, select, text, func, desc
+from sqlalchemy import Connection, Engine, select, text, func, desc
 from sqlalchemy.dialects.postgresql import insert
 
 
@@ -23,7 +23,7 @@ from synth.validator import response_validation
 
 
 class MinerDataHandler:
-    def __init__(self, engine=None):
+    def __init__(self, engine: Engine = None):
         # Use the provided engine or fall back to the default engine
         self.engine = engine or get_engine()
 
@@ -245,7 +245,12 @@ class MinerDataHandler:
 
             with self.engine.connect() as connection:
                 query = (
-                    select(validator_requests.c.id)
+                    select(
+                        validator_requests.c.id,
+                        validator_requests.c.start_time,
+                        validator_requests.c.time_length,
+                        validator_requests.c.time_increment,
+                    )
                     .select_from(validator_requests)
                     .where(
                         (
@@ -266,12 +271,7 @@ class MinerDataHandler:
                     .limit(1)
                 )
 
-                result = connection.execute(query).fetchone()
-
-                if result is None:
-                    return None
-
-                return result.id
+                return connection.execute(query).fetchone()
         except Exception as e:
             bt.logging.error(
                 f"in get_latest_prediction_request (got an exception): {e}"

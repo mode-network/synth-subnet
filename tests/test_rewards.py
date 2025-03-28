@@ -1,3 +1,4 @@
+import json
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
@@ -124,25 +125,16 @@ def test_get_rewards(db_engine):
         db_engine, start_time
     )
 
-    price_data_provider = PriceDataProvider(
-        "BTC"
-    )  # TODO: add a mock instead of the real provider
+    price_data_provider = PriceDataProvider("BTC")
 
-    validator_request_id = handler.get_latest_prediction_request(
+    validator_request = handler.get_latest_prediction_request(
         scored_time, simulation_input
     )
 
     prompt_scores_v2, detailed_info = get_rewards(
         handler,
         price_data_provider,
-        SimulationInput(
-            asset="BTC",
-            start_time=start_time,
-            time_increment=60,  # default: 5 mins
-            time_length=3600,  # default: 1 day
-            num_simulations=1,  # default: 100
-        ),
-        validator_request_id,
+        validator_request,
     )
 
     assert prompt_scores_v2 is not None
@@ -164,4 +156,4 @@ def test_get_rewards(db_engine):
     assert max(prompt_scores_v2) == percentile90 - lowest_crps
 
     assert detailed_info[0]["miner_uid"] == miner_uids[0]
-    assert len(detailed_info[0]["crps_data"]) == 72
+    assert len(detailed_info[0]["crps_data"]) == 350
