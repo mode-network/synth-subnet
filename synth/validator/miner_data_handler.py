@@ -245,7 +245,12 @@ class MinerDataHandler:
 
             with self.engine.connect() as connection:
                 query = (
-                    select(validator_requests.c.id)
+                    select(
+                        validator_requests.c.id,
+                        validator_requests.c.start_time,
+                        validator_requests.c.time_length,
+                        validator_requests.c.time_increment,
+                    )
                     .select_from(validator_requests)
                     .where(
                         (
@@ -266,12 +271,7 @@ class MinerDataHandler:
                     .limit(1)
                 )
 
-                result = connection.execute(query).fetchone()
-
-                if result is None:
-                    return None
-
-                return result.id
+                return connection.execute(query).fetchone()
         except Exception as e:
             bt.logging.error(
                 f"in get_latest_prediction_request (got an exception): {e}"

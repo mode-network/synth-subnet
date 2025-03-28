@@ -20,21 +20,20 @@ from typing import List
 # DEALINGS IN THE SOFTWARE.
 import numpy as np
 import pandas as pd
+import bittensor as bt
 
-from synth.simulation_input import SimulationInput
+
 from synth.utils.helpers import get_intersecting_arrays
 from synth.validator.crps_calculation import calculate_crps_for_miner
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator import response_validation
 
-import bittensor as bt
-
 
 def reward(
     miner_data_handler: MinerDataHandler,
     miner_uid: int,
-    simulation_input: SimulationInput,
+    time_increment: int,
     validator_request_id: int,
     real_prices: List[float],
 ):
@@ -79,7 +78,7 @@ def reward(
         score, detailed_crps_data = calculate_crps_for_miner(
             np.array(predictions_path).astype(float),
             np.array(real_price_path),
-            simulation_input.time_increment,
+            time_increment,
         )
     except Exception as e:
         bt.logging.error(
@@ -93,8 +92,7 @@ def reward(
 def get_rewards(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
-    simulation_input: SimulationInput,
-    validator_request_id: int,
+    validator_request,
 ) -> tuple[np.ndarray, list]:
     """
     Returns an array of rewards for the given query and responses.
@@ -108,10 +106,13 @@ def get_rewards(
     """
 
     miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
-        validator_request_id
+        validator_request.id
     )
 
-    real_prices = price_data_provider.fetch_data(simulation_input)
+    start_time = validator_request.start_time.isoformat()
+    real_prices = price_data_provider.fetch_data(
+        start_time, validator_request.time_length
+    )
 
     scores = []
     detailed_crps_data_list = []
@@ -121,8 +122,8 @@ def get_rewards(
         score, detailed_crps_data, miner_prediction = reward(
             miner_data_handler,
             miner_uid,
-            simulation_input,
-            validator_request_id,
+            validator_request.time_increment,
+            validator_request.id,
             real_prices,
         )
         scores.append(score)

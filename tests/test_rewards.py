@@ -127,15 +127,14 @@ def test_get_rewards(db_engine):
 
     price_data_provider = PriceDataProvider("BTC")
 
-    validator_request_id = handler.get_latest_prediction_request(
+    validator_request = handler.get_latest_prediction_request(
         scored_time, simulation_input
     )
 
     prompt_scores_v2, detailed_info = get_rewards(
         handler,
         price_data_provider,
-        simulation_input,
-        validator_request_id,
+        validator_request,
     )
 
     assert prompt_scores_v2 is not None
