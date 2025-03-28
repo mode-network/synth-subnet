@@ -46,10 +46,7 @@ class TestPriceDataProvider(unittest.TestCase):
             mock_get.return_value.json.return_value = mock_response
 
             result = self.dataProvider.fetch_data(
-                SimulationInput(
-                    start_time="2025-02-19T14:12:00+00:00",
-                    time_length=86400,
-                )
+                "2025-02-19T14:12:00+00:00", 86400
             )
 
             assert result == [
@@ -80,10 +77,7 @@ class TestPriceDataProvider(unittest.TestCase):
             mock_get.return_value.json.return_value = mock_response
 
             result = self.dataProvider.fetch_data(
-                SimulationInput(
-                    start_time="2025-02-19T14:12:00+00:00",
-                    time_length=86400,
-                )
+                "2025-02-19T14:12:00+00:00", 86400
             )
 
             assert result == [
@@ -114,10 +108,7 @@ class TestPriceDataProvider(unittest.TestCase):
             mock_get.return_value.json.return_value = mock_response
 
             result = self.dataProvider.fetch_data(
-                SimulationInput(
-                    start_time="2025-02-19T14:12:00+00:00",
-                    time_length=86400,
-                )
+                "2025-02-19T14:12:00+00:00", 86400
             )
 
             assert result == [
@@ -162,10 +153,7 @@ class TestPriceDataProvider(unittest.TestCase):
             mock_get.return_value.json.return_value = mock_response
 
             result = self.dataProvider.fetch_data(
-                SimulationInput(
-                    start_time="2025-02-19T14:12:00+00:00",
-                    time_length=86400,
-                )
+                "2025-02-19T14:12:00+00:00", 86400
             )
 
             assert result == [
@@ -189,10 +177,7 @@ class TestPriceDataProvider(unittest.TestCase):
             mock_get.return_value.json.return_value = mock_response
 
             result = self.dataProvider.fetch_data(
-                SimulationInput(
-                    start_time="2025-02-19T14:12:00+00:00",
-                    time_length=86400,
-                )
+                "2025-02-19T14:12:00+00:00", 86400
             )
 
             assert result == []
@@ -218,10 +203,7 @@ class TestPriceDataProvider(unittest.TestCase):
             mock_get.return_value.json.return_value = mock_response
 
             result = self.dataProvider.fetch_data(
-                SimulationInput(
-                    start_time="2025-02-19T14:12:00+00:00",
-                    time_length=86400,
-                )
+                "2025-02-19T14:12:00+00:00", 86400
             )
 
             assert result == [
@@ -274,10 +256,7 @@ class TestPriceDataProvider(unittest.TestCase):
             mock_get.return_value.json.return_value = mock_response
 
             result = self.dataProvider.fetch_data(
-                SimulationInput(
-                    start_time="2025-02-19T14:12:00+00:00",
-                    time_length=86400,
-                )
+                "2025-02-19T14:12:00+00:00", 86400
             )
 
             assert result == [
@@ -337,10 +316,7 @@ class TestPriceDataProvider(unittest.TestCase):
             mock_get.return_value.json.return_value = mock_response
 
             result = self.dataProvider.fetch_data(
-                SimulationInput(
-                    start_time="2025-02-19T14:12:00+00:00",
-                    time_length=86400,
-                )
+                "2025-02-19T14:12:00+00:00", 86400
             )
 
             assert result == [
@@ -402,10 +378,7 @@ class TestPriceDataProvider(unittest.TestCase):
             mock_get.return_value.json.return_value = mock_response
 
             result = self.dataProvider.fetch_data(
-                SimulationInput(
-                    start_time="2025-02-19T14:12:00+00:00",
-                    time_length=86400,
-                )
+                "2025-02-19T14:12:00+00:00", 86400
             )
 
             assert result == [
@@ -425,9 +398,6 @@ class TestPriceDataProvider(unittest.TestCase):
 
     def test_fetch_data(self):
         result = self.dataProvider.fetch_data(
-            SimulationInput(
-                start_time="2025-02-19T14:12:00+00:00",
-                time_length=86400,
-            )
+            "2025-02-19T14:12:00+00:00", 86400
         )
         print("result", result)

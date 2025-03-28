@@ -1,6 +1,6 @@
 import logging
 import requests
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 
 from tenacity import (
@@ -12,7 +12,6 @@ from tenacity import (
 import bittensor as bt
 
 
-from synth.simulation_input import SimulationInput
 from synth.utils.helpers import from_iso_to_unix_time
 
 
@@ -30,7 +29,7 @@ class PriceDataProvider:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
-    def fetch_data(self, simulation_input: SimulationInput):
+    def fetch_data(self, start_time: str, time_length: int):
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
@@ -38,11 +37,8 @@ class PriceDataProvider:
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        start_time = from_iso_to_unix_time(simulation_input.start_time)
-        end_time = datetime.fromisoformat(
-            simulation_input.start_time
-        ) + timedelta(seconds=simulation_input.time_length)
-        end_time = from_iso_to_unix_time(end_time.isoformat())
+        start_time = from_iso_to_unix_time(start_time)
+        end_time = start_time + time_length
 
         params = {
             "symbol": self.token,
