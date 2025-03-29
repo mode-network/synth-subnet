@@ -11,7 +11,7 @@
 # The above copyright notice and this permission notice shall be included in all copies or substantial portions of
 # the Software.
 
-from typing import List
+import typing
 
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
 # THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -35,7 +35,7 @@ def reward(
     miner_uid: int,
     time_increment: int,
     validator_request_id: int,
-    real_prices: List[float],
+    real_prices: list[dict],
 ):
     """
     Reward the miner response to the simulation_input request. This method returns a reward
@@ -93,7 +93,7 @@ def get_rewards(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
     validator_request,
-) -> tuple[np.ndarray, list]:
+) -> tuple[typing.Optional[np.ndarray], list]:
     """
     Returns an array of rewards for the given query and responses.
 
@@ -108,6 +108,9 @@ def get_rewards(
     miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
         validator_request.id
     )
+
+    if miner_uids is None:
+        return None, []
 
     start_time = validator_request.start_time.isoformat()
     real_prices = price_data_provider.fetch_data(

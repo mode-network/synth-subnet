@@ -106,16 +106,16 @@ def convert_weights_and_uids_for_emit(
         return [], []  # Nothing to set on chain.
     else:
         max_weight = float(np.max(weights))
-        weights = [
+        weights_list = [
             float(value) / max_weight for value in weights
         ]  # max-upscale values (max_weight = 1).
         bittensor.logging.debug(
-            f"setting on chain max: {max_weight} and weights: {weights}"
+            f"setting on chain max: {max_weight} and weights: {weights_list}"
         )
 
     weight_vals = []
     weight_uids = []
-    for i, (weight_i, uid_i) in enumerate(list(zip(weights, uids))):
+    for i, (weight_i, uid_i) in enumerate(list(zip(weights_list, uids))):
         uint16_val = round(
             float(weight_i) * int(U16_MAX)
         )  # convert to int representation.

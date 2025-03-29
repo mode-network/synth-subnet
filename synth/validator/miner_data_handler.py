@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
-import traceback, sys
+import traceback
+import sys
+import typing
 
 
 import bittensor as bt
@@ -23,7 +25,7 @@ from synth.validator import response_validation
 
 
 class MinerDataHandler:
-    def __init__(self, engine: Engine = None):
+    def __init__(self, engine: typing.Optional[Engine] = None):
         # Use the provided engine or fall back to the default engine
         self.engine = engine or get_engine()
 
@@ -168,7 +170,7 @@ class MinerDataHandler:
 
     def get_miner_uid_of_prediction_request(
         self, validator_request_id: int
-    ) -> list[tuple[int]]:
+    ) -> typing.Optional[list[int]]:
         """Retrieve the miner_uid of the given validator_request_id."""
         try:
             with self.engine.connect() as connection:
@@ -348,9 +350,7 @@ class MinerDataHandler:
 
                 result = connection.execute(query)
 
-            df = pd.DataFrame(result.fetchall(), columns=result.keys())
-
-            return df
+            return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
         except Exception as e:
             bt.logging.error(f"in get_miner_scores (got an exception): {e}")
             traceback.print_exc(file=sys.stderr)
@@ -394,8 +394,8 @@ class MinerDataHandler:
         self,
         miner_uids: list[int],
         miner_weights: list[float],
-        norm_miner_uids: list[int],
-        norm_miner_weights: list[int],
+        norm_miner_uids: list[str],
+        norm_miner_weights: list[str],
         update_result: str,
         scored_time: str,
     ):

@@ -30,7 +30,15 @@ jobs:
 
       - name: Run Pylint
         run: |
-          pylint --fail-on=W,E,F --exit-zero  ./
+          pylint --fail-on=W,E,F --exit-zero ./
+
+      - name: Run Flack8
+        run: |
+          flake8 synth neurons dca alembic tests verify
+
+      - name: Run mypy
+        run: |
+          mypy synth neurons dca alembic tests verify
 
       - name: Run Black
         run: |

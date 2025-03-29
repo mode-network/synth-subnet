@@ -69,10 +69,8 @@ async def stake(
             )
             TOTAL_ALLOCATED += amount_staked
         except Exception as err:
-            logger.debug(
-                str(print_exception(type(err), err, err.__traceback__))
-            )
             logger.error(f"Failed to stake on subnet {best_subnet}: {err}")
+            print_exception(type(err), err, err.__traceback__)
 
         # Retrieve updated stake info.
         stake_info = await sub.get_stake_for_coldkey_and_hotkey(

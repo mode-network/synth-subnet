@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from synth.simulation_input import SimulationInput
+
 from synth.validator.price_data_provider import PriceDataProvider
 
 
