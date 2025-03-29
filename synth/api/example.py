@@ -8,7 +8,6 @@ import asyncio
 
 from synth.simulation_input import SimulationInput
 from synth.utils.helpers import get_current_time
-from synth.utils.config import config
 
 
 # Example usage

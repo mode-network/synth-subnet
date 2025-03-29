@@ -48,7 +48,7 @@ class Simulation(bt.Synapse):
         typing.List[typing.List[typing.Dict[str, typing.Union[str, float]]]]
     ] = None
 
-    def deserialize(self) -> []:
+    def deserialize(self) -> typing.Optional[list]:
         """
         Deserialize simulation output. This method retrieves the response from
         the miner in the form of simulation_output, deserializes it and returns it

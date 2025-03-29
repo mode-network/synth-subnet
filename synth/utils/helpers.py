@@ -89,9 +89,7 @@ def from_iso_to_unix_time(iso_time: str):
     dt = datetime.fromisoformat(iso_time).replace(tzinfo=timezone.utc)
 
     # Convert to Unix time
-    unix_time = int(dt.timestamp())
-
-    return unix_time
+    return int(dt.timestamp())
 
 
 def timeout_from_start_time(
