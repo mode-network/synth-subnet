@@ -54,10 +54,8 @@ async def unstake(
             )
             TOTAL_UNSTAKED += amount_unstaked
         except Exception as err:
-            logger.debug(
-                str(print_exception(type(err), err, err.__traceback__))
-            )
             logger.error(f"Failed to stake on subnet {netuid}: {err}")
+            print_exception(type(err), err, err.__traceback__)
 
         # Retrieve updated stake info.
         stake_info = await sub.get_stake_for_coldkey_and_hotkey(

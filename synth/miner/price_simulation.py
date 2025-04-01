@@ -1,6 +1,5 @@
 import numpy as np
 import requests
-from properscoring import crps_ensemble
 
 
 def get_asset_price(asset="BTC"):

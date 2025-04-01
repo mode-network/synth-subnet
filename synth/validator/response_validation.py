@@ -10,22 +10,22 @@ CORRECT = "CORRECT"
 def datetime_valid(dt_str) -> bool:
     try:
         datetime.fromisoformat(dt_str)
-    except:
+    except ValueError:
         return False
     return True
 
 
 def validate_datetime(
     dt_str,
-) -> typing.Tuple[typing.Optional[datetime], typing.Optional[str]]:
+) -> typing.Tuple[datetime, typing.Optional[str]]:
     if not isinstance(dt_str, str):
         return (
-            None,
+            datetime.now(),
             f"Time format is incorrect: expected str, got {type(dt_str)}",
         )
     if not datetime_valid(dt_str):
         return (
-            None,
+            datetime.now(),
             f"Time format is incorrect: expected isoformat, got {dt_str}",
         )
 
