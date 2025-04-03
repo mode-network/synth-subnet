@@ -2,10 +2,11 @@ from datetime import datetime, timedelta, timezone
 import logging
 
 
+from numpy.testing import assert_almost_equal
 import bittensor as bt
 
 
-from sqlalchemy import insert
+from sqlalchemy import Engine, insert, select
 from synth.miner.simulations import generate_simulations
 from synth.simulation_input import SimulationInput
 from synth.validator import response_validation
@@ -13,13 +14,13 @@ from synth.validator.forward import (
     _calculate_moving_average_and_update_rewards,
     _calculate_rewards_and_update_scores,
 )
-from synth.db.models import miners as miners_model
+from synth.db.models import miners as miners_model, miner_rewards
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
 from tests.utils import prepare_random_predictions
 
 
-def test_calculate_rewards_and_update_scores(db_engine):
+def test_calculate_rewards_and_update_scores(db_engine: Engine):
     start_time = "2024-08-25T23:58:00+00:00"
     scored_time = "2024-08-28T00:00:00+00:00"
 
@@ -49,7 +50,7 @@ def test_calculate_rewards_and_update_scores(db_engine):
     # print(miner_scores_df['score_details_v2'][0])
 
 
-def test_calculate_moving_average_and_update_rewards(db_engine):
+def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
     start_time = "2024-09-25T23:58:00+00:00"
     scored_time = "2024-09-28T00:00:00+00:00"
 
@@ -82,7 +83,9 @@ def test_calculate_moving_average_and_update_rewards(db_engine):
     print("filtered_rewards", filtered_rewards)
 
 
-def test_calculate_moving_average_and_update_rewards_new_miner(db_engine):
+def test_calculate_moving_average_and_update_rewards_new_miner(
+    db_engine: Engine,
+):
     miner_uids = [10, 20, 33, 40, 50, 60]
     with db_engine.connect() as connection:
         with connection.begin():
@@ -186,7 +189,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(db_engine):
 
 
 def test_calculate_moving_average_and_update_rewards_new_miner_registration(
-    db_engine,
+    db_engine: Engine,
 ):
     bt.logging._logger.setLevel(logging.DEBUG)
     miner_uids = [10, 20, 33, 40, 50, 60]
@@ -314,8 +317,23 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         print("filtered_miner_uids", filtered_miner_uids)
         print("filtered_rewards", filtered_rewards)
 
+        # sum the reward weights
+        with db_engine.connect() as connection:
+            with connection.begin():
+                rewards_rows = select(miner_rewards).where(
+                    miner_rewards.c.updated_at == scored_time
+                )
+                rewards_rows = connection.execute(rewards_rows).all()
+                print("rewards_rows", rewards_rows)
+                rewards_sum = sum([row.reward_weight for row in rewards_rows])
+                print("rewards_sum", rewards_sum)
 
-def test_calculate_moving_average_and_update_rewards_only_invalid(db_engine):
+        assert_almost_equal(sum(filtered_rewards), 1, decimal=12)
+
+
+def test_calculate_moving_average_and_update_rewards_only_invalid(
+    db_engine: Engine,
+):
     handler = MinerDataHandler(db_engine)
     start_time_str = "2024-12-28T23:58:00+00:00"
 

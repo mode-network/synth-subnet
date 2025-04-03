@@ -1,4 +1,3 @@
-import json
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
@@ -8,7 +7,6 @@ from synth.db.models import (
     validator_requests,
     miner_scores,
 )
-from synth.simulation_input import SimulationInput
 from synth.validator.forward import remove_zero_rewards
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.reward import (
