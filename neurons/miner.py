@@ -70,8 +70,8 @@ class Miner(BaseMinerNeuron):
         sigma = self.config.simulation.sigma
 
         prediction = generate_simulations(
-            start_time=dt,
             asset=asset,
+            start_time=dt,
             time_increment=time_increment,
             time_length=time_length,
             num_simulations=num_simulations,
