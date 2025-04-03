@@ -264,15 +264,15 @@ def _calculate_rewards_and_update_scores(
     # get latest prediction request from validator
     # for which we already have real prices data,
     # i.e. (start_time + time_length) < scored_time
-    validator_request_id = miner_data_handler.get_latest_prediction_request(
+    validator_request = miner_data_handler.get_latest_prediction_request(
         scored_time, simulation_input
     )
 
-    if validator_request_id is None:
+    if validator_request is None:
         bt.logging.warning("No prediction requests found")
         return False
 
-    bt.logging.trace(f"validator_request_id: {validator_request_id}")
+    bt.logging.trace(f"validator_request_id: {validator_request.id}")
 
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
@@ -282,8 +282,7 @@ def _calculate_rewards_and_update_scores(
     prompt_scores_v2, detailed_info = get_rewards(
         miner_data_handler=miner_data_handler,
         price_data_provider=price_data_provider,
-        simulation_input=simulation_input,
-        validator_request_id=validator_request_id,
+        validator_request=validator_request,
     )
 
     print_scores_df(prompt_scores_v2, detailed_info)

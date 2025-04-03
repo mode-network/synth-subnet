@@ -9,7 +9,7 @@ from synth.utils.helpers import (
 
 def generate_simulations(
     asset="BTC",
-    start_time=None,
+    start_time: str = None,
     time_increment=300,
     time_length=86400,
     num_simulations=1,

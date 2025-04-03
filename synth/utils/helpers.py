@@ -84,7 +84,7 @@ def round_time_to_minutes(dt: datetime, in_seconds: int, extra_seconds=0):
     return rounded_time.isoformat()
 
 
-def from_iso_to_unix_time(iso_time):
+def from_iso_to_unix_time(iso_time: str):
     # Convert to a datetime object
     dt = datetime.fromisoformat(iso_time).replace(tzinfo=timezone.utc)
 

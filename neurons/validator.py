@@ -30,7 +30,7 @@ from synth.base.validator import BaseValidatorNeuron
 
 # Bittensor Validator Template:
 from synth.utils.logging import setup_wandb_alert
-from synth.validator import forward
+from synth.validator.forward import forward
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
 
