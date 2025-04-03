@@ -356,9 +356,7 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return pd.DataFrame()
 
-    def populate_miner_uid_in_miner_rewards(
-        self, miner_rewards_data: list[dict]
-    ):
+    def populate_miner_uid_in_miner_data(self, miner_data: list[dict]):
         try:
             with self.engine.connect() as connection:
                 with connection.begin():
@@ -370,13 +368,13 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return None
 
-        for row in miner_rewards_data:
+        for row in miner_data:
             miner_id = row["miner_id"]
             row["miner_uid"] = (
                 miner_uid_map[miner_id] if miner_id in miner_uid_map else None
             )
 
-        return miner_rewards_data
+        return miner_data
 
     def update_miner_rewards(self, miner_rewards_data: list[dict]):
         try:

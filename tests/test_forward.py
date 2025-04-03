@@ -69,18 +69,15 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
 
     assert success
 
-    filtered_miner_uids, filtered_rewards = (
-        _calculate_moving_average_and_update_rewards(
-            miner_data_handler=handler,
-            scored_time=scored_time,
-            cutoff_days=4,
-            half_life_days=2,
-            softmax_beta=-0.003,
-        )
+    moving_averages_data = _calculate_moving_average_and_update_rewards(
+        miner_data_handler=handler,
+        scored_time=scored_time,
+        cutoff_days=4,
+        half_life_days=2,
+        softmax_beta=-0.003,
     )
 
-    print("filtered_miner_uids", filtered_miner_uids)
-    print("filtered_rewards", filtered_rewards)
+    print("moving_averages_data", moving_averages_data)
 
 
 def test_calculate_moving_average_and_update_rewards_new_miner(
@@ -174,18 +171,15 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
 
         assert success
 
-        filtered_miner_uids, filtered_rewards = (
-            _calculate_moving_average_and_update_rewards(
-                miner_data_handler=handler,
-                scored_time=scored_time.isoformat(),
-                cutoff_days=4,
-                half_life_days=2,
-                softmax_beta=-0.003,
-            )
+        moving_averages_data = _calculate_moving_average_and_update_rewards(
+            miner_data_handler=handler,
+            scored_time=scored_time.isoformat(),
+            cutoff_days=4,
+            half_life_days=2,
+            softmax_beta=-0.003,
         )
 
-        print("filtered_miner_uids", filtered_miner_uids)
-        print("filtered_rewards", filtered_rewards)
+        print("moving_averages_data", moving_averages_data)
 
 
 def test_calculate_moving_average_and_update_rewards_new_miner_registration(
@@ -304,18 +298,15 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
 
         assert success
 
-        filtered_miner_uids, filtered_rewards = (
-            _calculate_moving_average_and_update_rewards(
-                miner_data_handler=handler,
-                scored_time=scored_time.isoformat(),
-                cutoff_days=4,
-                half_life_days=2,
-                softmax_beta=-0.003,
-            )
+        moving_averages_data = _calculate_moving_average_and_update_rewards(
+            miner_data_handler=handler,
+            scored_time=scored_time.isoformat(),
+            cutoff_days=4,
+            half_life_days=2,
+            softmax_beta=-0.003,
         )
 
-        print("filtered_miner_uids", filtered_miner_uids)
-        print("filtered_rewards", filtered_rewards)
+        print("moving_averages_data", moving_averages_data)
 
         # sum the reward weights
         with db_engine.connect() as connection:
@@ -328,7 +319,10 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
                 rewards_sum = sum([row.reward_weight for row in rewards_rows])
                 print("rewards_sum", rewards_sum)
 
-        assert_almost_equal(sum(filtered_rewards), 1, decimal=12)
+        miner_weights = [
+            item["reward_weight"] for item in moving_averages_data
+        ]
+        assert_almost_equal(sum(miner_weights), 1, decimal=12)
 
 
 def test_calculate_moving_average_and_update_rewards_only_invalid(
@@ -424,15 +418,12 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
 
         assert success
 
-        filtered_miner_uids, filtered_rewards = (
-            _calculate_moving_average_and_update_rewards(
-                miner_data_handler=handler,
-                scored_time=scored_time.isoformat(),
-                cutoff_days=4,
-                half_life_days=2,
-                softmax_beta=-0.003,
-            )
+        moving_averages_data = _calculate_moving_average_and_update_rewards(
+            miner_data_handler=handler,
+            scored_time=scored_time.isoformat(),
+            cutoff_days=4,
+            half_life_days=2,
+            softmax_beta=-0.003,
         )
 
-        print("filtered_miner_uids", filtered_miner_uids)
-        print("filtered_rewards", filtered_rewards)
+        print("moving_averages_data", moving_averages_data)

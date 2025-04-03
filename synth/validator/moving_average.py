@@ -7,6 +7,7 @@ from pandas import DataFrame
 import bittensor as bt
 
 
+from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.reward import compute_softmax
 
 
@@ -77,6 +78,7 @@ def prepare_df_for_moving_average(df):
 
 
 def compute_weighted_averages(
+    miner_data_handler: MinerDataHandler,
     input_df: DataFrame,
     half_life_days: float,
     scored_time_str: str,
@@ -102,7 +104,7 @@ def compute_weighted_averages(
     # Group by miner_id
     grouped = input_df.groupby("miner_id")
 
-    results = []  # will hold tuples of (miner_id, ewma)
+    results = []  # will hold dict with miner_id and ewma
 
     for miner_id, group_df in grouped:
         total_weight = 0.0
@@ -124,21 +126,38 @@ def compute_weighted_averages(
             if total_weight > 0
             else float("inf")
         )
-        results.append((miner_id, ewma))
+        results.append({"miner_id": miner_id, "ewma": ewma})
+
+    # Add the miner UID to the results
+    moving_averages_data = miner_data_handler.populate_miner_uid_in_miner_data(
+        results
+    )
+
+    # Filter out None UID
+    filtered_moving_averages_data = []
+    for item in moving_averages_data:
+        if item["miner_uid"] is not None:
+            filtered_moving_averages_data.append(item)
 
     # Now compute soft max to get the reward_scores
-    ewma_list = [r[1] for r in results]
+    ewma_list = [r["ewma"] for r in filtered_moving_averages_data]
     reward_weight_list = compute_softmax(np.array(ewma_list), softmax_beta)
 
     rewards = []
-    for (miner_id, ewma), reward_weight in zip(results, reward_weight_list):
-        reward_item = {
-            "miner_id": miner_id,
-            "smoothed_score": float(ewma),
-            "reward_weight": float(reward_weight),
-            "updated_at": scored_time_str,
-        }
-        rewards.append(reward_item)
+    for item, reward_weight in zip(
+        filtered_moving_averages_data, reward_weight_list
+    ):
+        # filter out zero rewards
+        if float(reward_weight) > 0:
+            rewards.append(
+                {
+                    "miner_id": item["miner_id"],
+                    "miner_uid": item["miner_uid"],
+                    "smoothed_score": item["ewma"],
+                    "reward_weight": float(reward_weight),
+                    "updated_at": scored_time_str,
+                }
+            )
 
     return rewards
 
