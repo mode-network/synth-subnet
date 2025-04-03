@@ -224,8 +224,6 @@ def _calculate_moving_average_and_update_rewards(
 
     df = prepare_df_for_moving_average(miner_scores_df)
 
-    # bt.logging.debug(df)
-
     moving_averages_data = compute_weighted_averages(
         input_df=df,
         half_life_days=half_life_days,
