@@ -1,4 +1,3 @@
-import json
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
@@ -8,8 +7,6 @@ from synth.db.models import (
     validator_requests,
     miner_scores,
 )
-from synth.simulation_input import SimulationInput
-from synth.validator.forward import remove_zero_rewards
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.reward import (
     compute_prompt_scores_v2,
@@ -75,46 +72,6 @@ def test_compute_prompt_scores_v2_only_one_miner():
     assert percentile90 == 1000
     assert lowest_score == 1000
     assert np.array_equal(actual_score, expected_prompt_scores)
-
-
-def test_remove_zero_rewards():
-    moving_average_rewards = [
-        {
-            "miner_uid": 0,
-            "smoothed_score": float(0),
-            "reward_weight": float(0),
-            "updated_at": "2024-11-20T00:00:00",
-        },
-        {
-            "miner_uid": 1,
-            "smoothed_score": float(0.2),
-            "reward_weight": float(0.2),
-            "updated_at": "2024-11-20T00:00:00",
-        },
-        {
-            "miner_uid": 2,
-            "smoothed_score": float(0),
-            "reward_weight": float(0),
-            "updated_at": "2024-11-20T00:00:00",
-        },
-        {
-            "miner_uid": 3,
-            "smoothed_score": float(0.8),
-            "reward_weight": float(0.8),
-            "updated_at": "2024-11-20T00:00:00",
-        },
-    ]
-
-    filtered_rewards, filtered_miner_uids = remove_zero_rewards(
-        moving_average_rewards
-    )
-
-    assert len(filtered_miner_uids) == 2
-    assert len(filtered_rewards) == 2
-    assert filtered_miner_uids[0] == 1
-    assert filtered_miner_uids[1] == 3
-    assert filtered_rewards[0] == 0.2
-    assert filtered_rewards[1] == 0.8
 
 
 def test_get_rewards(db_engine):

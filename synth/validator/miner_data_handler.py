@@ -283,7 +283,7 @@ class MinerDataHandler:
         """Insert or update miners table with the provided data."""
         try:
             with self.engine.connect() as connection:
-                with connection.begin():  # Begin a transaction
+                with connection.begin():
                     insert_stmt = (
                         insert(miners_model)
                         .values(
@@ -313,7 +313,7 @@ class MinerDataHandler:
     def update_metagraph_history(self, metagraph_info: list):
         try:
             with self.engine.connect() as connection:
-                with connection.begin():  # Begin a transaction
+                with connection.begin():
                     insert_stmt = insert(metagraph_history).values(
                         metagraph_info
                     )
@@ -343,11 +343,6 @@ class MinerDataHandler:
                         miner_predictions_model.c.id
                         == miner_scores.c.miner_predictions_id,
                     )
-                    .join(
-                        miners_model,
-                        miners_model.c.id
-                        == miner_predictions_model.c.miner_id,
-                    )
                     .where(miner_scores.c.scored_time > min_scored_time)
                 )
 
@@ -361,12 +356,10 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return pd.DataFrame()
 
-    def populate_miner_uid_in_miner_rewards(
-        self, miner_rewards_data: list[dict]
-    ):
+    def populate_miner_uid_in_miner_data(self, miner_data: list[dict]):
         try:
             with self.engine.connect() as connection:
-                with connection.begin():  # Begin a transaction
+                with connection.begin():
                     miner_uid_map = self.get_miner_ids_map(connection)
         except Exception as e:
             bt.logging.error(
@@ -375,19 +368,18 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return None
 
-        for row in miner_rewards_data:
+        for row in miner_data:
             miner_id = row["miner_id"]
-            # miner_uid column is deprecated
             row["miner_uid"] = (
                 miner_uid_map[miner_id] if miner_id in miner_uid_map else None
             )
 
-        return miner_rewards_data
+        return miner_data
 
     def update_miner_rewards(self, miner_rewards_data: list[dict]):
         try:
             with self.engine.connect() as connection:
-                with connection.begin():  # Begin a transaction
+                with connection.begin():
                     insert_stmt = insert(miner_rewards).values(
                         miner_rewards_data
                     )
@@ -418,7 +410,7 @@ class MinerDataHandler:
 
         try:
             with self.engine.connect() as connection:
-                with connection.begin():  # Begin a transaction
+                with connection.begin():
                     insert_stmt = insert(weights_update_history).values(
                         update_weights_rows
                     )
