@@ -142,7 +142,6 @@ def test_get_rewards(db_engine):
             time_length=3600,  # default: 1 day
             num_simulations=1,  # default: 100
         ),
-        miner_uids,
         validator_request_id,
     )
 
