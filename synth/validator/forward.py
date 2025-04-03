@@ -123,11 +123,8 @@ async def forward(
     #               from the database of previous prediction data
     scored_time = start_time
 
-    # TODO: here we should get the list of miner_uids from the database, table miners
-
     success = _calculate_rewards_and_update_scores(
         miner_data_handler=miner_data_handler,
-        miner_uids=miner_uids,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
@@ -252,8 +249,6 @@ def _calculate_moving_average_and_update_rewards(
 
     miner_data_handler.update_miner_rewards(moving_averages_data)
 
-    # Update the scores based on the rewards.
-    # You may want to define your own update_scores function for custom behavior.
     filtered_rewards, filtered_miner_uids = remove_zero_rewards(
         moving_averages_data
     )
@@ -262,7 +257,6 @@ def _calculate_moving_average_and_update_rewards(
 
 def _calculate_rewards_and_update_scores(
     miner_data_handler: MinerDataHandler,
-    miner_uids: list,
     price_data_provider: PriceDataProvider,
     scored_time: str,
     simulation_input: SimulationInput,
@@ -289,7 +283,6 @@ def _calculate_rewards_and_update_scores(
         miner_data_handler=miner_data_handler,
         price_data_provider=price_data_provider,
         simulation_input=simulation_input,
-        miner_uids=miner_uids,
         validator_request_id=validator_request_id,
     )
 

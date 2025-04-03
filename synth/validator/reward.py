@@ -104,7 +104,6 @@ def get_rewards(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
     simulation_input: SimulationInput,
-    miner_uids: List[int],
     validator_request_id: int,
 ) -> tuple[np.ndarray, list]:
     """
@@ -118,7 +117,9 @@ def get_rewards(
     - np.ndarray: An array of rewards for the given query and responses.
     """
 
-    bt.logging.info(f"In rewards, miner_uids={miner_uids}")
+    miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
+        validator_request_id
+    )
 
     scores = []
     detailed_crps_data_list = []
@@ -218,6 +219,12 @@ def print_scores_df(prompt_scores_v2, detailed_info):
     bt.logging.info(f"Scored responses: {prompt_scores_v2}")
 
     df = pd.DataFrame.from_dict(detailed_info)
-    df = df.drop(columns=["crps_data"])
-    df = df.drop(columns=["real_prices"])
+    if df.empty:
+        bt.logging.info("No data to display.")
+        return
+    # Drop columns that are not needed for logging
+    if "crps_data" in df.columns:
+        df = df.drop(columns=["crps_data"])
+    if "real_prices" in df.columns:
+        df = df.drop(columns=["real_prices"])
     bt.logging.info(df.to_string())
