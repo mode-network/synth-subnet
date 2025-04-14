@@ -1,7 +1,18 @@
+import logging
 import requests
+from datetime import datetime, timezone
+
+
+from tenacity import (
+    before_log,
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)
+import bittensor as bt
+
 
 from synth.utils.helpers import from_iso_to_unix_time
-from datetime import datetime, timezone
 
 
 class PriceDataProvider:
@@ -9,12 +20,16 @@ class PriceDataProvider:
 
     TOKEN_MAP = {"BTC": "Crypto.BTC/USD", "ETH": "Crypto.ETH/USD"}
 
-    one_day_seconds = 24 * 60 * 60
-
     def __init__(self, token):
         self.token = self._get_token_mapping(token)
 
-    def fetch_data(self, time_point: str):
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_random_exponential(multiplier=5),
+        reraise=True,
+        before=before_log(bt.logging._logger, logging.DEBUG),
+    )
+    def fetch_data(self, start_time: str, time_length: int):
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
@@ -22,8 +37,8 @@ class PriceDataProvider:
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        end_time = from_iso_to_unix_time(time_point)
-        start_time = end_time - self.one_day_seconds
+        start_time = from_iso_to_unix_time(start_time)
+        end_time = start_time + time_length
 
         params = {
             "symbol": self.token,

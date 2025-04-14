@@ -30,7 +30,7 @@ from synth.base.validator import BaseValidatorNeuron
 
 # Bittensor Validator Template:
 from synth.utils.logging import setup_wandb_alert
-from synth.validator import forward
+from synth.validator.forward import forward
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
 
@@ -102,7 +102,4 @@ class Validator(BaseValidatorNeuron):
 
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
-    with Validator() as validator:
-        while not validator.should_exit:
-            bt.logging.info(f"Validator running... {time.time()}")
-            time.sleep(600)
+    Validator().run()

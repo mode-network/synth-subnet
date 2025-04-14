@@ -1,0 +1,5 @@
+pre_commit==4.1.0
+pytest>=8
+black>=25.1.0
+testcontainers>=4.9.0
+pylint>=3.3.4

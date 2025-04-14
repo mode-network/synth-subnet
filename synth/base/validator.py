@@ -138,8 +138,6 @@ class BaseValidatorNeuron(BaseNeuron):
         # This loop maintains the validator's operations until intentionally stopped.
         try:
             while True:
-                bt.logging.info(f"step({self.step}) block({self.block})")
-
                 # Run multiple forwards concurrently.
                 self.loop.run_until_complete(self.concurrent_forward())
 
@@ -164,8 +162,6 @@ class BaseValidatorNeuron(BaseNeuron):
             bt.logging.debug(
                 str(print_exception(type(err), err, err.__traceback__))
             )
-            bt.logging.debug("Scheduling validator to stop.")
-            self.should_exit = True
 
     def run_in_background_thread(self):
         """
@@ -233,8 +229,8 @@ class BaseValidatorNeuron(BaseNeuron):
         # Compute raw_weights safely
         raw_weights = self.scores / norm
 
-        bt.logging.debug("raw_weights", raw_weights)
-        bt.logging.debug("raw_weight_uids", str(self.metagraph.uids.tolist()))
+        bt.logging.debug(raw_weights, "raw_weights")
+        bt.logging.debug(str(self.metagraph.uids.tolist()), "raw_weight_uids")
         # Process the raw weights to final_weights via subtensor limitations.
         (
             processed_weight_uids,
@@ -246,8 +242,8 @@ class BaseValidatorNeuron(BaseNeuron):
             subtensor=self.subtensor,
             metagraph=self.metagraph,
         )
-        bt.logging.debug("processed_weights", processed_weights)
-        bt.logging.debug("processed_weight_uids", processed_weight_uids)
+        bt.logging.debug(processed_weights, "processed_weights")
+        bt.logging.debug(processed_weight_uids, "processed_weight_uids")
 
         # Convert to uint16 weights and uids.
         (
@@ -256,8 +252,8 @@ class BaseValidatorNeuron(BaseNeuron):
         ) = convert_weights_and_uids_for_emit(
             uids=processed_weight_uids, weights=processed_weights
         )
-        bt.logging.debug("uint_weights", uint_weights)
-        bt.logging.debug("uint_uids", uint_uids)
+        bt.logging.debug(uint_weights, "uint_weights")
+        bt.logging.debug(uint_uids, "uint_uids")
 
         # Set the weights on chain via our subtensor connection.
         result, msg = self.subtensor.set_weights(

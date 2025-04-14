@@ -47,6 +47,7 @@
   - [2.2. Setup](#22-setup)
   - [2.3. Miners](#23-miners)
   - [2.4. Validators](#24-validators)
+  - [2.5. Develop](#25-develop)
 * [3. License](#-3-license)
 
 ## 🔭 1. Overview
@@ -178,33 +179,30 @@ sequenceDiagram
         Validator->>Storage: Get prediction (at least 24 hours old)
         Validator->>PricesProvider: Get real prices
         Validator->>Validator: Calculate CRPS
-        Validator->>Validator: Normalize to calculate prompts_score
-        Validator->>Storage: Save prompts_score
-        Validator->>Storage: Get prompts_score for past days
-        Validator->>Validator: Calculate moving average (final weights)
+        Validator->>Validator: Get Best Score
+        Validator->>Validator: Assign 90th Percentile Score to Invalid and Worst 10% scores
+        Validator->>Validator: Subtract Best Score from all scores
+        Validator->>Validator: Save scores
+        Validator->>Storage: Get scores for past days
+        Validator->>Validator: Calculate moving average
+        Validator->>Validator: Softmax to get final weights
         Validator->>Storage: Save final weights
         Validator->>Bittensor: Send final weights
     end
 ```
 
-#### Normalization Using Softmax Function
+#### CRPS Transformation
 
-After calculating the sum of the CRPS values, the validator normalizes these scores across all miners who submitted correctly formatted forecasts prior to the start time. The normalized score $S_i$ for miner $i$ is calculated as:
+After calculating the sum of the CRPS values, the validator transforms the resulting scores in the following way: 
+- Order the miners by their CRPS sum, cap the worst 10% scores to the 90th percentile; 
+- Get the best (=lowest) CRPS sum for that prompt; 
+- Subtract the best score from all the miners scores, in such a way that the best miner gets a score of 0; 
+- For miners that failed to submit predictions in the correct format or in time, assign the 90th percentile score. 
 
-$$
-S_i = \frac{e^{-\beta \cdot CRPS_i}}{\sum_j e^{-\beta \cdot CRPS_j}}
-$$
-
-where:
-- $CRPS_i$ is the sum of CRPS values for miner $i$ on that day
-- $\beta = \frac{1}{500}$ is the scaling factor
-- The negative sign ensures better forecasts (lower CRPS) receive higher scores
-
-Any miners who didn’t submit a correct prediction are allocated a normalised score of 0 for that prompt.
 
 #### Exponentially Decaying Time-Weighted Average (Leaderboard Score)
 
-The validator is required to store the historic request scores for each miner. After each new request is scored, the validator recalculates the ‘leaderboard score’ for each miner, using an exponentially decaying time-weighted average over their past **per request** scores, up to a threshold of 4 days in the past.
+The validator is required to store the historic request scores (as calculated in the previous step) for each miner. After each new request is scored, the validator recalculates the ‘leaderboard score’ for each miner, using an exponentially decaying time-weighted average over their past **per request** scores, up to a threshold of 4 days in the past.
 
 This approach emphasizes recent performance while still accounting for historical scores. 
 The leaderboard score for miner $i$ at time $t$ is calculated as:
@@ -215,28 +213,22 @@ $$
 
 where:
 
-- $S_{i,j}$ is the normalized score of miner $i$ at request $j$.
+- $S_{i,j}$ is the score of miner $i$ at request $j$.
 - $w_j = e^{-\lambda (t - t_j)}$ is the weight assigned to the score $S_{i,j}$.
 - $t_j$ is the time of request $j$.
 - $\lambda = \dfrac{\ln 2}{h}$ is the decay constant, with half-life $h = 2$ days.
 - The sum runs over all requests $j$ such that $t - t_j \leq T$, where $T = 4$ days is the threshold time.
 
-#### Allocation of Emissions 
-At the end of each day, the leaderboard scores are then raised to the power of an exponent $\alpha$ (e.g., $\alpha = 4$) to amplify performance differences. The adjusted scores determine each miner's share of the total emissions for that day
+Thus, highest-ranking miners are those with the lowest calculated scores.
 
-Adjusted Scores:
-
-$$
-AdjScore_{i,t} = (L_{i,t})^\alpha
-$$
-
-Emissions Allocation:
+#### Final Emissions
+Once the leaderboard scores have been calculated, the emission allocation for miner $i$ is given as: 
 
 $$
-P_{i,t} = \frac{AdjScore_{i,t}}{\sum_j AdjScore_{j,t}} \times Total
+A_i(t) = \frac{e^{-\beta \cdot L_i(t)}}{\sum_j e^{-\beta \cdot L_j(t)}} \cdot E(t)
 $$
 
-<sup>[Back to top ^][table-of-contents]</sup>
+where $\beta=-0.003$ and $E(t)$ the emission at time $t$.
 
 ### 1.5. Overall Purpose
 
@@ -251,11 +243,11 @@ The system creates a competitive environment through:
 3. **Applying CRPS to Different Time Increments**
    - Evaluates both short-term and long-term predictions
 
-4. **Normalizing Scores**
-   - Ensures fair comparison using softmax function ($\beta = \frac{1}{500}$)
-
-5. **Calculating Leaderboard Scores and Allocating Emissions**
+4. **Applying Moving Average to Scores**
    - Rewards consistent performance and encourages competition
+
+5. **Calculating Softmax Scores and Allocating Emissions**
+   - Ensures rewards proportional to performance 
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
@@ -347,6 +339,15 @@ Please refer to this [guide](./docs/miner_guide.md) for detailed instructions on
 ### 2.4. Validators
 
 Please refer to this [guide](./docs/validator_guide.md) for detailed instructions on getting a validator up and running.
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 2.5 Develop
+
+```shell
+pip install -r requirements-dev.txt
+pre-commit install
+```
 
 <sup>[Back to top ^][table-of-contents]</sup>
 

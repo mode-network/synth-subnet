@@ -60,13 +60,25 @@ validator_requests = Table(
     Column("request_time", DateTime(timezone=True), nullable=True),
 )
 
+miners = Table(
+    "miners",
+    metadata,
+    Column("id", BigInteger, primary_key=True),
+    Column("miner_uid", Integer, nullable=False),
+    Column("coldkey", String, nullable=True),
+    Column("hotkey", String, nullable=True),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+)
+
 # Define the table
 miner_predictions = Table(
     "miner_predictions",
     metadata,
     Column("id", BigInteger, primary_key=True),
     Column("validator_requests_id", BigInteger, nullable=False),
-    Column("miner_uid", Integer, nullable=False),
+    Column("miner_uid", Integer, nullable=False),  # deprecated
+    Column("miner_id", BigInteger, nullable=False),
     Column("prediction", JSONB, nullable=False),
     Column("format_validation", String, nullable=True),
     Column("process_time", Float, nullable=True),
@@ -77,11 +89,13 @@ miner_scores = Table(
     "miner_scores",
     metadata,
     Column("id", BigInteger, primary_key=True),
-    Column("miner_uid", Integer, nullable=False),
+    Column("miner_uid", Integer, nullable=False),  # deprecated
     Column("scored_time", DateTime(timezone=True), nullable=False),
     Column("miner_predictions_id", BigInteger, nullable=False),
     Column("prompt_score", Float, nullable=False),
+    Column("prompt_score_v2", Float, nullable=False),
     Column("score_details", JSONB, nullable=False),
+    Column("score_details_v2", JSONB, nullable=False),
     Column("real_prices", JSON, nullable=False),
 )
 
@@ -90,7 +104,8 @@ miner_rewards = Table(
     "miner_rewards",
     metadata,
     Column("id", BigInteger, primary_key=True),
-    Column("miner_uid", Integer, nullable=False),
+    Column("miner_uid", Integer, nullable=False),  # deprecated
+    Column("miner_id", BigInteger, nullable=False),
     Column("smoothed_score", Float, nullable=False),
     Column("reward_weight", Float, nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),

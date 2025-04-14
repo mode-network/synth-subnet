@@ -19,6 +19,7 @@
 
 import time
 from datetime import datetime
+import random
 
 import bittensor as bt
 import numpy as np
@@ -35,10 +36,14 @@ from synth.utils.helpers import (
 )
 from synth.utils.uids import check_uid_availability
 from synth.validator.miner_data_handler import MinerDataHandler
-from synth.validator.moving_average import compute_weighted_averages
+from synth.validator.moving_average import (
+    compute_weighted_averages,
+    prepare_df_for_moving_average,
+    print_rewards_df,
+)
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.response_validation import validate_responses
-from synth.validator.reward import get_rewards
+from synth.validator.reward import get_rewards, print_scores_df
 
 
 async def forward(
@@ -57,10 +62,10 @@ async def forward(
         price_data_provider (:obj:`synth.validator.PriceDataProvider`): The PriceDataProvider returns real prices data for a specific token.
     """
     # getting current validation time
-    current_time = get_current_time()
+    request_time = get_current_time()
 
     # round validation time to the closest minute and add 1 extra minute
-    start_time = round_time_to_minutes(current_time, 60, 60)
+    start_time = round_time_to_minutes(request_time, 60, 120)
 
     # ================= Step 1 ================= #
     # Getting available miners from metagraph and saving information about them
@@ -98,7 +103,7 @@ async def forward(
         miner_data_handler=miner_data_handler,
         miner_uids=miner_uids,
         simulation_input=simulation_input,
-        request_time=current_time,
+        request_time=request_time,
     )
 
     # ================= Step 3 ================= #
@@ -120,11 +125,9 @@ async def forward(
 
     success = _calculate_rewards_and_update_scores(
         miner_data_handler=miner_data_handler,
-        miner_uids=miner_uids,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
-        softmax_beta=base_neuron.config.softmax.beta,
     )
 
     if not success:
@@ -137,15 +140,15 @@ async def forward(
     # in the miner_rewards table in the end
     # ========================================== #
 
-    filtered_miner_uids, filtered_rewards = (
-        _calculate_moving_average_and_update_rewards(
-            base_neuron=base_neuron,
-            miner_data_handler=miner_data_handler,
-            scored_time=scored_time,
-        )
+    moving_averages_data = _calculate_moving_average_and_update_rewards(
+        miner_data_handler=miner_data_handler,
+        scored_time=scored_time,
+        cutoff_days=base_neuron.config.ewma.cutoff_days,
+        half_life_days=base_neuron.config.ewma.half_life_days,
+        softmax_beta=base_neuron.config.softmax.beta,
     )
 
-    if len(filtered_miner_uids) == 0:
+    if len(moving_averages_data) == 0:
         _wait_till_next_iteration()
         return
 
@@ -156,8 +159,7 @@ async def forward(
 
     _send_weights_to_bittensor_and_update_weights_history(
         base_neuron=base_neuron,
-        miner_uids=filtered_miner_uids,
-        miner_weights=filtered_rewards,
+        moving_averages_data=moving_averages_data,
         miner_data_handler=miner_data_handler,
         scored_time=scored_time,
     )
@@ -166,8 +168,14 @@ async def forward(
 
 
 def _send_weights_to_bittensor_and_update_weights_history(
-    base_neuron, miner_uids, miner_weights, miner_data_handler, scored_time
+    base_neuron: BaseValidatorNeuron,
+    moving_averages_data: list[dict],
+    miner_data_handler: MinerDataHandler,
+    scored_time,
 ):
+    miner_weights = [item["reward_weight"] for item in moving_averages_data]
+    miner_uids = [item["miner_uid"] for item in moving_averages_data]
+
     base_neuron.update_scores(np.array(miner_weights), miner_uids)
 
     wandb_on = base_neuron.config.wandb.enabled
@@ -201,76 +209,76 @@ def _wait_till_next_iteration():
 
 
 def _calculate_moving_average_and_update_rewards(
-    base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
     scored_time: str,
-) -> tuple[list, list]:
+    cutoff_days: int,
+    half_life_days: float,
+    softmax_beta: float,
+) -> list[dict]:
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(
         scored_time_str=scored_time,
-        cutoff_days=base_neuron.config.ewma.cutoff_days,
+        cutoff_days=cutoff_days,
     )
+
+    df = prepare_df_for_moving_average(miner_scores_df)
 
     moving_averages_data = compute_weighted_averages(
-        input_df=miner_scores_df,
-        half_life_days=base_neuron.config.ewma.half_life_days,
-        alpha=base_neuron.config.ewma.alpha,
-        validation_time_str=scored_time,
-    )
-
-    bt.logging.info(
-        f"Scored responses moving averages: {moving_averages_data}"
+        miner_data_handler=miner_data_handler,
+        input_df=df,
+        half_life_days=half_life_days,
+        scored_time_str=scored_time,
+        softmax_beta=softmax_beta,
     )
 
     if moving_averages_data is None:
         return [], []
 
+    print_rewards_df(moving_averages_data)
+
     miner_data_handler.update_miner_rewards(moving_averages_data)
 
-    # Update the scores based on the rewards.
-    # You may want to define your own update_scores function for custom behavior.
-    filtered_rewards, filtered_miner_uids = remove_zero_rewards(
-        moving_averages_data
-    )
-    return filtered_miner_uids, filtered_rewards
+    return moving_averages_data
 
 
 def _calculate_rewards_and_update_scores(
     miner_data_handler: MinerDataHandler,
-    miner_uids,
-    price_data_provider,
-    scored_time,
-    simulation_input,
-    softmax_beta: float,
+    price_data_provider: PriceDataProvider,
+    scored_time: str,
+    simulation_input: SimulationInput,
 ) -> bool:
     # get latest prediction request from validator
     # for which we already have real prices data,
     # i.e. (start_time + time_length) < scored_time
-    validator_request_id = miner_data_handler.get_latest_prediction_request(
+    validator_request = miner_data_handler.get_latest_prediction_request(
         scored_time, simulation_input
     )
 
-    if validator_request_id is None:
+    if validator_request is None:
+        bt.logging.warning("No prediction requests found")
         return False
+
+    bt.logging.trace(f"validator_request_id: {validator_request.id}")
 
     # Adjust the scores based on responses from miners.
     # response[0] - miner_uuids[0]
     # this is the function we need to implement for our incentives mechanism,
     # it returns an array of floats that determines how good a particular miner was at price predictions:
     # example: [0.2, 0.7, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
-    rewards, rewards_detailed_info = get_rewards(
+    prompt_scores_v2, detailed_info = get_rewards(
         miner_data_handler=miner_data_handler,
         price_data_provider=price_data_provider,
-        simulation_input=simulation_input,
-        miner_uids=miner_uids,
-        validator_request_id=validator_request_id,
-        softmax_beta=softmax_beta,
+        validator_request=validator_request,
     )
 
-    bt.logging.info(f"Scored responses: {rewards}")
+    print_scores_df(prompt_scores_v2, detailed_info)
 
-    miner_data_handler.set_reward_details(
-        reward_details=rewards_detailed_info, scored_time=scored_time
+    if prompt_scores_v2 is None:
+        bt.logging.warning("No rewards calculated")
+        return False
+
+    miner_data_handler.set_miner_scores(
+        reward_details=detailed_info, scored_time=scored_time
     )
 
     return True
@@ -354,13 +362,16 @@ def _get_available_miners_and_update_metagraph_history(
                 ),
                 "coldkey": base_neuron.metagraph.coldkeys[uid],
                 "hotkey": base_neuron.metagraph.hotkeys[uid],
-                "updated_at": start_time,
+                "updated_at": start_time,  # TODO: let the database fill this with default value now()
             }
             miner_uids.append(uid)
             metagraph_info.append(metagraph_item)
 
     if len(metagraph_info) > 0:
         miner_data_handler.update_metagraph_history(metagraph_info)
+        miner_data_handler.insert_new_miners(metagraph_info)
+
+    random.shuffle(miner_uids)
 
     return miner_uids
 
@@ -377,13 +388,3 @@ def _log_to_wandb(wandb_on, miner_uids, rewards):
             }
         }
         wandb.log(wandb_val_log)
-
-
-def remove_zero_rewards(moving_averages_data):
-    miners = []
-    rewards = []
-    for rewards_item in moving_averages_data:
-        if rewards_item["reward_weight"] != 0:
-            miners.append(rewards_item["miner_uid"])
-            rewards.append(rewards_item["reward_weight"])
-    return rewards, miners
