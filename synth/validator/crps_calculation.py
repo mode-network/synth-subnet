@@ -117,3 +117,5 @@ def calculate_price_changes_over_intervals(
         return interval_prices[:, 1:]
 
     return np.diff(interval_prices, axis=1)
+
+
