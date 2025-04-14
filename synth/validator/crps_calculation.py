@@ -35,7 +35,7 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
 
     for interval_name, interval_seconds in scoring_intervals.items():
         interval_steps = get_interval_steps(interval_seconds, time_increment)
-        
+
         # If we are considering absolute prices, adjust the interval steps for potential gaps:
         # if only the initial price is present, then decrease the interval step
         if interval_name.endswith("_abs"):
@@ -117,5 +117,3 @@ def calculate_price_changes_over_intervals(
         return interval_prices[:, 1:]
 
     return np.diff(interval_prices, axis=1)
-
-
