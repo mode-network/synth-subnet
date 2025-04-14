@@ -23,8 +23,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array(real_price_path),
             time_increment,
         )
-
-        self.assertEqual(sum_all_scores, 1100)
+        self.assertEqual(sum_all_scores, 2600)
 
     def test_calculate_crps_for_miner_2(self):
         time_increment = 300  # 300 seconds = 5 minutes
@@ -37,7 +36,7 @@ class TestCalculateCrps(unittest.TestCase):
             time_increment,
         )
 
-        self.assertEqual(sum_all_scores, 3500)
+        self.assertEqual(sum_all_scores, 4400)
 
     def test_calculate_crps_for_miner_3(self):
         time_increment = 300  # 300 seconds = 5 minutes
@@ -50,7 +49,7 @@ class TestCalculateCrps(unittest.TestCase):
             time_increment,
         )
 
-        self.assertEqual(sum_all_scores, 1100)
+        self.assertEqual(sum_all_scores, 42600)
 
     def test_calculate_crps_for_miner_4(self):
         """
@@ -100,8 +99,6 @@ class TestCalculateCrps(unittest.TestCase):
             np.array(real_price_path),
             time_increment,
         )
-
-        print(sum_all_scores)
 
     def test_normalization(self):
         result = compute_softmax(np.array([]), beta=-0.002)
