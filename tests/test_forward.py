@@ -311,10 +311,10 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         # sum the reward weights
         with db_engine.connect() as connection:
             with connection.begin():
-                rewards_rows = select(miner_rewards).where(
+                rewards_rows_select = select(miner_rewards).where(
                     miner_rewards.c.updated_at == scored_time
                 )
-                rewards_rows = connection.execute(rewards_rows).all()
+                rewards_rows = connection.execute(rewards_rows_select).all()
                 print("rewards_rows", rewards_rows)
                 rewards_sum = sum([row.reward_weight for row in rewards_rows])
                 print("rewards_sum", rewards_sum)

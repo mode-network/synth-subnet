@@ -9,7 +9,7 @@ from synth.utils.helpers import (
 
 def generate_simulations(
     asset="BTC",
-    start_time: str = None,
+    start_time: str = "",
     time_increment=300,
     time_length=86400,
     num_simulations=1,
@@ -29,7 +29,7 @@ def generate_simulations(
     Returns:
         numpy.ndarray: Simulated price paths.
     """
-    if start_time is None:
+    if start_time == "":
         raise ValueError("Start time must be provided.")
 
     current_price = get_asset_price(asset)

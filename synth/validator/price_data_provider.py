@@ -37,26 +37,26 @@ class PriceDataProvider:
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        start_time = from_iso_to_unix_time(start_time)
-        end_time = start_time + time_length
+        start_time_int = from_iso_to_unix_time(start_time)
+        end_time_int = start_time_int + time_length
 
         params = {
             "symbol": self.token,
             "resolution": 1,
-            "from": start_time,
-            "to": end_time,
+            "from": start_time_int,
+            "to": end_time_int,
         }
 
         response = requests.get(self.BASE_URL, params=params)
         response.raise_for_status()
 
         data = response.json()
-        transformed_data = self._transform_data(data, start_time)
+        transformed_data = self._transform_data(data, start_time_int)
 
         return transformed_data
 
     @staticmethod
-    def _transform_data(data, start_time):
+    def _transform_data(data, start_time) -> list[dict]:
         if data is None or len(data) == 0:
             return []
 

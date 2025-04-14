@@ -33,6 +33,8 @@ def test_moving_average_1(db_engine: Engine):
     # The miner id you want to search for
     target_id = 144
 
+    assert moving_averages_data is not None
+
     # Select the element by miner id
     selected_miner = next(
         (
@@ -66,6 +68,8 @@ def test_moving_average_2(db_engine: Engine):
 
     # The miner id you want to search for
     target_id = 144
+
+    assert moving_averages_data is not None
 
     # Select the element by miner id
     selected_miner = next(

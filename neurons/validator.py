@@ -19,8 +19,6 @@ import os
 # DEALINGS IN THE SOFTWARE.
 
 
-import time
-
 # Bittensor
 import bittensor as bt
 import wandb

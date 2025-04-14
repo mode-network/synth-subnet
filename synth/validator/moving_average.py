@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import typing
 
 
 import numpy as np
@@ -83,7 +84,7 @@ def compute_weighted_averages(
     half_life_days: float,
     scored_time_str: str,
     softmax_beta: float,
-) -> list[dict]:
+) -> typing.Optional[list[dict]]:
     """
     Computes an exponentially weighted
     moving average (EWMA) with a user-specified half-life, then outputs:

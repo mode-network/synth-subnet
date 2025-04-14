@@ -6,8 +6,8 @@ setuptools>=68
 requests>=2
 properscoring>=0.1
 pandas>=2.2.3
-bittensor==9.1.0
-bittensor-cli==9.1.4
+bittensor==9.2.0
+bittensor-cli==9.3.0
 alembic>=1.14.0
 python-dotenv>=1.0.1
 psycopg2-binary>=2.9.10

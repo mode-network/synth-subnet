@@ -1,5 +1,5 @@
 import bittensor as bt
-from substrateinterface import SubstrateInterface
+from substrateinterface import SubstrateInterface  # type: ignore
 
 netuid = 50
 subnet = bt.metagraph(netuid)
