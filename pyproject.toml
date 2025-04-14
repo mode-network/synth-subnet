@@ -19,4 +19,4 @@ exclude = '''
 '''
 
 [tool.mypy]
-disable_error_code = ["import-untyped", "attr-defined"]
+disable_error_code = ["import-untyped", "attr-defined", "annotation-unchecked"]

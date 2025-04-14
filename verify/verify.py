@@ -1,5 +1,6 @@
 from binascii import unhexlify
 
+# mypy: disable-error-code="import-not-found"
 from substrateinterface import Keypair
 
 

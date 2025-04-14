@@ -232,7 +232,7 @@ def _calculate_moving_average_and_update_rewards(
     )
 
     if moving_averages_data is None:
-        return [], []
+        return []
 
     print_rewards_df(moving_averages_data)
 

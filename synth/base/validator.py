@@ -75,8 +75,8 @@ class BaseValidatorNeuron(BaseNeuron):
         self.loop = asyncio.get_event_loop()
 
         # Instantiate runners
-        self.should_exit: bool = False
-        self.is_running: bool = False
+        self.should_exit = False
+        self.is_running = False
         self.thread: Union[threading.Thread, None] = None
         self.lock = asyncio.Lock()
 

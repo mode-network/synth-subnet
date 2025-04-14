@@ -7,7 +7,6 @@ from synth.db.models import (
     validator_requests,
     miner_scores,
 )
-from synth.validator.forward import remove_zero_rewards
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.reward import (
     compute_prompt_scores_v2,

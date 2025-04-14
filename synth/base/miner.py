@@ -69,8 +69,8 @@ class BaseMinerNeuron(BaseNeuron):
         bt.logging.info(f"Axon created: {self.axon}")
 
         # Instantiate runners
-        self.should_exit: bool = False
-        self.is_running: bool = False
+        self.should_exit = False
+        self.is_running = False
         self.thread: Union[threading.Thread, None] = None
         self.lock = asyncio.Lock()
 
