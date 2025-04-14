@@ -60,10 +60,10 @@ def test_get_values_within_range(db_engine):
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
-    validator_request = handler.get_latest_prediction_request(
+    validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input
     )
-    result = handler.get_miner_prediction(miner_uid, validator_request.id)
+    result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
@@ -112,11 +112,11 @@ def test_get_values_ongoing_range(db_engine):
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
-    validator_request = handler.get_latest_prediction_request(
+    validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input
     )
 
-    assert validator_request is None
+    assert len(validator_requests) == 0
 
 
 def test_multiple_records_for_same_miner(db_engine):
@@ -180,10 +180,10 @@ def test_multiple_records_for_same_miner(db_engine):
         simulation_data_2, simulation_input_2, datetime.now()
     )
 
-    validator_request = handler.get_latest_prediction_request(
+    validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input_1
     )
-    result = handler.get_miner_prediction(miner_uid, validator_request.id)
+    result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
@@ -262,10 +262,10 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
         simulation_data_2, simulation_input_2, datetime.now()
     )
 
-    validator_request = handler.get_latest_prediction_request(
+    validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input_1
     )
-    result = handler.get_miner_prediction(miner_uid, validator_request.id)
+    result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
@@ -297,10 +297,10 @@ def test_no_data_for_miner(db_engine):
 
     handler = MinerDataHandler(db_engine)
 
-    validator_request = handler.get_latest_prediction_request(
+    validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input
     )
-    assert validator_request is None
+    assert len(validator_requests) == 0
 
 
 def test_get_values_incorrect_format(db_engine):
@@ -336,10 +336,10 @@ def test_get_values_incorrect_format(db_engine):
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
-    validator_request = handler.get_latest_prediction_request(
+    validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input
     )
-    result = handler.get_miner_prediction(miner_uid, validator_request.id)
+    result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
     prediction = result.prediction
     format_validation = result.format_validation
@@ -357,14 +357,14 @@ def test_set_get_scores(db_engine):
         db_engine, start_time
     )
 
-    validator_request = handler.get_latest_prediction_request(
+    validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input
     )
 
     prompt_scores_v2, detailed_info = get_rewards(
         handler,
         price_data_provider,
-        validator_request,
+        validator_requests[0],
     )
 
     assert prompt_scores_v2 is not None

@@ -248,38 +248,35 @@ def _calculate_rewards_and_update_scores(
     simulation_input: SimulationInput,
 ) -> bool:
     # get latest prediction request from validator
-    # for which we already have real prices data,
-    # i.e. (start_time + time_length) < scored_time
-    validator_request = miner_data_handler.get_latest_prediction_request(
+    validator_requests = miner_data_handler.get_latest_prediction_requests(
         scored_time, simulation_input
     )
 
-    if validator_request is None:
+    if validator_requests is None or len(validator_requests) == 0:
         bt.logging.warning("No prediction requests found")
         return False
 
-    bt.logging.trace(f"validator_request_id: {validator_request.id}")
+    bt.logging.trace(f"found {len(validator_requests)} prediction requests")
 
-    # Adjust the scores based on responses from miners.
-    # response[0] - miner_uuids[0]
-    # this is the function we need to implement for our incentives mechanism,
-    # it returns an array of floats that determines how good a particular miner was at price predictions:
-    # example: [0.2, 0.7, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
-    prompt_scores_v2, detailed_info = get_rewards(
-        miner_data_handler=miner_data_handler,
-        price_data_provider=price_data_provider,
-        validator_request=validator_request,
-    )
+    for validator_request in validator_requests:
 
-    print_scores_df(prompt_scores_v2, detailed_info)
+        bt.logging.trace(f"validator_request_id: {validator_request.id}")
 
-    if prompt_scores_v2 is None:
-        bt.logging.warning("No rewards calculated")
-        return False
+        prompt_scores_v2, detailed_info = get_rewards(
+            miner_data_handler=miner_data_handler,
+            price_data_provider=price_data_provider,
+            validator_request=validator_request,
+        )
 
-    miner_data_handler.set_miner_scores(
-        reward_details=detailed_info, scored_time=scored_time
-    )
+        print_scores_df(prompt_scores_v2, detailed_info)
+
+        if prompt_scores_v2 is None:
+            bt.logging.warning("No rewards calculated")
+            return False
+
+        miner_data_handler.set_miner_scores(
+            reward_details=detailed_info, scored_time=scored_time
+        )
 
     return True
 

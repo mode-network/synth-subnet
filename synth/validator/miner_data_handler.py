@@ -6,7 +6,17 @@ import typing
 
 import bittensor as bt
 import pandas as pd
-from sqlalchemy import Connection, Engine, select, text, func, desc
+from sqlalchemy import (
+    Connection,
+    Engine,
+    and_,
+    exists,
+    select,
+    text,
+    func,
+    desc,
+    not_,
+)
 from sqlalchemy.dialects.postgresql import insert
 
 
@@ -238,14 +248,29 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return None
 
-    def get_latest_prediction_request(
+    def get_latest_prediction_requests(
         self, scored_time_str: str, simulation_input: SimulationInput
     ):
-        """Retrieve the id of the latest validator request that (start_time + time_length) < scored_time."""
+        """Retrieve the list of IDs of the latest validator requests that (start_time + time_length) < scored_time."""
         try:
             scored_time = datetime.fromisoformat(scored_time_str)
 
             with self.engine.connect() as connection:
+                subq = (
+                    select(1)
+                    .select_from(
+                        miner_scores.join(
+                            miner_predictions_model,
+                            miner_predictions_model.c.id
+                            == miner_scores.c.miner_predictions_id,
+                        )
+                    )
+                    .where(
+                        miner_predictions_model.c.validator_requests_id
+                        == validator_requests.c.id
+                    )
+                )
+
                 query = (
                     select(
                         validator_requests.c.id,
@@ -253,27 +278,32 @@ class MinerDataHandler:
                         validator_requests.c.time_length,
                         validator_requests.c.time_increment,
                     )
-                    .select_from(validator_requests)
                     .where(
-                        (
-                            validator_requests.c.start_time
-                            + text("INTERVAL '1 second'")
-                            * validator_requests.c.time_length
+                        and_(
+                            # Compare start_time plus an interval (in seconds) to the scored_time.
+                            (
+                                validator_requests.c.start_time
+                                + text("INTERVAL '1 second'")
+                                * validator_requests.c.time_length
+                            )
+                            < scored_time,
+                            # Include simulation_input filters.
+                            validator_requests.c.asset
+                            == simulation_input.asset,
+                            validator_requests.c.time_increment
+                            == simulation_input.time_increment,
+                            validator_requests.c.time_length
+                            == simulation_input.time_length,
+                            validator_requests.c.num_simulations
+                            == simulation_input.num_simulations,
+                            # Exclude records that have a matching miner_prediction via the NOT EXISTS clause.
+                            not_(exists(subq)),
                         )
-                        < scored_time,
-                        validator_requests.c.asset == simulation_input.asset,
-                        validator_requests.c.time_increment
-                        == simulation_input.time_increment,
-                        validator_requests.c.time_length
-                        == simulation_input.time_length,
-                        validator_requests.c.num_simulations
-                        == simulation_input.num_simulations,
                     )
                     .order_by(validator_requests.c.start_time.desc())
-                    .limit(1)
                 )
 
-                return connection.execute(query).fetchone()
+                return connection.execute(query).fetchall()
         except Exception as e:
             bt.logging.error(
                 f"in get_latest_prediction_request (got an exception): {e}"
