@@ -61,7 +61,7 @@ def test_get_values_within_range(db_engine):
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
     validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input
+        scored_time, simulation_input, 7
     )
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
@@ -113,7 +113,7 @@ def test_get_values_ongoing_range(db_engine):
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
     validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input
+        scored_time, simulation_input, 7
     )
 
     assert len(validator_requests) == 0
@@ -181,7 +181,7 @@ def test_multiple_records_for_same_miner(db_engine):
     )
 
     validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input_1
+        scored_time, simulation_input_1, 7
     )
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
@@ -263,7 +263,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
     )
 
     validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input_1
+        scored_time, simulation_input_1, 7
     )
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
@@ -298,7 +298,7 @@ def test_no_data_for_miner(db_engine):
     handler = MinerDataHandler(db_engine)
 
     validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input
+        scored_time, simulation_input, 7
     )
     assert len(validator_requests) == 0
 
@@ -337,7 +337,7 @@ def test_get_values_incorrect_format(db_engine):
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
     validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input
+        scored_time, simulation_input, 7
     )
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
@@ -358,7 +358,7 @@ def test_set_get_scores(db_engine):
     )
 
     validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input
+        scored_time, simulation_input, 7
     )
 
     prompt_scores_v2, detailed_info = get_rewards(

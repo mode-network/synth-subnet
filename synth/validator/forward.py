@@ -128,6 +128,7 @@ async def forward(
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
+        cutoff_days=base_neuron.config.ewma.cutoff_days,
     )
 
     if not success:
@@ -246,10 +247,11 @@ def _calculate_rewards_and_update_scores(
     price_data_provider: PriceDataProvider,
     scored_time: str,
     simulation_input: SimulationInput,
+    cutoff_days: int,
 ) -> bool:
     # get latest prediction request from validator
     validator_requests = miner_data_handler.get_latest_prediction_requests(
-        scored_time, simulation_input
+        scored_time, simulation_input, cutoff_days
     )
 
     if validator_requests is None or len(validator_requests) == 0:

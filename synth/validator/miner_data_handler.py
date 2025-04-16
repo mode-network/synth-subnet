@@ -249,7 +249,10 @@ class MinerDataHandler:
             return None
 
     def get_latest_prediction_requests(
-        self, scored_time_str: str, simulation_input: SimulationInput
+        self,
+        scored_time_str: str,
+        simulation_input: SimulationInput,
+        cutoff_days: int,
     ):
         """Retrieve the list of IDs of the latest validator requests that (start_time + time_length) < scored_time."""
         try:
@@ -287,6 +290,15 @@ class MinerDataHandler:
                                 * validator_requests.c.time_length
                             )
                             < scored_time,
+                            # Compare start_time plus an interval (in seconds) to the cutoff_days.
+                            # This is to ensure that we only get requests that are within the cutoff_days.
+                            # Because we want to include in the moving average only the requests that are within the cutoff_days.
+                            (
+                                validator_requests.c.start_time
+                                + text("INTERVAL '1 second'")
+                                * validator_requests.c.time_length
+                            )
+                            >= scored_time - timedelta(days=cutoff_days),
                             # Include simulation_input filters.
                             validator_requests.c.asset
                             == simulation_input.asset,

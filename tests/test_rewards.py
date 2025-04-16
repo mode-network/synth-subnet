@@ -85,7 +85,7 @@ def test_get_rewards(db_engine):
     price_data_provider = PriceDataProvider("BTC")
 
     validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input
+        scored_time, simulation_input, 7
     )
 
     prompt_scores_v2, detailed_info = get_rewards(
