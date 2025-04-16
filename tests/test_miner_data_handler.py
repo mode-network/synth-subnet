@@ -63,6 +63,8 @@ def test_get_values_within_range(db_engine):
     validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input, 7
     )
+    assert len(validator_requests) == 1
+
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
     # get only second element from the result tuple
@@ -183,6 +185,8 @@ def test_multiple_records_for_same_miner(db_engine):
     validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input_1, 7
     )
+    assert len(validator_requests) == 2
+
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
     # get only second element from the result tuple
@@ -265,6 +269,8 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
     validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input_1, 7
     )
+    assert len(validator_requests) == 1
+
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
     # get only second element from the result tuple
@@ -339,6 +345,7 @@ def test_get_values_incorrect_format(db_engine):
     validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input, 7
     )
+    assert len(validator_requests) == 1
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
     prediction = result.prediction
@@ -360,6 +367,8 @@ def test_set_get_scores(db_engine):
     validator_requests = handler.get_latest_prediction_requests(
         scored_time, simulation_input, 7
     )
+
+    assert len(validator_requests) == 1
 
     prompt_scores_v2, detailed_info = get_rewards(
         handler,
