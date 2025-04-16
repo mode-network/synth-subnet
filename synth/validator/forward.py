@@ -344,6 +344,7 @@ def _get_available_miners_and_update_metagraph_history(
     start_time: str,
 ):
     miner_uids = []
+    miners = []
     metagraph_info = []
     for uid in range(len(base_neuron.metagraph.S)):
         uid_is_available = check_uid_availability(
@@ -351,6 +352,17 @@ def _get_available_miners_and_update_metagraph_history(
             uid,
             base_neuron.config.neuron.vpermit_tao_limit,
         )
+
+        # adding the uid even if not available, to generate a score
+        miner_uids.append(uid)
+        miners.append(
+            {
+                "neuron_uid": uid,
+                "coldkey": base_neuron.metagraph.coldkeys[uid],
+                "hotkey": base_neuron.metagraph.hotkeys[uid],
+            }
+        )
+
         if uid_is_available:
             metagraph_item = {
                 "neuron_uid": uid,
@@ -364,14 +376,15 @@ def _get_available_miners_and_update_metagraph_history(
                 ),
                 "coldkey": base_neuron.metagraph.coldkeys[uid],
                 "hotkey": base_neuron.metagraph.hotkeys[uid],
-                "updated_at": start_time,  # TODO: let the database fill this with default value now()
+                "updated_at": start_time,
             }
-            miner_uids.append(uid)
             metagraph_info.append(metagraph_item)
+
+    if len(miners) > 0:
+        miner_data_handler.insert_new_miners(miners)
 
     if len(metagraph_info) > 0:
         miner_data_handler.update_metagraph_history(metagraph_info)
-        miner_data_handler.insert_new_miners(metagraph_info)
 
     random.shuffle(miner_uids)
 
