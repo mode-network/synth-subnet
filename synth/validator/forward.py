@@ -260,6 +260,7 @@ def _calculate_rewards_and_update_scores(
 
     bt.logging.trace(f"found {len(validator_requests)} prediction requests")
 
+    fail_count = 0
     for validator_request in validator_requests:
 
         bt.logging.trace(f"validator_request_id: {validator_request.id}")
@@ -274,13 +275,15 @@ def _calculate_rewards_and_update_scores(
 
         if prompt_scores_v2 is None:
             bt.logging.warning("No rewards calculated")
-            return False
+            fail_count += 1
+            continue
 
         miner_data_handler.set_miner_scores(
             reward_details=detailed_info, scored_time=scored_time
         )
 
-    return True
+    # Success if at least one request succeed
+    return fail_count != len(validator_requests)
 
 
 async def _query_available_miners_and_save_responses(
