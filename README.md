@@ -4,18 +4,12 @@
   </a>
 </div>
 
-<div align="center">
-  <a href="https://github.com/mode-network/synth-subnet/blob/main/LICENSE">
-    <img alt="GitHub License" src="https://img.shields.io/github/license/mode-network/synth-subnet">
-  </a>
-</div>
-
 <h1 align="center">
     Synth Subnet
 </h1>
 
 <div align="center">
-    <a href="https://www.mode.network/synth" target="_blank">
+    <a href="https://www.synthdata.co" target="_blank">
         <b>Website</b>
     </a>
 ·
@@ -30,6 +24,12 @@
     <a href="https://synth.mode.network/docs" target="_blank">
         <b>API Documentation</b>
     </a>
+</div>
+
+<div align="center">
+
+[![License: MIT](https://img.shields.io/github/license/mode-network/synth-subnet)](https://github.com/mode-network/synth-subnet/blob/main/LICENSE)
+
 </div>
 
 ---
