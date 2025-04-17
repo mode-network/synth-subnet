@@ -28,7 +28,7 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
         db_engine, start_time
     )
 
-    price_data_provider = PriceDataProvider("BTC")
+    price_data_provider = PriceDataProvider()
 
     success = _calculate_rewards_and_update_scores(
         miner_data_handler=handler,
@@ -59,7 +59,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
         db_engine, start_time
     )
 
-    price_data_provider = PriceDataProvider("BTC")
+    price_data_provider = PriceDataProvider()
 
     success = _calculate_rewards_and_update_scores(
         miner_data_handler=handler,
@@ -152,7 +152,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             simulation_data, simulation_input, datetime.now()
         )
 
-        price_data_provider = PriceDataProvider("BTC")
+        price_data_provider = PriceDataProvider()
 
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
@@ -280,7 +280,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             simulation_data, simulation_input, datetime.now()
         )
 
-        price_data_provider = PriceDataProvider("BTC")
+        price_data_provider = PriceDataProvider()
 
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
@@ -401,7 +401,7 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
             simulation_data, simulation_input, datetime.now()
         )
 
-        price_data_provider = PriceDataProvider("BTC")
+        price_data_provider = PriceDataProvider()
 
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)

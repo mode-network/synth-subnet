@@ -172,7 +172,7 @@ def _send_weights_to_bittensor_and_update_weights_history(
     base_neuron: BaseValidatorNeuron,
     moving_averages_data: list[dict],
     miner_data_handler: MinerDataHandler,
-    scored_time,
+    scored_time: str,
 ):
     miner_weights = [item["reward_weight"] for item in moving_averages_data]
     miner_uids = [item["miner_uid"] for item in moving_averages_data]

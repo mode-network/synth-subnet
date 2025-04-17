@@ -278,6 +278,7 @@ class MinerDataHandler:
                     select(
                         validator_requests.c.id,
                         validator_requests.c.start_time,
+                        validator_requests.c.asset,
                         validator_requests.c.time_length,
                         validator_requests.c.time_increment,
                     )
