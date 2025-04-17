@@ -191,9 +191,9 @@ def _send_weights_to_bittensor_and_update_weights_history(
     else:
         rate_limit_message = "Perhaps it is too soon to commit weights"
         if rate_limit_message in msg:
-            bt.logging.warning("set_weights failed", msg)
+            bt.logging.warning(msg, "set_weights failed")
         else:
-            bt.logging.error("set_weights failed", msg)
+            bt.logging.error(msg, "set_weights failed")
 
     miner_data_handler.update_weights_history(
         miner_uids=miner_uids,
