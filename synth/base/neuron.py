@@ -101,6 +101,12 @@ class BaseNeuron(ABC):
     async def forward(self, synapse: bt.Synapse) -> bt.Synapse: ...
 
     @abstractmethod
+    def resync_metagraph(self): ...
+
+    @abstractmethod
+    def set_weights(self): ...
+
+    @abstractmethod
     def run(self): ...
 
     def sync(self):
@@ -113,8 +119,8 @@ class BaseNeuron(ABC):
         if self.should_sync_metagraph():
             self.resync_metagraph()
 
-        if self.should_set_weights():
-            self.set_weights()
+        # we don't set_weights here because we control the set weights process
+        # in the run() method. This to save to database the result of the set_weights.
 
         # Always save state.
         self.save_state()
