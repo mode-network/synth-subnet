@@ -205,6 +205,9 @@ class Miner(BaseMinerNeuron):
     def load_state(self):
         pass
 
+    def set_weights(self):
+        pass
+
     def print_info(self):
         metagraph = self.metagraph
         self.uid = self.metagraph.hotkeys.index(

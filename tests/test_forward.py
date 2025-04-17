@@ -35,6 +35,7 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
+        cutoff_days=7,
     )
 
     assert success
@@ -65,6 +66,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
+        cutoff_days=7,
     )
 
     assert success
@@ -160,6 +162,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
             simulation_input=simulation_input,
+            cutoff_days=7,
         )
 
         miner_scores_df = handler.get_miner_scores(
@@ -287,6 +290,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
             simulation_input=simulation_input,
+            cutoff_days=7,
         )
 
         miner_scores_df = handler.get_miner_scores(
@@ -407,6 +411,7 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
             simulation_input=simulation_input,
+            cutoff_days=7,
         )
 
         miner_scores_df = handler.get_miner_scores(
