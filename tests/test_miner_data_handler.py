@@ -357,7 +357,7 @@ def test_get_values_incorrect_format(db_engine):
 
 def test_set_get_scores(db_engine):
     handler = MinerDataHandler(db_engine)
-    price_data_provider = PriceDataProvider("BTC")
+    price_data_provider = PriceDataProvider()
     start_time = "2024-11-25T23:58:00+00:00"
     scored_time = "2024-11-27T00:00:00+00:00"
     handler, simulation_input, _ = prepare_random_predictions(

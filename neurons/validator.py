@@ -51,9 +51,7 @@ class Validator(BaseValidatorNeuron):
         self.load_state()
 
         self.miner_data_handler = MinerDataHandler()
-        self.price_data_provider = PriceDataProvider("BTC")
-
-        # TODO(developer): Anything specific to your use case you can do here
+        self.price_data_provider = PriceDataProvider()
 
     async def forward(self):
         """
