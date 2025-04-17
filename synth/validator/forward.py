@@ -128,6 +128,7 @@ async def forward(
         price_data_provider=price_data_provider,
         scored_time=scored_time,
         simulation_input=simulation_input,
+        cutoff_days=base_neuron.config.ewma.cutoff_days,
     )
 
     if not success:
@@ -246,42 +247,43 @@ def _calculate_rewards_and_update_scores(
     price_data_provider: PriceDataProvider,
     scored_time: str,
     simulation_input: SimulationInput,
+    cutoff_days: int,
 ) -> bool:
     # get latest prediction request from validator
-    # for which we already have real prices data,
-    # i.e. (start_time + time_length) < scored_time
-    validator_request = miner_data_handler.get_latest_prediction_request(
-        scored_time, simulation_input
+    validator_requests = miner_data_handler.get_latest_prediction_requests(
+        scored_time, simulation_input, cutoff_days
     )
 
-    if validator_request is None:
+    if validator_requests is None or len(validator_requests) == 0:
         bt.logging.warning("No prediction requests found")
         return False
 
-    bt.logging.trace(f"validator_request_id: {validator_request.id}")
+    bt.logging.trace(f"found {len(validator_requests)} prediction requests")
 
-    # Adjust the scores based on responses from miners.
-    # response[0] - miner_uuids[0]
-    # this is the function we need to implement for our incentives mechanism,
-    # it returns an array of floats that determines how good a particular miner was at price predictions:
-    # example: [0.2, 0.7, 0.1] - you can see that the best miner was 2nd, and the worst 3rd
-    prompt_scores_v2, detailed_info = get_rewards(
-        miner_data_handler=miner_data_handler,
-        price_data_provider=price_data_provider,
-        validator_request=validator_request,
-    )
+    fail_count = 0
+    for validator_request in validator_requests:
 
-    print_scores_df(prompt_scores_v2, detailed_info)
+        bt.logging.trace(f"validator_request_id: {validator_request.id}")
 
-    if prompt_scores_v2 is None:
-        bt.logging.warning("No rewards calculated")
-        return False
+        prompt_scores_v2, detailed_info = get_rewards(
+            miner_data_handler=miner_data_handler,
+            price_data_provider=price_data_provider,
+            validator_request=validator_request,
+        )
 
-    miner_data_handler.set_miner_scores(
-        reward_details=detailed_info, scored_time=scored_time
-    )
+        print_scores_df(prompt_scores_v2, detailed_info)
 
-    return True
+        if prompt_scores_v2 is None:
+            bt.logging.warning("No rewards calculated")
+            fail_count += 1
+            continue
+
+        miner_data_handler.set_miner_scores(
+            reward_details=detailed_info, scored_time=scored_time
+        )
+
+    # Success if at least one request succeed
+    return fail_count != len(validator_requests)
 
 
 async def _query_available_miners_and_save_responses(
@@ -342,6 +344,7 @@ def _get_available_miners_and_update_metagraph_history(
     start_time: str,
 ):
     miner_uids = []
+    miners = []
     metagraph_info = []
     for uid in range(len(base_neuron.metagraph.S)):
         uid_is_available = check_uid_availability(
@@ -349,6 +352,17 @@ def _get_available_miners_and_update_metagraph_history(
             uid,
             base_neuron.config.neuron.vpermit_tao_limit,
         )
+
+        # adding the uid even if not available, to generate a score
+        miner_uids.append(uid)
+        miners.append(
+            {
+                "neuron_uid": uid,
+                "coldkey": base_neuron.metagraph.coldkeys[uid],
+                "hotkey": base_neuron.metagraph.hotkeys[uid],
+            }
+        )
+
         if uid_is_available:
             metagraph_item = {
                 "neuron_uid": uid,
@@ -362,14 +376,15 @@ def _get_available_miners_and_update_metagraph_history(
                 ),
                 "coldkey": base_neuron.metagraph.coldkeys[uid],
                 "hotkey": base_neuron.metagraph.hotkeys[uid],
-                "updated_at": start_time,  # TODO: let the database fill this with default value now()
+                "updated_at": start_time,
             }
-            miner_uids.append(uid)
             metagraph_info.append(metagraph_item)
+
+    if len(miners) > 0:
+        miner_data_handler.insert_new_miners(miners)
 
     if len(metagraph_info) > 0:
         miner_data_handler.update_metagraph_history(metagraph_info)
-        miner_data_handler.insert_new_miners(metagraph_info)
 
     random.shuffle(miner_uids)
 
