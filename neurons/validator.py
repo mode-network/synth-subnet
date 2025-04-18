@@ -77,32 +77,30 @@ class Validator(BaseValidatorNeuron):
         - Updating the scores
         """
         wandb_api_key = os.getenv("WANDB_API_KEY")
-        if wandb_api_key is not None:
+        if wandb_api_key is not None and self.config.wandb.enabled:
             bt.logging.info("WANDB_API_KEY is set")
+            run = wandb.init(
+                project=f"{self.config.wandb.project_name}",
+                mode=(
+                    "disabled"
+                    if not getattr(self.config.wandb, "enabled", False)
+                    else "online"
+                ),
+                entity=f"{self.config.wandb.entity}",
+                config={
+                    "hotkey": self.wallet.hotkey.ss58_address,
+                },
+                name=f"validator-{self.uid}-{__version__}",
+                resume="auto",
+                dir=self.config.neuron.full_path,
+                reinit=True,
+            )
+            wandb_handler = setup_wandb_alert(run)
+            bt.logging._logger.addHandler(wandb_handler)
         else:
             bt.logging.warning(
                 "WANDB_API_KEY not found in environment variables."
             )
-
-        run = wandb.init(
-            project=f"{self.config.wandb.project_name}",
-            mode=(
-                "disabled"
-                if not getattr(self.config.wandb, "enabled", False)
-                else "online"
-            ),
-            entity=f"{self.config.wandb.entity}",
-            config={
-                "hotkey": self.wallet.hotkey.ss58_address,
-            },
-            name=f"validator-{self.uid}-{__version__}",
-            resume="auto",
-            dir=self.config.neuron.full_path,
-            reinit=True,
-        )
-        if self.config.wandb.enabled:
-            wandb_handler = setup_wandb_alert(run)
-            bt.logging._logger.addHandler(wandb_handler)
 
         bt.logging.info("calling forward()")
         await self.forward_prompt()
