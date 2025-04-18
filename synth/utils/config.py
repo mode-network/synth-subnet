@@ -27,8 +27,8 @@ def is_cuda_available():
     try:
         output = subprocess.check_output(
             ["nvidia-smi", "-L"], stderr=subprocess.STDOUT
-        )
-        if "NVIDIA" in output.decode("utf-8"):
+        ).decode("utf-8")
+        if "NVIDIA" in output:
             return "cuda"
     except Exception:
         pass

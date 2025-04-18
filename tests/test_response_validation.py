@@ -10,7 +10,7 @@ def test_validate_responses_process_time_none():
         time_length=10,
         time_increment=1,
     )
-    response = []
+    response: list = []
     request_time = datetime.fromisoformat("2023-01-01T00:00:00")
     process_time_str = None
 
@@ -27,7 +27,7 @@ def test_validate_responses_received_after_start_time():
         time_length=10,
         time_increment=1,
     )
-    response = []
+    response: list = []
     request_time = datetime.fromisoformat("2023-01-01T00:00:00")
     process_time_str = "10"
 
@@ -47,7 +47,7 @@ def test_validate_responses_empty_response():
         time_length=10,
         time_increment=1,
     )
-    response = []
+    response: list = []
     request_time = datetime.fromisoformat("2023-01-01T00:00:00")
     process_time_str = "0"
 
@@ -64,7 +64,7 @@ def test_validate_responses_incorrect_number_of_paths():
         time_length=10,
         time_increment=1,
     )
-    response = [[]]
+    response: list = [[]]
     request_time = datetime.fromisoformat("2023-01-01T00:00:00")
     process_time_str = "0"
 
@@ -81,7 +81,7 @@ def test_validate_responses_incorrect_number_of_time_points():
         time_length=10,
         time_increment=1,
     )
-    response = [[{"time": "2023-01-01T00:00:00"}]]
+    response: list = [[{"time": "2023-01-01T00:00:00"}]]
     request_time = datetime.fromisoformat("2023-01-01T00:00:00")
     process_time_str = "0"
 
@@ -98,7 +98,7 @@ def test_validate_responses_incorrect_start_time():
         time_length=10,
         time_increment=1,
     )
-    response = [[{"time": "2023-01-01T00:00:01"} for _ in range(11)]]
+    response: list = [[{"time": "2023-01-01T00:00:01"} for _ in range(11)]]
     request_time = datetime.fromisoformat("2023-01-01T00:00:00")
     process_time_str = "0"
 
@@ -118,7 +118,7 @@ def test_validate_responses_incorrect_time_increment():
         time_length=10,
         time_increment=1,
     )
-    response = [
+    response: list = [
         [{"time": "2023-01-01T00:00:00"}, {"time": "2023-01-01T00:00:02"}]
         + [{"time": "2023-01-01T00:00:00"} for _ in range(9)]
     ]
@@ -140,7 +140,7 @@ def test_validate_responses_incorrect_price_format():
         time_length=10,
         time_increment=1,
     )
-    response = [
+    response: list = [
         [{"time": "2023-01-01T00:00:00", "price": 100}]
         + [{"time": "2023-01-01T00:00:01", "price": "100"} for _ in range(10)]
     ]
@@ -163,7 +163,7 @@ def test_validate_responses_incorrect_time_type():
         time_length=10,
         time_increment=1,
     )
-    response = [
+    response: list = [
         [{"time": "2023-01-01T00:00:00", "price": 100}]
         + [{"time": 12456, "price": "100"} for _ in range(10)]
     ]
@@ -185,7 +185,7 @@ def test_validate_responses_incorrect_time_format():
         time_length=10,
         time_increment=1,
     )
-    response = [
+    response: list = [
         [{"time": "2023-01-01T00:00:00", "price": 100}]
         + [{"time": "2023-01-01 0000", "price": "100"} for _ in range(10)]
     ]
@@ -208,7 +208,7 @@ def test_validate_responses_correct():
         time_length=3,
         time_increment=1,
     )
-    response = [
+    response: list = [
         [{"time": f"2023-01-01T00:00:0{i}", "price": 100} for i in range(4)]
     ]
     request_time = datetime.fromisoformat("2023-01-01T00:00:00")
