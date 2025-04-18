@@ -24,9 +24,7 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
     start_time = "2024-08-25T23:58:00+00:00"
     scored_time = "2024-08-28T00:00:00+00:00"
 
-    handler, simulation_input, miner_uids = prepare_random_predictions(
-        db_engine, start_time
-    )
+    handler, _, miner_uids = prepare_random_predictions(db_engine, start_time)
 
     price_data_provider = PriceDataProvider()
 
@@ -34,7 +32,6 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        simulation_input=simulation_input,
         cutoff_days=7,
     )
 
@@ -55,9 +52,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
     start_time = "2024-09-25T23:58:00+00:00"
     scored_time = "2024-09-28T00:00:00+00:00"
 
-    handler, simulation_input, _ = prepare_random_predictions(
-        db_engine, start_time
-    )
+    handler, _, _ = prepare_random_predictions(db_engine, start_time)
 
     price_data_provider = PriceDataProvider()
 
@@ -65,7 +60,6 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        simulation_input=simulation_input,
         cutoff_days=7,
     )
 
@@ -161,7 +155,6 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
-            simulation_input=simulation_input,
             cutoff_days=7,
         )
 
@@ -289,7 +282,6 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
-            simulation_input=simulation_input,
             cutoff_days=7,
         )
 
@@ -410,7 +402,6 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
-            simulation_input=simulation_input,
             cutoff_days=7,
         )
 

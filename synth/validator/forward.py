@@ -246,12 +246,11 @@ def _calculate_rewards_and_update_scores(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
     scored_time: str,
-    simulation_input: SimulationInput,
     cutoff_days: int,
 ) -> bool:
     # get latest prediction request from validator
     validator_requests = miner_data_handler.get_latest_prediction_requests(
-        scored_time, simulation_input, cutoff_days
+        scored_time, cutoff_days
     )
 
     if validator_requests is None or len(validator_requests) == 0:
