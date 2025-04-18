@@ -11,8 +11,8 @@ from synth.miner.simulations import generate_simulations
 from synth.simulation_input import SimulationInput
 from synth.validator import response_validation
 from synth.validator.forward import (
-    _calculate_moving_average_and_update_rewards,
-    _calculate_rewards_and_update_scores,
+    calculate_moving_average_and_update_rewards,
+    calculate_rewards_and_update_scores,
 )
 from synth.db.models import miners as miners_model, miner_rewards
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -28,7 +28,7 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
 
     price_data_provider = PriceDataProvider()
 
-    success = _calculate_rewards_and_update_scores(
+    success = calculate_rewards_and_update_scores(
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
@@ -56,7 +56,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
 
     price_data_provider = PriceDataProvider()
 
-    success = _calculate_rewards_and_update_scores(
+    success = calculate_rewards_and_update_scores(
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
@@ -65,7 +65,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
 
     assert success
 
-    moving_averages_data = _calculate_moving_average_and_update_rewards(
+    moving_averages_data = calculate_moving_average_and_update_rewards(
         miner_data_handler=handler,
         scored_time=scored_time,
         cutoff_days=4,
@@ -151,7 +151,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
 
-        success = _calculate_rewards_and_update_scores(
+        success = calculate_rewards_and_update_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
@@ -167,7 +167,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
 
         assert success
 
-        moving_averages_data = _calculate_moving_average_and_update_rewards(
+        moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
             scored_time=scored_time.isoformat(),
             cutoff_days=4,
@@ -278,7 +278,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
 
-        success = _calculate_rewards_and_update_scores(
+        success = calculate_rewards_and_update_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
@@ -294,7 +294,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
 
         assert success
 
-        moving_averages_data = _calculate_moving_average_and_update_rewards(
+        moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
             scored_time=scored_time.isoformat(),
             cutoff_days=4,
@@ -398,7 +398,7 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
 
-        success = _calculate_rewards_and_update_scores(
+        success = calculate_rewards_and_update_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time.isoformat(),
@@ -414,7 +414,7 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
 
         assert success
 
-        moving_averages_data = _calculate_moving_average_and_update_rewards(
+        moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
             scored_time=scored_time.isoformat(),
             cutoff_days=4,
