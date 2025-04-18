@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 
 import pandas as pd
 from sqlalchemy import Engine
@@ -16,7 +17,7 @@ def read_csv(file_name):
 def test_moving_average_1(db_engine: Engine):
     handler = MinerDataHandler(db_engine)
 
-    scored_time = "2025-02-21T17:23:00+00:00"
+    scored_time = datetime.fromisoformat("2025-02-21T17:23:00+00:00")
     half_life_days = 2
 
     df = read_csv("cutoff_data_4_days.csv")
@@ -26,7 +27,7 @@ def test_moving_average_1(db_engine: Engine):
         handler,
         input_df=df,
         half_life_days=half_life_days,
-        scored_time_str=scored_time,
+        scored_time=scored_time,
         softmax_beta=-0.003,
     )
 
@@ -52,7 +53,7 @@ def test_moving_average_1(db_engine: Engine):
 def test_moving_average_2(db_engine: Engine):
     handler = MinerDataHandler(db_engine)
 
-    scored_time = "2025-02-21T17:23:00+00:00"
+    scored_time = datetime.fromisoformat("2025-02-21T17:23:00+00:00")
     half_life_days = 1
 
     df = read_csv("cutoff_data_2_days.csv")
@@ -62,7 +63,7 @@ def test_moving_average_2(db_engine: Engine):
         handler,
         input_df=df,
         half_life_days=half_life_days,
-        scored_time_str=scored_time,
+        scored_time=scored_time,
         softmax_beta=-0.003,
     )
 

@@ -59,7 +59,7 @@ class BaseNeuron(ABC):
 
     def __init__(self, config=None):
         base_config = copy.deepcopy(config or BaseNeuron.config())
-        self.config = self.config()
+        self.config = self.config()  # type: ignore[method-assign]
         self.config.merge(base_config)
         self.check_config(self.config)
 
@@ -98,7 +98,10 @@ class BaseNeuron(ABC):
         self.step = 0
 
     @abstractmethod
-    async def forward(self, synapse: bt.Synapse) -> bt.Synapse: ...
+    async def forward_miner(self, synapse: bt.Synapse) -> bt.Synapse: ...
+
+    @abstractmethod
+    async def forward_validator(self): ...
 
     @abstractmethod
     def resync_metagraph(self): ...

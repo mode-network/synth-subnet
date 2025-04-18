@@ -27,8 +27,8 @@ def is_cuda_available():
     try:
         output = subprocess.check_output(
             ["nvidia-smi", "-L"], stderr=subprocess.STDOUT
-        )
-        if "NVIDIA" in output.decode("utf-8"):
+        ).decode("utf-8")
+        if "NVIDIA" in output:
             return "cuda"
     except Exception:
         pass
@@ -207,13 +207,6 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
         type=float,
         help="Override the timeout for each forward call in seconds.",
         default=None,
-    )
-
-    parser.add_argument(
-        "--neuron.num_concurrent_forwards",
-        type=int,
-        help="The number of concurrent forwards running at any time.",
-        default=1,
     )
 
     parser.add_argument(

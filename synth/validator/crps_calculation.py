@@ -76,7 +76,7 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
 
         # Total CRPS for this interval
         total_crps_interval = np.sum(crps_values)
-        sum_all_scores += total_crps_interval
+        sum_all_scores += float(total_crps_interval)
 
         # Append total CRPS for this interval to detailed data
         detailed_crps_data.append(

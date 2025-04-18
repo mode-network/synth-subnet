@@ -82,21 +82,21 @@ class TestHelpers(unittest.TestCase):
             datetime.fromisoformat(dt_str_2), time_increment
         )
 
-        self.assertEqual(result_1, "2024-11-25T19:05:00")
-        self.assertEqual(result_2, "2024-11-25T19:05:00")
+        self.assertEqual(result_1.isoformat(), "2024-11-25T19:05:00")
+        self.assertEqual(result_2.isoformat(), "2024-11-25T19:05:00")
 
     def test_round_time_to_minutes_plus_two_extra(self):
         dt_str_1 = "2024-11-25T19:01:59.940515"
         result_1 = round_time_to_minutes(
             datetime.fromisoformat(dt_str_1), 60, 120
         )
-        self.assertEqual(result_1, "2024-11-25T19:04:00")
+        self.assertEqual(result_1.isoformat(), "2024-11-25T19:04:00")
 
         dt_str_2 = "2024-11-25T19:03:09.659353"
         result_2 = round_time_to_minutes(
             datetime.fromisoformat(dt_str_2), 60, 120
         )
-        self.assertEqual(result_2, "2024-11-25T19:06:00")
+        self.assertEqual(result_2.isoformat(), "2024-11-25T19:06:00")
 
     def test_round_time_to_two_minutes(self):
         time_increment = 120
@@ -112,8 +112,8 @@ class TestHelpers(unittest.TestCase):
             datetime.fromisoformat(dt_str_2), time_increment, extra_seconds
         )
 
-        self.assertEqual(result_1, "2024-11-25T19:03:00")
-        self.assertEqual(result_2, "2024-11-25T19:05:00")
+        self.assertEqual(result_1.isoformat(), "2024-11-25T19:03:00")
+        self.assertEqual(result_2.isoformat(), "2024-11-25T19:05:00")
 
     def test_from_iso_to_unix_time(self):
         iso_time = "2024-11-25T16:20:00"

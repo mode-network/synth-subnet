@@ -114,7 +114,7 @@ def get_rewards(
 
     start_time = validator_request.start_time.isoformat()
     real_prices = price_data_provider.fetch_data(
-        start_time, validator_request.time_length
+        validator_request.asset, start_time, validator_request.time_length
     )
 
     scores = []

@@ -60,7 +60,9 @@ def get_intersecting_arrays(array1, array2):
     return filtered_array1, filtered_array2
 
 
-def round_time_to_minutes(dt: datetime, in_seconds: int, extra_seconds=0):
+def round_time_to_minutes(
+    dt: datetime, in_seconds: int, extra_seconds=0
+) -> datetime:
     # Define the rounding interval
     rounding_interval = timedelta(seconds=in_seconds)
 
@@ -81,7 +83,7 @@ def round_time_to_minutes(dt: datetime, in_seconds: int, extra_seconds=0):
         + timedelta(seconds=extra_seconds)
     )
 
-    return rounded_time.isoformat()
+    return rounded_time
 
 
 def from_iso_to_unix_time(iso_time: str):
@@ -112,6 +114,20 @@ def timeout_from_start_time(
 
     # Calculate the timeout duration
     return (start_time - current_time).total_seconds()
+
+
+def timeout_until(until_time: datetime):
+    """
+    Calculate the timeout duration from the current time to the until_time.
+
+    :param until_time: datetime object representing the end time.
+    :return: Timeout duration in seconds.
+    """
+    # Get current date and time
+    current_time = datetime.now(timezone.utc)
+
+    # Calculate the timeout duration
+    return (until_time - current_time).total_seconds()
 
 
 def convert_list_elements_to_str(items: list[int]) -> list[str]:

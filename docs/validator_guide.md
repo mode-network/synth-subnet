@@ -21,7 +21,6 @@
     - [`--neuron.events_retention_size TEXT`](#--neuronevents_retention_size-text)
     - [`--neuron.moving_average_alpha FLOAT`](#--neuronmoving_average_alpha-float)
     - [`--neuron.name TEXT`](#--neuronname-text)
-    - [`--neuron.num_concurrent_forwards INTEGER`](#--neuronnum_concurrent_forwards-integer)
     - [`--neuron.sample_size INTEGER`](#--neuronsample_size-integer)
     - [`--neuron.timeout INTEGER`](#--neurontimeout-integer)
     - [`--neuron.vpermit_tao_limit INTEGER`](#--neuronvpermit_tao_limit-integer)
@@ -624,38 +623,6 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 ```shell
 pm2 start validator.config.js -- --neuron.name validator
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-#### `--neuron.num_concurrent_forwards INTEGER`
-
-The number of concurrent forwards running at any time.
-
-Default: `1`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.num_concurrent_forwards 1',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-```shell
-pm2 start validator.config.js -- --neuron.num_concurrent_forwards 1
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

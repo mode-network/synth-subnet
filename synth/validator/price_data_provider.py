@@ -20,16 +20,13 @@ class PriceDataProvider:
 
     TOKEN_MAP = {"BTC": "Crypto.BTC/USD", "ETH": "Crypto.ETH/USD"}
 
-    def __init__(self, token):
-        self.token = self._get_token_mapping(token)
-
     @retry(
         stop=stop_after_attempt(5),
         wait=wait_random_exponential(multiplier=5),
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
-    def fetch_data(self, start_time: str, time_length: int):
+    def fetch_data(self, token: str, start_time: str, time_length: int):
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
@@ -41,7 +38,7 @@ class PriceDataProvider:
         end_time_int = start_time_int + time_length
 
         params = {
-            "symbol": self.token,
+            "symbol": self._get_token_mapping(token),
             "resolution": 1,
             "from": start_time_int,
             "to": end_time_int,

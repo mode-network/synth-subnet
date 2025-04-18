@@ -11,8 +11,8 @@ from synth.miner.simulations import generate_simulations
 from synth.simulation_input import SimulationInput
 from synth.validator import response_validation
 from synth.validator.forward import (
-    _calculate_moving_average_and_update_rewards,
-    _calculate_rewards_and_update_scores,
+    calculate_moving_average_and_update_rewards,
+    calculate_rewards_and_update_scores,
 )
 from synth.db.models import miners as miners_model, miner_rewards
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -22,26 +22,23 @@ from tests.utils import prepare_random_predictions
 
 def test_calculate_rewards_and_update_scores(db_engine: Engine):
     start_time = "2024-08-25T23:58:00+00:00"
-    scored_time = "2024-08-28T00:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-08-28T00:00:00+00:00")
 
-    handler, simulation_input, miner_uids = prepare_random_predictions(
-        db_engine, start_time
-    )
+    handler, _, miner_uids = prepare_random_predictions(db_engine, start_time)
 
-    price_data_provider = PriceDataProvider("BTC")
+    price_data_provider = PriceDataProvider()
 
-    success = _calculate_rewards_and_update_scores(
+    success = calculate_rewards_and_update_scores(
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        simulation_input=simulation_input,
         cutoff_days=7,
     )
 
     assert success
 
     miner_scores_df = handler.get_miner_scores(
-        scored_time_str=scored_time,
+        scored_time=scored_time,
         cutoff_days=2,
     )
 
@@ -53,25 +50,22 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
 
 def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
     start_time = "2024-09-25T23:58:00+00:00"
-    scored_time = "2024-09-28T00:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-09-28T00:00:00+00:00")
 
-    handler, simulation_input, _ = prepare_random_predictions(
-        db_engine, start_time
-    )
+    handler, _, _ = prepare_random_predictions(db_engine, start_time)
 
-    price_data_provider = PriceDataProvider("BTC")
+    price_data_provider = PriceDataProvider()
 
-    success = _calculate_rewards_and_update_scores(
+    success = calculate_rewards_and_update_scores(
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        simulation_input=simulation_input,
         cutoff_days=7,
     )
 
     assert success
 
-    moving_averages_data = _calculate_moving_average_and_update_rewards(
+    moving_averages_data = calculate_moving_average_and_update_rewards(
         miner_data_handler=handler,
         scored_time=scored_time,
         cutoff_days=4,
@@ -152,21 +146,20 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             simulation_data, simulation_input, datetime.now()
         )
 
-        price_data_provider = PriceDataProvider("BTC")
+        price_data_provider = PriceDataProvider()
 
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
 
-        success = _calculate_rewards_and_update_scores(
+        success = calculate_rewards_and_update_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
-            scored_time=scored_time.isoformat(),
-            simulation_input=simulation_input,
+            scored_time=scored_time,
             cutoff_days=7,
         )
 
         miner_scores_df = handler.get_miner_scores(
-            scored_time_str=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
         )
 
@@ -174,9 +167,9 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
 
         assert success
 
-        moving_averages_data = _calculate_moving_average_and_update_rewards(
+        moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
-            scored_time=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
             half_life_days=2,
             softmax_beta=-0.003,
@@ -280,21 +273,20 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             simulation_data, simulation_input, datetime.now()
         )
 
-        price_data_provider = PriceDataProvider("BTC")
+        price_data_provider = PriceDataProvider()
 
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
 
-        success = _calculate_rewards_and_update_scores(
+        success = calculate_rewards_and_update_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
-            scored_time=scored_time.isoformat(),
-            simulation_input=simulation_input,
+            scored_time=scored_time,
             cutoff_days=7,
         )
 
         miner_scores_df = handler.get_miner_scores(
-            scored_time_str=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
         )
 
@@ -302,9 +294,9 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
 
         assert success
 
-        moving_averages_data = _calculate_moving_average_and_update_rewards(
+        moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
-            scored_time=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
             half_life_days=2,
             softmax_beta=-0.003,
@@ -401,21 +393,20 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
             simulation_data, simulation_input, datetime.now()
         )
 
-        price_data_provider = PriceDataProvider("BTC")
+        price_data_provider = PriceDataProvider()
 
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
 
-        success = _calculate_rewards_and_update_scores(
+        success = calculate_rewards_and_update_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
-            scored_time=scored_time.isoformat(),
-            simulation_input=simulation_input,
+            scored_time=scored_time,
             cutoff_days=7,
         )
 
         miner_scores_df = handler.get_miner_scores(
-            scored_time_str=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
         )
 
@@ -423,9 +414,9 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
 
         assert success
 
-        moving_averages_data = _calculate_moving_average_and_update_rewards(
+        moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
-            scored_time=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
             half_life_days=2,
             softmax_beta=-0.003,
