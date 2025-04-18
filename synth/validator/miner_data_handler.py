@@ -251,7 +251,6 @@ class MinerDataHandler:
     def get_latest_prediction_requests(
         self,
         scored_time_str: str,
-        simulation_input: SimulationInput,
         cutoff_days: int,
     ):
         """Retrieve the list of IDs of the latest validator requests that (start_time + time_length) < scored_time."""
@@ -300,15 +299,6 @@ class MinerDataHandler:
                                 * validator_requests.c.time_length
                             )
                             >= scored_time - timedelta(days=cutoff_days),
-                            # Include simulation_input filters.
-                            validator_requests.c.asset
-                            == simulation_input.asset,
-                            validator_requests.c.time_increment
-                            == simulation_input.time_increment,
-                            validator_requests.c.time_length
-                            == simulation_input.time_length,
-                            validator_requests.c.num_simulations
-                            == simulation_input.num_simulations,
                             # Exclude records that have a matching miner_prediction via the NOT EXISTS clause.
                             not_(exists(subq)),
                         )

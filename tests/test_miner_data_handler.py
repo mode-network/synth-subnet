@@ -60,9 +60,7 @@ def test_get_values_within_range(db_engine):
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
-    validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input, 7
-    )
+    validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
     assert len(validator_requests) == 1
 
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
@@ -114,9 +112,7 @@ def test_get_values_ongoing_range(db_engine):
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
-    validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input, 7
-    )
+    validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
 
     assert len(validator_requests) == 0
 
@@ -182,9 +178,7 @@ def test_multiple_records_for_same_miner(db_engine):
         simulation_data_2, simulation_input_2, datetime.now()
     )
 
-    validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input_1, 7
-    )
+    validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
     assert len(validator_requests) == 2
 
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
@@ -266,9 +260,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
         simulation_data_2, simulation_input_2, datetime.now()
     )
 
-    validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input_1, 7
-    )
+    validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
     assert len(validator_requests) == 1
 
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
@@ -293,19 +285,9 @@ def test_no_data_for_miner(db_engine):
     """Test retrieving values for a miner that doesn't exist."""
     scored_time = "2024-11-20T12:00:00+00:00"
 
-    simulation_input = SimulationInput(
-        asset="BTC",
-        start_time=scored_time,
-        time_increment=300,
-        time_length=86400,
-        num_simulations=1,
-    )
-
     handler = MinerDataHandler(db_engine)
 
-    validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input, 7
-    )
+    validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
     assert len(validator_requests) == 0
 
 
@@ -342,9 +324,7 @@ def test_get_values_incorrect_format(db_engine):
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
-    validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input, 7
-    )
+    validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
     assert len(validator_requests) == 1
     result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
 
@@ -360,13 +340,9 @@ def test_set_get_scores(db_engine):
     price_data_provider = PriceDataProvider()
     start_time = "2024-11-25T23:58:00+00:00"
     scored_time = "2024-11-27T00:00:00+00:00"
-    handler, simulation_input, _ = prepare_random_predictions(
-        db_engine, start_time
-    )
+    handler, _, _ = prepare_random_predictions(db_engine, start_time)
 
-    validator_requests = handler.get_latest_prediction_requests(
-        scored_time, simulation_input, 7
-    )
+    validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
 
     assert len(validator_requests) == 1
 
