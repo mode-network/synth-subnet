@@ -210,13 +210,6 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
-        "--neuron.num_concurrent_forwards",
-        type=int,
-        help="The number of concurrent forwards running at any time.",
-        default=1,
-    )
-
-    parser.add_argument(
         "--neuron.sample_size",
         type=int,
         help="The number of miners to query in a single step.",
