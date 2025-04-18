@@ -145,7 +145,9 @@ class MinerDataHandler:
             bt.logging.error(f"in save_responses (got an exception): {e}")
             traceback.print_exc(file=sys.stderr)
 
-    def set_miner_scores(self, reward_details: list[dict], scored_time: str):
+    def set_miner_scores(
+        self, reward_details: list[dict], scored_time: datetime
+    ):
         try:
             with self.engine.connect() as connection:
                 with connection.begin():
@@ -154,7 +156,7 @@ class MinerDataHandler:
                         rows_to_insert.append(
                             {
                                 "miner_uid": row["miner_uid"],  # deprecated
-                                "scored_time": scored_time,
+                                "scored_time": scored_time.isoformat(),
                                 "miner_predictions_id": row[
                                     "miner_prediction_id"
                                 ],
@@ -250,13 +252,11 @@ class MinerDataHandler:
 
     def get_latest_prediction_requests(
         self,
-        scored_time_str: str,
+        scored_time: datetime,
         cutoff_days: int,
     ):
         """Retrieve the list of IDs of the latest validator requests that (start_time + time_length) < scored_time."""
         try:
-            scored_time = datetime.fromisoformat(scored_time_str)
-
             with self.engine.connect() as connection:
                 subq = (
                     select(1)
@@ -359,8 +359,7 @@ class MinerDataHandler:
             )
             traceback.print_exc(file=sys.stderr)
 
-    def get_miner_scores(self, scored_time_str: str, cutoff_days: int):
-        scored_time = datetime.fromisoformat(scored_time_str)
+    def get_miner_scores(self, scored_time: datetime, cutoff_days: int):
         min_scored_time = scored_time - timedelta(days=cutoff_days)
 
         try:
@@ -430,7 +429,7 @@ class MinerDataHandler:
         norm_miner_uids: list[str],
         norm_miner_weights: list[str],
         update_result: str,
-        scored_time: str,
+        scored_time: datetime,
     ):
         update_weights_rows = {
             "miner_uids": miner_uids,
@@ -438,7 +437,7 @@ class MinerDataHandler:
             "norm_miner_uids": norm_miner_uids,
             "norm_miner_weights": norm_miner_weights,
             "update_result": update_result,
-            "updated_at": scored_time,
+            "updated_at": scored_time.isoformat(),
         }
 
         try:

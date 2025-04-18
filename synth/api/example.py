@@ -28,7 +28,7 @@ async def test_prediction(args):
 
     simulation_input = SimulationInput(
         asset="BTC",
-        start_time=current_time,
+        start_time=current_time.isoformat(),
         time_increment=300,
         time_length=86400,
         num_simulations=1,

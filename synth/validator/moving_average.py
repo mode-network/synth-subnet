@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 import typing
 
 
@@ -82,7 +82,7 @@ def compute_weighted_averages(
     miner_data_handler: MinerDataHandler,
     input_df: DataFrame,
     half_life_days: float,
-    scored_time_str: str,
+    scored_time: datetime,
     softmax_beta: float,
 ) -> typing.Optional[list[dict]]:
     """
@@ -98,10 +98,6 @@ def compute_weighted_averages(
     if input_df.empty:
         return None
 
-    validation_time = datetime.fromisoformat(scored_time_str).replace(
-        tzinfo=timezone.utc
-    )
-
     # Group by miner_id
     grouped = input_df.groupby("miner_id")
 
@@ -116,9 +112,7 @@ def compute_weighted_averages(
             if prompt_score is None or np.isnan(prompt_score):
                 continue
 
-            w = compute_weight(
-                row["scored_time"], validation_time, half_life_days
-            )
+            w = compute_weight(row["scored_time"], scored_time, half_life_days)
             total_weight += w
             weighted_reward_sum += w * prompt_score
 
@@ -156,7 +150,7 @@ def compute_weighted_averages(
                     "miner_uid": item["miner_uid"],
                     "smoothed_score": item["ewma"],
                     "reward_weight": float(reward_weight),
-                    "updated_at": scored_time_str,
+                    "updated_at": scored_time.isoformat(),
                 }
             )
 

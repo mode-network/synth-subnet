@@ -48,7 +48,7 @@ def send_weights_to_bittensor_and_update_weights_history(
     base_neuron: BaseValidatorNeuron,
     moving_averages_data: list[dict],
     miner_data_handler: MinerDataHandler,
-    scored_time: str,
+    scored_time: datetime,
 ):
     miner_weights = [item["reward_weight"] for item in moving_averages_data]
     miner_uids = [item["miner_uid"] for item in moving_averages_data]
@@ -87,14 +87,14 @@ def wait_till_next_iteration():
 
 def calculate_moving_average_and_update_rewards(
     miner_data_handler: MinerDataHandler,
-    scored_time: str,
+    scored_time: datetime,
     cutoff_days: int,
     half_life_days: float,
     softmax_beta: float,
 ) -> list[dict]:
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(
-        scored_time_str=scored_time,
+        scored_time=scored_time,
         cutoff_days=cutoff_days,
     )
 
@@ -104,7 +104,7 @@ def calculate_moving_average_and_update_rewards(
         miner_data_handler=miner_data_handler,
         input_df=df,
         half_life_days=half_life_days,
-        scored_time_str=scored_time,
+        scored_time=scored_time,
         softmax_beta=softmax_beta,
     )
 
@@ -121,7 +121,7 @@ def calculate_moving_average_and_update_rewards(
 def calculate_rewards_and_update_scores(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
-    scored_time: str,
+    scored_time: datetime,
     cutoff_days: int,
 ) -> bool:
     # get latest prediction request from validator
@@ -220,7 +220,7 @@ async def query_available_miners_and_save_responses(
 def get_available_miners_and_update_metagraph_history(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
-    start_time: str,
+    start_time: datetime,
 ):
     miner_uids = []
     miners = []
@@ -255,7 +255,7 @@ def get_available_miners_and_update_metagraph_history(
                 ),
                 "coldkey": base_neuron.metagraph.coldkeys[uid],
                 "hotkey": base_neuron.metagraph.hotkeys[uid],
-                "updated_at": start_time,
+                "updated_at": start_time.isoformat(),
             }
             metagraph_info.append(metagraph_item)
 

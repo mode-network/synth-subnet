@@ -60,7 +60,9 @@ def get_intersecting_arrays(array1, array2):
     return filtered_array1, filtered_array2
 
 
-def round_time_to_minutes(dt: datetime, in_seconds: int, extra_seconds=0):
+def round_time_to_minutes(
+    dt: datetime, in_seconds: int, extra_seconds=0
+) -> datetime:
     # Define the rounding interval
     rounding_interval = timedelta(seconds=in_seconds)
 
@@ -81,7 +83,7 @@ def round_time_to_minutes(dt: datetime, in_seconds: int, extra_seconds=0):
         + timedelta(seconds=extra_seconds)
     )
 
-    return rounded_time.isoformat()
+    return rounded_time
 
 
 def from_iso_to_unix_time(iso_time: str):
