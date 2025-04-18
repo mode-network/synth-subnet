@@ -145,7 +145,8 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # If someone intentionally stops the validator, it'll safely terminate operations.
         except KeyboardInterrupt:
-            self.axon.stop()
+            if not self.config.neuron.axon_off:
+                self.axon.stop()
             bt.logging.success("Validator killed by keyboard interrupt.")
             exit()
 
