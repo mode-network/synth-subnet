@@ -22,7 +22,7 @@ from tests.utils import prepare_random_predictions
 
 def test_calculate_rewards_and_update_scores(db_engine: Engine):
     start_time = "2024-08-25T23:58:00+00:00"
-    scored_time = "2024-08-28T00:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-08-28T00:00:00+00:00")
 
     handler, _, miner_uids = prepare_random_predictions(db_engine, start_time)
 
@@ -38,7 +38,7 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
     assert success
 
     miner_scores_df = handler.get_miner_scores(
-        scored_time_str=scored_time,
+        scored_time=scored_time,
         cutoff_days=2,
     )
 
@@ -50,7 +50,7 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
 
 def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
     start_time = "2024-09-25T23:58:00+00:00"
-    scored_time = "2024-09-28T00:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-09-28T00:00:00+00:00")
 
     handler, _, _ = prepare_random_predictions(db_engine, start_time)
 
@@ -154,12 +154,12 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
         success = calculate_rewards_and_update_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
-            scored_time=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=7,
         )
 
         miner_scores_df = handler.get_miner_scores(
-            scored_time_str=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
         )
 
@@ -169,7 +169,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
 
         moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
-            scored_time=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
             half_life_days=2,
             softmax_beta=-0.003,
@@ -281,12 +281,12 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         success = calculate_rewards_and_update_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
-            scored_time=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=7,
         )
 
         miner_scores_df = handler.get_miner_scores(
-            scored_time_str=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
         )
 
@@ -296,7 +296,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
 
         moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
-            scored_time=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
             half_life_days=2,
             softmax_beta=-0.003,
@@ -401,12 +401,12 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
         success = calculate_rewards_and_update_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
-            scored_time=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=7,
         )
 
         miner_scores_df = handler.get_miner_scores(
-            scored_time_str=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
         )
 
@@ -416,7 +416,7 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
 
         moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
-            scored_time=scored_time.isoformat(),
+            scored_time=scored_time,
             cutoff_days=4,
             half_life_days=2,
             softmax_beta=-0.003,

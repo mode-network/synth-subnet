@@ -138,7 +138,7 @@ class Validator(BaseValidatorNeuron):
         # input data: give me prediction of BTC price for the next 1 day for every 5 min of time
         simulation_input = SimulationInput(
             asset="BTC",
-            start_time=start_time,
+            start_time=start_time.isoformat(),
             time_increment=300,
             time_length=86400,
             num_simulations=100,
@@ -161,7 +161,7 @@ class Validator(BaseValidatorNeuron):
         scored_time = round_time_to_minutes(current_time, 60, 0)
 
         # wait until the score_time
-        time.sleep(timeout_from_start_time(None, scored_time))
+        time.sleep(timeout_from_start_time(None, scored_time.isoformat()))
 
         success = calculate_rewards_and_update_scores(
             miner_data_handler=self.miner_data_handler,

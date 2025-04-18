@@ -46,7 +46,7 @@ def test_get_values_within_range(db_engine):
 
     miner_uid = miner_uids[0]
     start_time = "2024-11-20T00:00:00"
-    scored_time = "2024-11-22T00:00:00"
+    scored_time = datetime.fromisoformat("2024-11-22T00:00:00")
     simulation_input = SimulationInput(
         asset="BTC",
         start_time=start_time,
@@ -97,7 +97,7 @@ def test_get_values_ongoing_range(db_engine):
 
     miner_uid = miner_uids[0]
     start_time = "2024-11-20T00:00:00"
-    scored_time = "2024-11-20T12:00:00"
+    scored_time = datetime.fromisoformat("2024-11-20T12:00:00")
 
     simulation_input = SimulationInput(
         asset="BTC",
@@ -142,7 +142,7 @@ def test_multiple_records_for_same_miner(db_engine):
     miner_uid = miner_uids[0]
     start_time_1 = "2024-11-20T00:00:00+00:00"
     start_time_2 = "2024-11-20T12:00:00+00:00"
-    scored_time = "2024-11-21T15:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-11-21T15:00:00+00:00")
 
     simulation_input_1 = SimulationInput(
         asset="BTC",
@@ -224,7 +224,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
     miner_uid = miner_uids[0]
     start_time_1 = "2024-11-20T00:00:00+00:00"
     start_time_2 = "2024-11-20T12:00:00+00:00"
-    scored_time = "2024-11-21T03:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-11-21T03:00:00+00:00")
 
     simulation_input_1 = SimulationInput(
         asset="BTC",
@@ -283,7 +283,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
 
 def test_no_data_for_miner(db_engine):
     """Test retrieving values for a miner that doesn't exist."""
-    scored_time = "2024-11-20T12:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-11-20T12:00:00+00:00")
 
     handler = MinerDataHandler(db_engine)
 
@@ -310,7 +310,7 @@ def test_get_values_incorrect_format(db_engine):
 
     miner_uid = miner_uids[0]
     start_time = "2024-11-20T00:00:00"
-    scored_time = "2024-11-22T00:00:00"
+    scored_time = datetime.fromisoformat("2024-11-22T00:00:00")
     simulation_input = SimulationInput(
         asset="BTC",
         start_time=start_time,
@@ -320,7 +320,7 @@ def test_get_values_incorrect_format(db_engine):
     )
 
     error_string = "some errors in the format"
-    simulation_data = {miner_uid: ([], error_string, "12")}
+    simulation_data: dict = {miner_uid: ([], error_string, "12")}
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
@@ -339,7 +339,7 @@ def test_set_get_scores(db_engine):
     handler = MinerDataHandler(db_engine)
     price_data_provider = PriceDataProvider()
     start_time = "2024-11-25T23:58:00+00:00"
-    scored_time = "2024-11-27T00:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-11-27T00:00:00+00:00")
     handler, _, _ = prepare_random_predictions(db_engine, start_time)
 
     validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
@@ -359,7 +359,7 @@ def test_set_get_scores(db_engine):
     )
 
     miner_scores_df = handler.get_miner_scores(
-        scored_time_str=scored_time,
+        scored_time=scored_time,
         cutoff_days=4,
     )
 

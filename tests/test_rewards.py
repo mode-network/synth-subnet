@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
+from datetime import datetime
 
 from synth.db.models import (
     miner_predictions,
@@ -76,7 +77,7 @@ def test_compute_prompt_scores_v2_only_one_miner():
 
 def test_get_rewards(db_engine):
     start_time = "2024-11-25T23:58:00+00:00"
-    scored_time = "2024-11-28T00:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-11-28T00:00:00+00:00")
 
     handler, _, miner_uids = prepare_random_predictions(db_engine, start_time)
 
