@@ -174,7 +174,8 @@ class BaseValidatorNeuron(BaseNeuron):
         if self.is_running:
             bt.logging.debug("Stopping validator in background thread.")
             self.should_exit = True
-            self.thread.join(5)
+            if self.thread is not None:
+                self.thread.join(5)
             self.is_running = False
             bt.logging.debug("Stopped")
 
@@ -288,7 +289,7 @@ class BaseValidatorNeuron(BaseNeuron):
             new_moving_average = np.zeros((self.metagraph.n))
             min_len = min(len(self.hotkeys), len(self.scores))
             new_moving_average[:min_len] = self.scores[:min_len]
-            self.scores = new_moving_average
+            self.scores = new_moving_average.astype(np.float32)
 
         # Update the hotkeys.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)

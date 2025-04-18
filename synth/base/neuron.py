@@ -59,7 +59,7 @@ class BaseNeuron(ABC):
 
     def __init__(self, config=None):
         base_config = copy.deepcopy(config or BaseNeuron.config())
-        self.config = self.config()
+        self.config = self.config()  # type: ignore[method-assign]
         self.config.merge(base_config)
         self.check_config(self.config)
 

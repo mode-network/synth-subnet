@@ -167,7 +167,7 @@ class TestPriceDataProvider(unittest.TestCase):
             ]
 
     def test_fetch_data_no_prices(self):
-        mock_response = {
+        mock_response: dict = {
             "t": [],
             "c": [],
         }
