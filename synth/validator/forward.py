@@ -1,7 +1,6 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
-# TODO(developer): Set your name
-# Copyright © 2023 <your name>
+# Copyright © 2023 Mode Labs
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -17,7 +16,6 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import time
 from datetime import datetime, timedelta
 import random
 
@@ -79,10 +77,6 @@ def send_weights_to_bittensor_and_update_weights_history(
         update_result=msg,
         scored_time=scored_time,
     )
-
-
-def wait_till_next_iteration():
-    time.sleep(3600)  # wait for an hour
 
 
 def calculate_moving_average_and_update_rewards(
