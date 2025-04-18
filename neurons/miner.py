@@ -41,7 +41,7 @@ class Miner(BaseMinerNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    async def forward(self, synapse: Simulation) -> Simulation:
+    async def forward_miner(self, synapse: Simulation) -> Simulation:
         """
         Processes the incoming 'Dummy' synapse by performing a predefined operation on the input data.
         This method should be replaced with actual logic relevant to the miner's purpose.
@@ -206,6 +206,9 @@ class Miner(BaseMinerNeuron):
         pass
 
     def set_weights(self):
+        pass
+
+    async def forward_validator(self):
         pass
 
     def print_info(self):

@@ -104,7 +104,7 @@ class BaseValidatorNeuron(BaseNeuron):
             )
 
     async def concurrent_forward(self):
-        coroutines = [self.forward()]
+        coroutines = await self.forward_validator()
         await asyncio.gather(*coroutines)
 
     def run(self):
