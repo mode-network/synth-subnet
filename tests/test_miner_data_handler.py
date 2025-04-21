@@ -181,10 +181,8 @@ def test_multiple_records_for_same_miner(db_engine):
     validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
     assert len(validator_requests) == 2
 
-    result = handler.get_miner_prediction(miner_uid, validator_requests[0].id)
+    result = handler.get_miner_prediction(miner_uid, validator_requests[1].id)
 
-    # get only second element from the result tuple
-    # that corresponds to the prediction result
     prediction = result.prediction
 
     assert len(prediction) == 1
