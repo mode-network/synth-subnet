@@ -14,11 +14,20 @@ import bittensor as bt
 
 from synth.utils.helpers import from_iso_to_unix_time
 
+# Python API benckmarks doc: https://benchmarks.pyth.network/docs
+# get the list of stocks supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_stock
+# get the list of crypto supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_crypto
+# get the ticket: https://benchmarks.pyth.network/v1/shims/tradingview/symbols?symbol=CSPX
+
 
 class PriceDataProvider:
     BASE_URL = "https://benchmarks.pyth.network/v1/shims/tradingview/history"
 
-    TOKEN_MAP = {"BTC": "Crypto.BTC/USD", "ETH": "Crypto.ETH/USD"}
+    TOKEN_MAP = {
+        "BTC": "Crypto.BTC/USD",
+        "ETH": "Crypto.ETH/USD",
+        "CPX": "Equity.GB.CSPX/USD",
+    }
 
     @retry(
         stop=stop_after_attempt(5),
