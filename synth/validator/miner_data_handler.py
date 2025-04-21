@@ -303,7 +303,7 @@ class MinerDataHandler:
                             not_(exists(subq)),
                         )
                     )
-                    .order_by(validator_requests.c.start_time.desc())
+                    .order_by(validator_requests.c.start_time.asc())
                 )
 
                 return connection.execute(query).fetchall()

@@ -18,7 +18,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 
 import bittensor as bt
@@ -153,8 +153,11 @@ def calculate_rewards_and_update_scores(
             fail_count += 1
             continue
 
+        miner_score_time = validator_request.start_time + timedelta(
+            seconds=validator_request.time_length
+        )
         miner_data_handler.set_miner_scores(
-            reward_details=detailed_info, scored_time=scored_time
+            reward_details=detailed_info, scored_time=miner_score_time
         )
 
     # Success if at least one request succeed
