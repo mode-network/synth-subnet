@@ -66,6 +66,7 @@ class Validator(BaseValidatorNeuron):
 
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
+        self.wandb_handler = None
 
     async def forward(self):
         """
@@ -95,8 +96,10 @@ class Validator(BaseValidatorNeuron):
                 dir=self.config.neuron.full_path,
                 reinit=True,
             )
-            wandb_handler = setup_wandb_alert(run)
-            bt.logging._logger.addHandler(wandb_handler)
+            if self.wandb_handler is not None:
+                bt.logging._logger.removeHandler(self.wandb_handler)
+            self.wandb_handler = setup_wandb_alert(run)
+            bt.logging._logger.addHandler(self.wandb_handler)
         else:
             bt.logging.warning(
                 "WANDB_API_KEY not found in environment variables."

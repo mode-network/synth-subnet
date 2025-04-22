@@ -37,26 +37,31 @@ def setup_events_logger(full_path, events_retention_size):
     return logger
 
 
-def setup_wandb_alert(wandb_run):
-    class WandBHandler(logging.Handler):
-        def emit(self, record):
-            try:
-                log_entry = self.format(record)
-                if record.levelno >= 40:
-                    wandb_run.alert(
-                        title="An error occurred",
-                        text=log_entry,
-                        level=record.levelname,
-                    )
-            except Exception as err:
-                filter = "will be ignored. Please make sure that you are using an active run"
-                msg = f"Error occurred while sending alert to wandb: ---{str(err)}--- the message: ---{log_entry}---"
-                if filter not in str(err):
-                    bt.logging.trace(msg)
-                else:
-                    bt.logging.warning(msg)
+class WandBHandler(logging.Handler):
+    def __init__(self, wandb_run):
+        super().__init__()
+        self.wandb_run = wandb_run
 
-    wandb_handler = WandBHandler()
+    def emit(self, record):
+        try:
+            log_entry = self.format(record)
+            if record.levelno >= 40:
+                self.wandb_run.alert(
+                    title="An error occurred",
+                    text=log_entry,
+                    level=record.levelname,
+                )
+        except Exception as err:
+            filter = "will be ignored. Please make sure that you are using an active run"
+            msg = f"Error occurred while sending alert to wandb: ---{str(err)}--- the message: ---{log_entry}---"
+            if filter not in str(err):
+                bt.logging.trace(msg)
+            else:
+                bt.logging.warning(msg)
+
+
+def setup_wandb_alert(wandb_run):
+    wandb_handler = WandBHandler(wandb_run)
     wandb_handler.setLevel(logging.ERROR)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
