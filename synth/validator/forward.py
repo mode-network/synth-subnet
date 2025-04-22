@@ -29,8 +29,6 @@ from synth.base.validator import BaseValidatorNeuron
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
 from synth.utils.helpers import (
-    get_current_time,
-    round_time_to_minutes,
     timeout_from_start_time,
     convert_list_elements_to_str,
 )
@@ -46,133 +44,11 @@ from synth.validator.response_validation import validate_responses
 from synth.validator.reward import get_rewards, print_scores_df
 
 
-async def forward(
-    base_neuron: BaseValidatorNeuron,
-    miner_data_handler: MinerDataHandler,
-    price_data_provider: PriceDataProvider,
-):
-    """
-    The forward function is called by the validator every time step.
-
-    It is responsible for querying the network and scoring the responses.
-
-    Args:
-        base_neuron (:obj:`bittensor.neuron.Neuron`): The neuron object which contains all the necessary state for the validator.
-        miner_data_handler (:obj:`synth.validator.MinerDataHandler`): The MinerDataHandler object which contains all the necessary state for the validator.
-        price_data_provider (:obj:`synth.validator.PriceDataProvider`): The PriceDataProvider returns real prices data for a specific token.
-    """
-    # getting current validation time
-    request_time = get_current_time()
-
-    # round validation time to the closest minute and add 1 extra minute
-    start_time = round_time_to_minutes(request_time, 60, 120)
-
-    # ================= Step 1 ================= #
-    # Getting available miners from metagraph and saving information about them
-    # and their properties (rank, incentives, emission) at the current moment in the database
-    # in the metagraph_history table
-    # ========================================== #
-
-    miner_uids = _get_available_miners_and_update_metagraph_history(
-        base_neuron=base_neuron,
-        miner_data_handler=miner_data_handler,
-        start_time=start_time,
-    )
-
-    if len(miner_uids) == 0:
-        bt.logging.error("No miners available")
-        _wait_till_next_iteration()
-        return
-
-    # ================= Step 2 ================= #
-    # Query all the available miners and save all their responses
-    # in the database in miner_predictions table
-    # ========================================== #
-
-    # input data: give me prediction of BTC price for the next 1 day for every 5 min of time
-    simulation_input = SimulationInput(
-        asset="BTC",
-        start_time=start_time,
-        time_increment=300,
-        time_length=86400,
-        num_simulations=100,
-    )
-
-    await _query_available_miners_and_save_responses(
-        base_neuron=base_neuron,
-        miner_data_handler=miner_data_handler,
-        miner_uids=miner_uids,
-        simulation_input=simulation_input,
-        request_time=request_time,
-    )
-
-    # ================= Step 3 ================= #
-    # Calculate rewards based on historical predictions data
-    # from the miner_predictions table:
-    # we're going to get the prediction that is already in the past,
-    # in this way we know the real prices, can compare them
-    # with predictions and calculate the rewards,
-    # we store the rewards in the miner_scores table
-    # ========================================== #
-
-    # scored_time is the same as start_time for a single validator step
-    # but the meaning is different
-    # start_time - is the time when validator asks miners for prediction data
-    #              and stores it in the database
-    # scored_time - is the time when validator calculates rewards using the data
-    #               from the database of previous prediction data
-    scored_time = start_time
-
-    success = _calculate_rewards_and_update_scores(
-        miner_data_handler=miner_data_handler,
-        price_data_provider=price_data_provider,
-        scored_time=scored_time,
-        simulation_input=simulation_input,
-        cutoff_days=base_neuron.config.ewma.cutoff_days,
-    )
-
-    if not success:
-        _wait_till_next_iteration()
-        return
-
-    # ================= Step 4 ================= #
-    # Calculate moving average based on the past results
-    # in the miner_scores table and save them
-    # in the miner_rewards table in the end
-    # ========================================== #
-
-    moving_averages_data = _calculate_moving_average_and_update_rewards(
-        miner_data_handler=miner_data_handler,
-        scored_time=scored_time,
-        cutoff_days=base_neuron.config.ewma.cutoff_days,
-        half_life_days=base_neuron.config.ewma.half_life_days,
-        softmax_beta=base_neuron.config.softmax.beta,
-    )
-
-    if len(moving_averages_data) == 0:
-        _wait_till_next_iteration()
-        return
-
-    # ================= Step 5 ================= #
-    # Send rewards calculated in the previous step
-    # into bittensor consensus calculation
-    # ========================================== #
-
-    _send_weights_to_bittensor_and_update_weights_history(
-        base_neuron=base_neuron,
-        moving_averages_data=moving_averages_data,
-        miner_data_handler=miner_data_handler,
-        scored_time=scored_time,
-    )
-
-    _wait_till_next_iteration()
-
-
-def _send_weights_to_bittensor_and_update_weights_history(
+def send_weights_to_bittensor_and_update_weights_history(
     base_neuron: BaseValidatorNeuron,
     moving_averages_data: list[dict],
     miner_data_handler: MinerDataHandler,
-    scored_time,
+    scored_time: datetime,
 ):
     miner_weights = [item["reward_weight"] for item in moving_averages_data]
     miner_uids = [item["miner_uid"] for item in moving_averages_data]
@@ -205,20 +81,20 @@ def _send_weights_to_bittensor_and_update_weights_history(
     )
 
 
-def _wait_till_next_iteration():
+def wait_till_next_iteration():
     time.sleep(3600)  # wait for an hour
 
 
-def _calculate_moving_average_and_update_rewards(
+def calculate_moving_average_and_update_rewards(
     miner_data_handler: MinerDataHandler,
-    scored_time: str,
+    scored_time: datetime,
     cutoff_days: int,
     half_life_days: float,
     softmax_beta: float,
 ) -> list[dict]:
     # apply custom moving average rewards
     miner_scores_df = miner_data_handler.get_miner_scores(
-        scored_time_str=scored_time,
+        scored_time=scored_time,
         cutoff_days=cutoff_days,
     )
 
@@ -228,7 +104,7 @@ def _calculate_moving_average_and_update_rewards(
         miner_data_handler=miner_data_handler,
         input_df=df,
         half_life_days=half_life_days,
-        scored_time_str=scored_time,
+        scored_time=scored_time,
         softmax_beta=softmax_beta,
     )
 
@@ -242,16 +118,15 @@ def _calculate_moving_average_and_update_rewards(
     return moving_averages_data
 
 
-def _calculate_rewards_and_update_scores(
+def calculate_rewards_and_update_scores(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
-    scored_time: str,
-    simulation_input: SimulationInput,
+    scored_time: datetime,
     cutoff_days: int,
 ) -> bool:
     # get latest prediction request from validator
     validator_requests = miner_data_handler.get_latest_prediction_requests(
-        scored_time, simulation_input, cutoff_days
+        scored_time, cutoff_days
     )
 
     if validator_requests is None or len(validator_requests) == 0:
@@ -290,7 +165,7 @@ def _calculate_rewards_and_update_scores(
     return fail_count != len(validator_requests)
 
 
-async def _query_available_miners_and_save_responses(
+async def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
     miner_uids: list,
@@ -342,10 +217,10 @@ async def _query_available_miners_and_save_responses(
         bt.logging.info("skip saving because no prediction")
 
 
-def _get_available_miners_and_update_metagraph_history(
+def get_available_miners_and_update_metagraph_history(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
-    start_time: str,
+    start_time: datetime,
 ):
     miner_uids = []
     miners = []
@@ -380,7 +255,7 @@ def _get_available_miners_and_update_metagraph_history(
                 ),
                 "coldkey": base_neuron.metagraph.coldkeys[uid],
                 "hotkey": base_neuron.metagraph.hotkeys[uid],
-                "updated_at": start_time,
+                "updated_at": start_time.isoformat(),
             }
             metagraph_info.append(metagraph_item)
 
