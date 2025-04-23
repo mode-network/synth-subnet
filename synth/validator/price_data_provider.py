@@ -35,7 +35,9 @@ class PriceDataProvider:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
-    def fetch_data(self, token: str, start_time: str, time_length: int):
+    def fetch_data(
+        self, token: str, start_time: str, time_length: int, transformed=True
+    ):
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
@@ -57,6 +59,10 @@ class PriceDataProvider:
         response.raise_for_status()
 
         data = response.json()
+
+        if not transformed:
+            return data
+
         transformed_data = self._transform_data(data, start_time_int)
 
         return transformed_data
