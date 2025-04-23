@@ -1,5 +1,10 @@
+import datetime
+
+
 import numpy as np
-import requests
+
+
+from synth.validator.price_data_provider import PriceDataProvider
 
 
 def get_asset_price(asset="BTC"):
@@ -10,27 +15,18 @@ def get_asset_price(asset="BTC"):
     Returns:
         float: Current asset price.
     """
-    if asset == "BTC":
-        btc_price_id = (
-            "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43"
-        )
-        endpoint = f"https://hermes.pyth.network/api/latest_price_feeds?ids[]={btc_price_id}"  # TODO: this endpoint is deprecated
-        try:
-            response = requests.get(endpoint)
-            response.raise_for_status()
-            data = response.json()
-            if not data or len(data) == 0:
-                raise ValueError("No price data received")
-            price_feed = data[0]
-            price = float(price_feed["price"]["price"]) / (10**8)
-            return price
-        except Exception as e:
-            print(f"Error fetching {asset} price: {str(e)}")
-            return None
-    else:
-        # For other assets, implement accordingly
-        print(f"Asset '{asset}' not supported.")
-        return None
+    price_data_provider = PriceDataProvider()
+    prices = price_data_provider.fetch_data(
+        asset,
+        (
+            datetime.datetime.now(datetime.timezone.utc)
+            - datetime.timedelta(minutes=2)
+        ).isoformat(),
+        60 * 2,
+        False,
+    )
+
+    return prices["c"][-1]
 
 
 def simulate_single_price_path(
