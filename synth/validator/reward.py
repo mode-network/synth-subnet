@@ -134,11 +134,11 @@ def get_rewards(
         miner_prediction_list.append(miner_prediction)
 
     score_values = np.array(scores)
-    prompt_scores_v2, percentile90, lowest_score = compute_prompt_scores_v2(
+    prompt_scores, percentile90, lowest_score = compute_prompt_scores(
         score_values
     )
 
-    if prompt_scores_v2 is None:
+    if prompt_scores is None:
         return None, []
 
     # gather all the detailed information
@@ -146,7 +146,7 @@ def get_rewards(
     detailed_info = [
         {
             "miner_uid": miner_uid,
-            "prompt_score_v2": float(prompt_score_v2),
+            "prompt_score_v2": float(prompt_score),
             "percentile90": float(percentile90),
             "lowest_score": float(lowest_score),
             "miner_prediction_id": (
@@ -164,19 +164,19 @@ def get_rewards(
             "crps_data": clean_numpy_in_crps_data(crps_data),
             "real_prices": real_prices,
         }
-        for miner_uid, score, crps_data, prompt_score_v2, miner_prediction in zip(
+        for miner_uid, score, crps_data, prompt_score, miner_prediction in zip(
             miner_uids,
             scores,
             detailed_crps_data_list,
-            prompt_scores_v2,
+            prompt_scores,
             miner_prediction_list,
         )
     ]
 
-    return prompt_scores_v2, detailed_info
+    return prompt_scores, detailed_info
 
 
-def compute_prompt_scores_v2(score_values: np.ndarray):
+def compute_prompt_scores(score_values: np.ndarray):
     if np.all(score_values == -1):
         return None, 0, 0
     score_values_valid = score_values[score_values != -1]
@@ -208,8 +208,8 @@ def clean_numpy_in_crps_data(crps_data: list) -> list:
     return cleaned_crps_data
 
 
-def print_scores_df(prompt_scores_v2, detailed_info):
-    bt.logging.info(f"Scored responses: {prompt_scores_v2}")
+def print_scores_df(prompt_scores, detailed_info):
+    bt.logging.info(f"Scored responses: {prompt_scores}")
 
     df = pd.DataFrame.from_dict(detailed_info)
     if df.empty:
