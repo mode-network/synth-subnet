@@ -45,7 +45,6 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
     assert len(miner_scores_df) == len(miner_uids)
 
     print("miner_scores_df", miner_scores_df)
-    # print(miner_scores_df['score_details_v2'][0])
 
 
 def test_calculate_moving_average_and_update_rewards(db_engine: Engine):

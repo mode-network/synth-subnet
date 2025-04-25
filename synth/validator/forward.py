@@ -134,15 +134,15 @@ def calculate_rewards_and_update_scores(
 
         bt.logging.trace(f"validator_request_id: {validator_request.id}")
 
-        prompt_scores_v2, detailed_info = get_rewards(
+        prompt_scores, detailed_info = get_rewards(
             miner_data_handler=miner_data_handler,
             price_data_provider=price_data_provider,
             validator_request=validator_request,
         )
 
-        print_scores_df(prompt_scores_v2, detailed_info)
+        print_scores_df(prompt_scores, detailed_info)
 
-        if prompt_scores_v2 is None:
+        if prompt_scores is None:
             bt.logging.warning("No rewards calculated")
             fail_count += 1
             continue

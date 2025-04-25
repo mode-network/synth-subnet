@@ -344,13 +344,13 @@ def test_set_get_scores(db_engine):
 
     assert len(validator_requests) == 1
 
-    prompt_scores_v2, detailed_info = get_rewards(
+    prompt_scores, detailed_info = get_rewards(
         handler,
         price_data_provider,
         validator_requests[0],
     )
 
-    assert prompt_scores_v2 is not None
+    assert prompt_scores is not None
 
     handler.set_miner_scores(
         reward_details=detailed_info, scored_time=scored_time

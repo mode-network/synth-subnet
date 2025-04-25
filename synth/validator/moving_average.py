@@ -34,7 +34,7 @@ def prepare_df_for_moving_average(df):
     # Create a global mapping for each scored_time to the corresponding worst prompt score.
     # Here we simply pick (for each timestamp) the percentile90 and the lowest_score from the first row encountered.
     global_worst_score_mapping = {}
-    global_score_details_v2_mapping = {}
+    global_score_details_mapping = {}
     for t in all_times:
         sample_row = df.loc[df["scored_time"] == t].iloc[0]
         if sample_row["score_details_v2"] is None:
@@ -43,7 +43,7 @@ def prepare_df_for_moving_average(df):
             sample_row["score_details_v2"]["percentile90"]
             - sample_row["score_details_v2"]["lowest_score"]
         )
-        global_score_details_v2_mapping[t] = sample_row["score_details_v2"]
+        global_score_details_mapping[t] = sample_row["score_details_v2"]
 
     def fill_missing_for_miner(group):
         miner_min = group["scored_time"].min()
@@ -66,7 +66,7 @@ def prepare_df_for_moving_average(df):
 
             # Fill in score_details_v2:
             group["score_details_v2"] = [
-                global_score_details_v2_mapping.get(t) for t in group.index
+                global_score_details_mapping.get(t) for t in group.index
             ]
 
             group = group.reset_index()
