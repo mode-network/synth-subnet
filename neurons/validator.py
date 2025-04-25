@@ -120,10 +120,11 @@ class Validator(BaseValidatorNeuron):
                 dir=self.config.neuron.full_path,
                 reinit=True,
             )
-            if self.wandb_handler is not None:
-                bt.logging._logger.removeHandler(self.wandb_handler)
-            self.wandb_handler = setup_wandb_alert(run)
-            bt.logging._logger.addHandler(self.wandb_handler)
+            if self.config.subtensor.network != "test":
+                if self.wandb_handler is not None:
+                    bt.logging._logger.removeHandler(self.wandb_handler)
+                self.wandb_handler = setup_wandb_alert(run)
+                bt.logging._logger.addHandler(self.wandb_handler)
         else:
             bt.logging.warning(
                 "WANDB_API_KEY not found in environment variables."
