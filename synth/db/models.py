@@ -110,9 +110,9 @@ class MinerScore(Base):
         nullable=False,
     )
     prompt_score = Column(Float, nullable=False)
-    prompt_score_v2 = Column(Float, nullable=False)
+    prompt_score_v3 = Column(Float, nullable=False)
     score_details = Column(JSONB, nullable=False)
-    score_details_v2 = Column(JSONB, nullable=False)
+    score_details_v3 = Column(JSONB, nullable=False)
     real_prices = Column(JSON, nullable=False)
 
     prediction = relationship("MinerPrediction", back_populates="scores")

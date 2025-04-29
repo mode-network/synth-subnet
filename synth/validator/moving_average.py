@@ -17,7 +17,7 @@ def prepare_df_for_moving_average(df):
     Prepare the input dataframe for the moving average computation.
 
     If a miner misses a prompt or has recently joined the network, we backfill
-    the prompt_score_v2 and score_details_v2.
+    the prompt_score_v3 and score_details_v3.
 
     To determine if a miner has missed a prompt, we check if the miner has a record
     at the global_min timestamp. If not, we assume the miner has missed the prompt.
@@ -37,13 +37,13 @@ def prepare_df_for_moving_average(df):
     global_score_details_mapping = {}
     for t in all_times:
         sample_row = df.loc[df["scored_time"] == t].iloc[0]
-        if sample_row["score_details_v2"] is None:
+        if sample_row["score_details_v3"] is None:
             continue
         global_worst_score_mapping[t] = (
-            sample_row["score_details_v2"]["percentile90"]
-            - sample_row["score_details_v2"]["lowest_score"]
+            sample_row["score_details_v3"]["percentile90"]
+            - sample_row["score_details_v3"]["lowest_score"]
         )
-        global_score_details_mapping[t] = sample_row["score_details_v2"]
+        global_score_details_mapping[t] = sample_row["score_details_v3"]
 
     def fill_missing_for_miner(group):
         miner_min = group["scored_time"].min()
@@ -58,14 +58,14 @@ def prepare_df_for_moving_average(df):
             # Fill in miner_id (assumed constant for the miner)
             group["miner_id"] = group["miner_id"].ffill().bfill().astype(int)
 
-            # For missing prompt_score_v2, use the corresponding worst_score from the mapping.
+            # For missing prompt_score_v3, use the corresponding worst_score from the mapping.
             # Note: group.index is the scored_time.
-            group["prompt_score_v2"] = group["prompt_score_v2"].fillna(
+            group["prompt_score_v3"] = group["prompt_score_v3"].fillna(
                 group.index.to_series().map(global_worst_score_mapping)
             )
 
-            # Fill in score_details_v2:
-            group["score_details_v2"] = [
+            # Fill in score_details_v3:
+            group["score_details_v3"] = [
                 global_score_details_mapping.get(t) for t in group.index
             ]
 
@@ -108,7 +108,7 @@ def compute_weighted_averages(
         weighted_reward_sum = 0.0
 
         for _, row in group_df.iterrows():
-            prompt_score = row["prompt_score_v2"]
+            prompt_score = row["prompt_score_v3"]
             if prompt_score is None or np.isnan(prompt_score):
                 continue
 
