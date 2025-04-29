@@ -160,14 +160,14 @@ class MinerDataHandler:
                                 "miner_predictions_id": row[
                                     "miner_prediction_id"
                                 ],
-                                "score_details_v2": {
+                                "score_details_v3": {
                                     "total_crps": row["total_crps"],
                                     "percentile90": row["percentile90"],
                                     "lowest_score": row["lowest_score"],
-                                    "prompt_score_v2": row["prompt_score_v2"],
+                                    "prompt_score_v3": row["prompt_score_v3"],
                                     "crps_data": row["crps_data"],
                                 },
-                                "prompt_score_v2": row["prompt_score_v2"],
+                                "prompt_score_v3": row["prompt_score_v3"],
                                 "real_prices": row["real_prices"],
                             }
                         )
@@ -255,7 +255,12 @@ class MinerDataHandler:
         scored_time: datetime,
         cutoff_days: int,
     ):
-        """Retrieve the list of IDs of the latest validator requests that (start_time + time_length) < scored_time."""
+        """
+        Retrieve the list of IDs of the latest validator requests that (start_time + time_length) < scored_time
+        and (start_time + time_length) >= scored_time - cutoff_days.
+        This is to ensure that we only get requests that are within the cutoff_days.
+        and exclude records that are already scored
+        """
         try:
             with self.engine.connect() as connection:
                 subq = (
@@ -367,9 +372,9 @@ class MinerDataHandler:
                 query = (
                     select(
                         miner_predictions_model.c.miner_id,
-                        miner_scores.c.prompt_score_v2,
+                        miner_scores.c.prompt_score_v3,
                         miner_scores.c.scored_time,
-                        miner_scores.c.score_details_v2,
+                        miner_scores.c.score_details_v3,
                     )
                     .select_from(miner_scores)
                     .join(

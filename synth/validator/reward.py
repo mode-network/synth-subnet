@@ -146,7 +146,7 @@ def get_rewards(
     detailed_info = [
         {
             "miner_uid": miner_uid,
-            "prompt_score_v2": float(prompt_score),
+            "prompt_score_v3": float(prompt_score),
             "percentile90": float(percentile90),
             "lowest_score": float(lowest_score),
             "miner_prediction_id": (
