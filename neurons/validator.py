@@ -20,14 +20,11 @@ from datetime import timedelta
 # DEALINGS IN THE SOFTWARE.
 
 
-# Bittensor
 import bittensor as bt
 import wandb
 
-# import base validator class which takes care of most of the boilerplate
 from synth.base.validator import BaseValidatorNeuron
 
-# Bittensor Validator Template:
 from synth.simulation_input import SimulationInput
 from synth.utils.helpers import (
     get_current_time,
