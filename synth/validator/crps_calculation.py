@@ -2,10 +2,14 @@ import numpy as np
 from properscoring import crps_ensemble
 
 
-def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
+def calculate_crps_for_miner(
+    simulation_runs: np.ndarray,
+    real_price_path: np.ndarray,
+    time_increment: int,
+) -> tuple[float, list[dict]]:
     """
     Calculate the total CRPS score for a miner's simulations over specified intervals,
-    write the CRPS scores for every increment to a CSV file, and return the sum of the scores.
+    Return the sum of the scores.
 
     Parameters:
         simulation_runs (numpy.ndarray): Simulated price paths.
@@ -24,21 +28,22 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
     }
 
     # Function to calculate interval steps
-    def get_interval_steps(scoring_interval, time_increment):
+    def get_interval_steps(scoring_interval: int, time_increment: int) -> int:
         return int(scoring_interval / time_increment)
 
     # Initialize lists to store detailed CRPS data
-    detailed_crps_data = []
+    detailed_crps_data: list[dict] = []
 
     # Sum of all scores
     sum_all_scores = 0.0
 
     for interval_name, interval_seconds in scoring_intervals.items():
         interval_steps = get_interval_steps(interval_seconds, time_increment)
+        absolute_price = interval_name.endswith("_abs")
 
         # If we are considering absolute prices, adjust the interval steps for potential gaps:
         # if only the initial price is present, then decrease the interval step
-        if interval_name.endswith("_abs"):
+        if absolute_price:
             while (
                 real_price_path[::interval_steps].shape[0] == 1
                 and interval_steps > 1
@@ -49,21 +54,23 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
         simulated_changes = calculate_price_changes_over_intervals(
             simulation_runs,
             interval_steps,
-            absolute_price=interval_name.endswith("_abs"),
+            absolute_price=absolute_price,
         )
         real_changes = calculate_price_changes_over_intervals(
             real_price_path.reshape(1, -1),
             interval_steps,
-            absolute_price=interval_name.endswith("_abs"),
-        )[0]
+            absolute_price=absolute_price,
+        )
 
         # Calculate CRPS over intervals
         num_intervals = simulated_changes.shape[1]
         crps_values = np.zeros(num_intervals)
         for t in range(num_intervals):
             forecasts = simulated_changes[:, t]
-            observation = real_changes[t]
+            observation = real_changes[0, t]
             crps_values[t] = crps_ensemble(observation, forecasts)
+            if absolute_price:
+                crps_values[t] = crps_values[t] / real_price_path[-1] * 10_000
 
             # Append detailed data for this increment
             detailed_crps_data.append(
@@ -97,8 +104,8 @@ def calculate_crps_for_miner(simulation_runs, real_price_path, time_increment):
 
 
 def calculate_price_changes_over_intervals(
-    price_paths, interval_steps, absolute_price=False
-):
+    price_paths: np.ndarray, interval_steps: int, absolute_price=False
+) -> np.ndarray:
     """
     Calculate price changes over specified intervals.
 
@@ -116,4 +123,6 @@ def calculate_price_changes_over_intervals(
     if absolute_price:
         return interval_prices[:, 1:]
 
-    return np.diff(interval_prices, axis=1)
+    return (
+        np.diff(interval_prices, axis=1) / interval_prices[:, :-1]
+    ) * 10_000
