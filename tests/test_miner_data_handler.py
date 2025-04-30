@@ -1,14 +1,10 @@
 from datetime import datetime
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import Engine, select, delete
 from sqlalchemy.dialects.postgresql import insert
 
-from synth.db.models import (
-    miner_predictions,
-    validator_requests,
-    miners as miners_model,
-)
+from synth.db.models import MinerPrediction, ValidatorRequest, Miner
 from synth.validator import response_validation
 from synth.simulation_input import SimulationInput
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -18,16 +14,14 @@ from tests.utils import generate_values, prepare_random_predictions
 
 
 @pytest.fixture(scope="function", autouse=True)
-def setup_data(db_engine):
+def setup_data(db_engine: Engine):
     with db_engine.connect() as connection:
         with connection.begin():
-            mp = miner_predictions.delete()
-            vr = validator_requests.delete()
-            connection.execute(mp)
-            connection.execute(vr)
+            connection.execute(delete(MinerPrediction))
+            connection.execute(delete(ValidatorRequest))
 
 
-def test_get_values_within_range(db_engine):
+def test_get_values_within_range(db_engine: Engine):
     """
     Test retrieving values within the valid time range.
     2024-11-20T00:00:00       2024-11-20T23:55:00
@@ -39,7 +33,7 @@ def test_get_values_within_range(db_engine):
     miner_uids = [10]
     with db_engine.connect() as connection:
         with connection.begin():
-            insert_stmt_validator = insert(miners_model).values(
+            insert_stmt_validator = insert(Miner).values(
                 [{"miner_uid": uid} for uid in miner_uids]
             )
             connection.execute(insert_stmt_validator)
@@ -78,7 +72,7 @@ def test_get_values_within_range(db_engine):
     }
 
 
-def test_get_values_ongoing_range(db_engine):
+def test_get_values_ongoing_range(db_engine: Engine):
     """
     Test retrieving values when current_time overlaps with the range.
     2024-11-20T00:00:00       2024-11-20T23:55:00
@@ -90,7 +84,7 @@ def test_get_values_ongoing_range(db_engine):
     miner_uids = [10]
     with db_engine.connect() as connection:
         with connection.begin():
-            insert_stmt_validator = insert(miners_model).values(
+            insert_stmt_validator = insert(Miner).values(
                 [{"miner_uid": uid} for uid in miner_uids]
             )
             connection.execute(insert_stmt_validator)
@@ -117,7 +111,7 @@ def test_get_values_ongoing_range(db_engine):
     assert len(validator_requests) == 0
 
 
-def test_multiple_records_for_same_miner(db_engine):
+def test_multiple_records_for_same_miner(db_engine: Engine):
     """
     Test handling multiple records for the same miner.
     Should take "Prediction range 2" as the latest one
@@ -134,7 +128,7 @@ def test_multiple_records_for_same_miner(db_engine):
     miner_uids = [10]
     with db_engine.connect() as connection:
         with connection.begin():
-            insert_stmt_validator = insert(miners_model).values(
+            insert_stmt_validator = insert(Miner).values(
                 [{"miner_uid": uid} for uid in miner_uids]
             )
             connection.execute(insert_stmt_validator)
@@ -197,7 +191,7 @@ def test_multiple_records_for_same_miner(db_engine):
     }
 
 
-def test_multiple_records_for_same_miner_with_overlapping(db_engine):
+def test_multiple_records_for_same_miner_with_overlapping(db_engine: Engine):
     """
     Test handling multiple records for the same miner with overlapping records.
     Should take "Prediction range 1" as the latest one
@@ -214,7 +208,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
     miner_uids = [10]
     with db_engine.connect() as connection:
         with connection.begin():
-            insert_stmt_validator = insert(miners_model).values(
+            insert_stmt_validator = insert(Miner).values(
                 [{"miner_uid": uid} for uid in miner_uids]
             )
             connection.execute(insert_stmt_validator)
@@ -279,7 +273,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine):
     }
 
 
-def test_no_data_for_miner(db_engine):
+def test_no_data_for_miner(db_engine: Engine):
     """Test retrieving values for a miner that doesn't exist."""
     scored_time = datetime.fromisoformat("2024-11-20T12:00:00+00:00")
 
@@ -289,7 +283,7 @@ def test_no_data_for_miner(db_engine):
     assert len(validator_requests) == 0
 
 
-def test_get_values_incorrect_format(db_engine):
+def test_get_values_incorrect_format(db_engine: Engine):
     """
     Test retrieving values within the valid time range.
     2024-11-20T00:00:00       2024-11-20T23:55:00
@@ -301,7 +295,7 @@ def test_get_values_incorrect_format(db_engine):
     miner_uids = [10]
     with db_engine.connect() as connection:
         with connection.begin():
-            insert_stmt_validator = insert(miners_model).values(
+            insert_stmt_validator = insert(Miner).values(
                 [{"miner_uid": uid} for uid in miner_uids]
             )
             connection.execute(insert_stmt_validator)
@@ -333,7 +327,7 @@ def test_get_values_incorrect_format(db_engine):
     assert format_validation == error_string
 
 
-def test_set_get_scores(db_engine):
+def test_set_get_scores(db_engine: Engine):
     handler = MinerDataHandler(db_engine)
     price_data_provider = PriceDataProvider()
     start_time = "2024-11-25T23:58:00+00:00"
@@ -364,14 +358,12 @@ def test_set_get_scores(db_engine):
     print("miner_scores_df", miner_scores_df)
 
 
-def test_insert_new_miners(db_engine):
+def test_insert_new_miners(db_engine: Engine):
     handler = MinerDataHandler(db_engine)
 
     with db_engine.connect() as connection:
         with connection.begin():
-            initial_len = len(
-                connection.execute(select(miners_model)).fetchall()
-            )
+            initial_len = len(connection.execute(select(Miner)).fetchall())
 
     handler.insert_new_miners(
         [{"neuron_uid": 111, "coldkey": "coldkey111", "hotkey": "hotkey111"}]
@@ -380,7 +372,7 @@ def test_insert_new_miners(db_engine):
     with db_engine.connect() as connection:
         with connection.begin():
             assert (
-                len(connection.execute(select(miners_model)).fetchall())
+                len(connection.execute(select(Miner)).fetchall())
                 == initial_len + 1
             )
 
@@ -392,7 +384,7 @@ def test_insert_new_miners(db_engine):
     with db_engine.connect() as connection:
         with connection.begin():
             assert (
-                len(connection.execute(select(miners_model)).fetchall())
+                len(connection.execute(select(Miner)).fetchall())
                 == initial_len + 1
             )
 
@@ -410,6 +402,6 @@ def test_insert_new_miners(db_engine):
     with db_engine.connect() as connection:
         with connection.begin():
             assert (
-                len(connection.execute(select(miners_model)).fetchall())
+                len(connection.execute(select(Miner)).fetchall())
                 == initial_len + 2
             )
