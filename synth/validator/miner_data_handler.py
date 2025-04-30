@@ -7,12 +7,13 @@ import typing
 import bittensor as bt
 import pandas as pd
 from sqlalchemy import (
+    join,
+    literal_column,
     Connection,
     Engine,
     and_,
     exists,
     select,
-    text,
     func,
     desc,
     not_,
@@ -21,14 +22,14 @@ from sqlalchemy.dialects.postgresql import insert
 
 
 from synth.db.models import (
-    miner_predictions as miner_predictions_model,
-    miners as miners_model,
-    miner_scores,
-    validator_requests,
-    metagraph_history,
-    miner_rewards,
+    MinerPrediction,
+    Miner,
+    MinerScore,
+    ValidatorRequest,
+    MetagraphHistory,
+    MinerReward,
     get_engine,
-    weights_update_history,
+    WeightsUpdateHistory,
 )
 from synth.simulation_input import SimulationInput
 from synth.validator import response_validation
@@ -41,11 +42,11 @@ class MinerDataHandler:
 
     def get_miner_uids(self, connection: Connection):
         ranked_miners = select(
-            miners_model,
+            Miner,
             func.row_number()
             .over(
-                partition_by=miners_model.c.miner_uid,
-                order_by=desc(miners_model.c.updated_at),
+                partition_by=Miner.miner_uid,
+                order_by=desc(Miner.updated_at),
             )
             .label("rn"),
         ).alias("ranked_miners")
@@ -82,7 +83,7 @@ class MinerDataHandler:
     ):
         """Save miner predictions and simulation input."""
 
-        # Prepare the validator_requests row from the simulation input:
+        # Prepare the ValidatorRequest row from the simulation input:
         validator_requests_row = {
             "start_time": simulation_input.start_time,
             "asset": simulation_input.asset,
@@ -95,8 +96,8 @@ class MinerDataHandler:
         try:
             with self.engine.connect() as connection:
                 with connection.begin():
-                    # Insert into validator_requests and get its ID
-                    insert_stmt_validator = insert(validator_requests).values(
+                    # Insert into ValidatorRequest and get its ID
+                    insert_stmt_validator = insert(ValidatorRequest).values(
                         validator_requests_row
                     )
                     result = connection.execute(insert_stmt_validator)
@@ -137,7 +138,7 @@ class MinerDataHandler:
                     if len(miner_prediction_records) == 0:
                         return None
                     insert_stmt_miner_predictions = insert(
-                        miner_predictions_model
+                        MinerPrediction
                     ).values(miner_prediction_records)
                     connection.execute(insert_stmt_miner_predictions)
             return validator_requests_id  # TODO: finish this: refactor to add the validator_requests_id in the score and reward table
@@ -172,7 +173,7 @@ class MinerDataHandler:
                             }
                         )
 
-                    insert_stmt_miner_scores = insert(miner_scores).values(
+                    insert_stmt_miner_scores = insert(MinerScore).values(
                         rows_to_insert
                     )
                     connection.execute(insert_stmt_miner_scores)
@@ -188,16 +189,15 @@ class MinerDataHandler:
             with self.engine.connect() as connection:
                 query = (
                     select(
-                        miners_model.c.miner_uid,
+                        Miner.miner_uid,
                     )
-                    .select_from(miner_predictions_model)
+                    .select_from(MinerPrediction)
                     .join(
-                        miners_model,
-                        miners_model.c.id
-                        == miner_predictions_model.c.miner_id,
+                        Miner,
+                        Miner.id == MinerPrediction.miner_id,
                     )
                     .where(
-                        miner_predictions_model.c.validator_requests_id
+                        MinerPrediction.validator_requests_id
                         == validator_request_id
                     )
                 )
@@ -221,20 +221,19 @@ class MinerDataHandler:
             with self.engine.connect() as connection:
                 query = (
                     select(
-                        miner_predictions_model.c.id,
-                        miner_predictions_model.c.prediction,
-                        miner_predictions_model.c.format_validation,
-                        miner_predictions_model.c.process_time,
+                        MinerPrediction.id,
+                        MinerPrediction.prediction,
+                        MinerPrediction.format_validation,
+                        MinerPrediction.process_time,
                     )
-                    .select_from(miner_predictions_model)
+                    .select_from(MinerPrediction)
                     .join(
-                        miners_model,
-                        miners_model.c.id
-                        == miner_predictions_model.c.miner_id,
+                        Miner,
+                        Miner.id == MinerPrediction.miner_id,
                     )
                     .where(
-                        miners_model.c.miner_uid == miner_uid,
-                        miner_predictions_model.c.validator_requests_id
+                        Miner.miner_uid == miner_uid,
+                        MinerPrediction.validator_requests_id
                         == validator_request_id,
                     )
                     .limit(1)
@@ -266,49 +265,47 @@ class MinerDataHandler:
                 subq = (
                     select(1)
                     .select_from(
-                        miner_scores.join(
-                            miner_predictions_model,
-                            miner_predictions_model.c.id
-                            == miner_scores.c.miner_predictions_id,
+                        join(
+                            MinerPrediction,
+                            MinerScore,
+                            MinerPrediction.id
+                            == MinerScore.miner_predictions_id,
                         )
                     )
                     .where(
-                        miner_predictions_model.c.validator_requests_id
-                        == validator_requests.c.id
+                        MinerPrediction.validator_requests_id
+                        == ValidatorRequest.id
                     )
+                )
+
+                window_start = (
+                    ValidatorRequest.start_time
+                    + literal_column("INTERVAL '1 second'")
+                    * ValidatorRequest.time_length
                 )
 
                 query = (
                     select(
-                        validator_requests.c.id,
-                        validator_requests.c.start_time,
-                        validator_requests.c.asset,
-                        validator_requests.c.time_length,
-                        validator_requests.c.time_increment,
+                        ValidatorRequest.id,
+                        ValidatorRequest.start_time,
+                        ValidatorRequest.asset,
+                        ValidatorRequest.time_length,
+                        ValidatorRequest.time_increment,
                     )
                     .where(
                         and_(
                             # Compare start_time plus an interval (in seconds) to the scored_time.
-                            (
-                                validator_requests.c.start_time
-                                + text("INTERVAL '1 second'")
-                                * validator_requests.c.time_length
-                            )
-                            < scored_time,
+                            window_start < scored_time,
                             # Compare start_time plus an interval (in seconds) to the cutoff_days.
                             # This is to ensure that we only get requests that are within the cutoff_days.
                             # Because we want to include in the moving average only the requests that are within the cutoff_days.
-                            (
-                                validator_requests.c.start_time
-                                + text("INTERVAL '1 second'")
-                                * validator_requests.c.time_length
-                            )
+                            window_start
                             >= scored_time - timedelta(days=cutoff_days),
                             # Exclude records that have a matching miner_prediction via the NOT EXISTS clause.
                             not_(exists(subq)),
                         )
                     )
-                    .order_by(validator_requests.c.start_time.asc())
+                    .order_by(ValidatorRequest.start_time.asc())
                 )
 
                 return connection.execute(query).fetchall()
@@ -325,7 +322,7 @@ class MinerDataHandler:
             with self.engine.connect() as connection:
                 with connection.begin():
                     insert_stmt = (
-                        insert(miners_model)
+                        insert(Miner)
                         .values(
                             [
                                 {
@@ -354,7 +351,7 @@ class MinerDataHandler:
         try:
             with self.engine.connect() as connection:
                 with connection.begin():
-                    insert_stmt = insert(metagraph_history).values(
+                    insert_stmt = insert(MetagraphHistory).values(
                         metagraph_info
                     )
                     connection.execute(insert_stmt)
@@ -371,18 +368,17 @@ class MinerDataHandler:
             with self.engine.connect() as connection:
                 query = (
                     select(
-                        miner_predictions_model.c.miner_id,
-                        miner_scores.c.prompt_score_v3,
-                        miner_scores.c.scored_time,
-                        miner_scores.c.score_details_v3,
+                        MinerPrediction.miner_id,
+                        MinerScore.prompt_score_v3,
+                        MinerScore.scored_time,
+                        MinerScore.score_details_v3,
                     )
-                    .select_from(miner_scores)
+                    .select_from(MinerScore)
                     .join(
-                        miner_predictions_model,
-                        miner_predictions_model.c.id
-                        == miner_scores.c.miner_predictions_id,
+                        MinerPrediction,
+                        MinerPrediction.id == MinerScore.miner_predictions_id,
                     )
-                    .where(miner_scores.c.scored_time > min_scored_time)
+                    .where(MinerScore.scored_time > min_scored_time)
                 )
 
                 result = connection.execute(query)
@@ -417,7 +413,7 @@ class MinerDataHandler:
         try:
             with self.engine.connect() as connection:
                 with connection.begin():
-                    insert_stmt = insert(miner_rewards).values(
+                    insert_stmt = insert(MinerReward).values(
                         miner_rewards_data
                     )
                     connection.execute(insert_stmt)
@@ -448,7 +444,7 @@ class MinerDataHandler:
         try:
             with self.engine.connect() as connection:
                 with connection.begin():
-                    insert_stmt = insert(weights_update_history).values(
+                    insert_stmt = insert(WeightsUpdateHistory).values(
                         update_weights_rows
                     )
                     connection.execute(insert_stmt)

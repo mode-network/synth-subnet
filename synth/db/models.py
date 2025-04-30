@@ -4,139 +4,160 @@ import logging
 from dotenv import load_dotenv
 from sqlalchemy import (
     create_engine,
-    MetaData,
-    Table,
     Column,
     Integer,
+    BigInteger,
     DateTime,
-    JSON,
     Float,
     String,
-    BigInteger,
+    JSON,
+    ForeignKey,
 )
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import DeclarativeBase, relationship, Session
+
+
+class Base(DeclarativeBase):
+    """Our root for all ORM models."""
+
+    pass
 
 
 def get_database_url():
-    """Returns the database URL from environment variables."""
     load_dotenv()
-    db_url = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
-    return db_url
+    return (
+        f"postgresql://{os.getenv('POSTGRES_USER')}:"
+        f"{os.getenv('POSTGRES_PASSWORD')}@"
+        f"{os.getenv('POSTGRES_HOST')}:"
+        f"{os.getenv('POSTGRES_PORT')}/"
+        f"{os.getenv('POSTGRES_DB')}"
+    )
 
 
-def create_database_engine():
-    """Creates and returns a new database engine."""
-    database_url = get_database_url()
-    if not database_url:
-        raise ValueError("invalid postgres environment variables.")
+def create_engine_and_session():
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-    logging.getLogger("sqlalchemy.pool").setLevel(logging.WARNING)
-    engine = create_engine(database_url, echo=False)
-    return engine
-
-
-metadata = MetaData()
-db_engine = None
+    engine = create_engine(get_database_url(), echo=False)
+    return engine, Session(engine)
 
 
 def get_engine():
-    """Lazy-load and return the global database engine."""
-    global db_engine
-    if db_engine is None:
-        db_engine = create_database_engine()
-    return db_engine
+    engine, _ = create_engine_and_session()
+    return engine
 
 
-# Define the table
-validator_requests = Table(
-    "validator_requests",
-    metadata,
-    Column("id", BigInteger, primary_key=True),
-    Column("start_time", DateTime(timezone=True), nullable=False),
-    Column("asset", String, nullable=True),
-    Column("time_increment", Integer, nullable=True),
-    Column("time_length", Integer, nullable=True),
-    Column("num_simulations", Integer, nullable=True),
-    Column("request_time", DateTime(timezone=True), nullable=True),
-)
+class ValidatorRequest(Base):
+    __tablename__ = "validator_requests"
 
-miners = Table(
-    "miners",
-    metadata,
-    Column("id", BigInteger, primary_key=True),
-    Column("miner_uid", Integer, nullable=False),
-    Column("coldkey", String, nullable=True),
-    Column("hotkey", String, nullable=True),
-    Column("created_at", DateTime(timezone=True), nullable=False),
-    Column("updated_at", DateTime(timezone=True), nullable=False),
-)
+    id = Column(BigInteger, primary_key=True)
+    start_time = Column(DateTime(timezone=True), nullable=False)
+    asset = Column(String, nullable=True)
+    time_increment = Column(Integer, nullable=True)
+    time_length = Column(Integer, nullable=True)
+    num_simulations = Column(Integer, nullable=True)
+    request_time = Column(DateTime(timezone=True), nullable=True)
 
-# Define the table
-miner_predictions = Table(
-    "miner_predictions",
-    metadata,
-    Column("id", BigInteger, primary_key=True),
-    Column("validator_requests_id", BigInteger, nullable=False),
-    Column("miner_uid", Integer, nullable=False),  # deprecated
-    Column("miner_id", BigInteger, nullable=False),
-    Column("prediction", JSONB, nullable=False),
-    Column("format_validation", String, nullable=True),
-    Column("process_time", Float, nullable=True),
-)
+    # backref from MinerPrediction
+    predictions = relationship("MinerPrediction", back_populates="request")
 
-# Define the table
-miner_scores = Table(
-    "miner_scores",
-    metadata,
-    Column("id", BigInteger, primary_key=True),
-    Column("miner_uid", Integer, nullable=False),  # deprecated
-    Column("scored_time", DateTime(timezone=True), nullable=False),
-    Column("miner_predictions_id", BigInteger, nullable=False),
-    Column("prompt_score", Float, nullable=False),
-    Column("prompt_score_v3", Float, nullable=False),
-    Column("score_details", JSONB, nullable=False),
-    Column("score_details_v3", JSONB, nullable=False),
-    Column("real_prices", JSON, nullable=False),
-)
 
-# Define the table
-miner_rewards = Table(
-    "miner_rewards",
-    metadata,
-    Column("id", BigInteger, primary_key=True),
-    Column("miner_uid", Integer, nullable=False),  # deprecated
-    Column("miner_id", BigInteger, nullable=False),
-    Column("smoothed_score", Float, nullable=False),
-    Column("reward_weight", Float, nullable=False),
-    Column("updated_at", DateTime(timezone=True), nullable=False),
-)
+class Miner(Base):
+    __tablename__ = "miners"
 
-# Define the table
-metagraph_history = Table(
-    "metagraph_history",
-    metadata,
-    Column("id", BigInteger, primary_key=True),
-    Column("neuron_uid", Integer, nullable=False),
-    Column("incentive", Float, nullable=True),
-    Column("rank", Float, nullable=True),
-    Column("stake", Float, nullable=True),
-    Column("trust", Float, nullable=True),
-    Column("emission", Float, nullable=True),
-    Column("pruning_score", Float, nullable=True),
-    Column("coldkey", String, nullable=True),
-    Column("hotkey", String, nullable=True),
-    Column("updated_at", DateTime(timezone=True), nullable=False),
-)
+    id = Column(BigInteger, primary_key=True)
+    miner_uid = Column(Integer, nullable=False)
+    coldkey = Column(String, nullable=True)
+    hotkey = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
 
-# Define the table
-weights_update_history = Table(
-    "weights_update_history",
-    metadata,
-    Column("id", BigInteger, primary_key=True),
-    Column("miner_uids", JSON, nullable=False),
-    Column("miner_weights", JSON, nullable=False),
-    Column("norm_miner_uids", JSON, nullable=False),
-    Column("norm_miner_weights", JSON, nullable=False),
-    Column("update_result", String, nullable=False),
-    Column("updated_at", DateTime(timezone=True), nullable=False),
-)
+    predictions = relationship("MinerPrediction", back_populates="miner")
+    rewards = relationship("MinerReward", back_populates="miner")
+
+
+class MinerPrediction(Base):
+    __tablename__ = "miner_predictions"
+
+    id = Column(BigInteger, primary_key=True)
+    validator_requests_id = Column(
+        BigInteger,
+        ForeignKey("validator_requests.id"),
+        nullable=False,
+    )
+    miner_uid = Column(Integer, nullable=False)  # deprecated
+    miner_id = Column(
+        BigInteger,
+        ForeignKey("miners.id"),
+        nullable=False,
+    )
+    prediction = Column(JSONB, nullable=False)
+    format_validation = Column(String, nullable=True)
+    process_time = Column(Float, nullable=True)
+
+    request = relationship("ValidatorRequest", back_populates="predictions")
+    miner = relationship("Miner", back_populates="predictions")
+    scores = relationship("MinerScore", back_populates="prediction")
+
+
+class MinerScore(Base):
+    __tablename__ = "miner_scores"
+
+    id = Column(BigInteger, primary_key=True)
+    miner_uid = Column(Integer, nullable=False)  # deprecated
+    scored_time = Column(DateTime(timezone=True), nullable=False)
+    miner_predictions_id = Column(
+        BigInteger,
+        ForeignKey("miner_predictions.id"),
+        nullable=False,
+    )
+    prompt_score = Column(Float, nullable=False)
+    prompt_score_v3 = Column(Float, nullable=False)
+    score_details = Column(JSONB, nullable=False)
+    score_details_v3 = Column(JSONB, nullable=False)
+    real_prices = Column(JSON, nullable=False)
+
+    prediction = relationship("MinerPrediction", back_populates="scores")
+
+
+class MinerReward(Base):
+    __tablename__ = "miner_rewards"
+
+    id = Column(BigInteger, primary_key=True)
+    miner_uid = Column(Integer, nullable=False)  # deprecated
+    miner_id = Column(
+        BigInteger,
+        ForeignKey("miners.id"),
+        nullable=False,
+    )
+    smoothed_score = Column(Float, nullable=False)
+    reward_weight = Column(Float, nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+
+    miner = relationship("Miner", back_populates="rewards")
+
+
+class MetagraphHistory(Base):
+    __tablename__ = "metagraph_history"
+
+    id = Column(BigInteger, primary_key=True)
+    neuron_uid = Column(Integer, nullable=False)
+    incentive = Column(Float, nullable=True)
+    rank = Column(Float, nullable=True)
+    stake = Column(Float, nullable=True)
+    trust = Column(Float, nullable=True)
+    emission = Column(Float, nullable=True)
+    pruning_score = Column(Float, nullable=True)
+    coldkey = Column(String, nullable=True)
+    hotkey = Column(String, nullable=True)
+    updated_at = Column(DateTime(timezone=True), nullable=False)
+
+
+class WeightsUpdateHistory(Base):
+    __tablename__ = "weights_update_history"
+
+    id = Column(BigInteger, primary_key=True)
+    miner_uids = Column(JSON, nullable=False)
+    miner_weights = Column(JSON, nullable=False)
+    norm_miner_uids = Column(JSON, nullable=False)
+    norm_miner_weights = Column(JSON, nullable=False)
+    update_result = Column(String, nullable=False)
+    updated_at = Column(DateTime(timezone=True), nullable=False)

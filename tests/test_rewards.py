@@ -3,11 +3,9 @@ import pytest
 from numpy.testing import assert_almost_equal
 from datetime import datetime
 
-from synth.db.models import (
-    miner_predictions,
-    validator_requests,
-    miner_scores,
-)
+from sqlalchemy import delete
+
+from synth.db.models import MinerPrediction, ValidatorRequest, MinerScore
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.reward import (
     compute_prompt_scores,
@@ -21,12 +19,9 @@ from tests.utils import prepare_random_predictions
 def setup_data(db_engine):
     with db_engine.connect() as connection:
         with connection.begin():
-            ms = miner_scores.delete()
-            mp = miner_predictions.delete()
-            vr = validator_requests.delete()
-            connection.execute(ms)
-            connection.execute(mp)
-            connection.execute(vr)
+            connection.execute(delete(MinerScore))
+            connection.execute(delete(MinerPrediction))
+            connection.execute(delete(ValidatorRequest))
 
 
 def test_compute_softmax_1():

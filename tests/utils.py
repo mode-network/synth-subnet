@@ -8,7 +8,7 @@ from synth.miner.simulations import generate_simulations
 from synth.simulation_input import SimulationInput
 from synth.validator import response_validation
 from synth.validator.miner_data_handler import MinerDataHandler
-from synth.db.models import miners as miners_model
+from synth.db.models import Miner
 
 
 def generate_values(start_time: datetime):
@@ -28,7 +28,7 @@ def prepare_random_predictions(db_engine: Engine, start_time: str):
 
     with db_engine.connect() as connection:
         with connection.begin():
-            insert_stmt_validator = insert(miners_model).values(
+            insert_stmt_validator = insert(Miner).values(
                 [{"miner_uid": uid} for uid in miner_uids]
             )
             connection.execute(insert_stmt_validator)
