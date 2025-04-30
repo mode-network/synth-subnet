@@ -273,8 +273,11 @@ class MinerDataHandler:
                         )
                     )
                     .where(
-                        MinerPrediction.validator_requests_id
-                        == ValidatorRequest.id
+                        and_(
+                            MinerPrediction.validator_requests_id
+                            == ValidatorRequest.id,
+                            MinerScore.prompt_score_v3.isnot(None),
+                        )
                     )
                 )
 
@@ -306,6 +309,9 @@ class MinerDataHandler:
                         )
                     )
                     .order_by(ValidatorRequest.start_time.asc())
+                    .limit(
+                        500
+                    )  # avoid too many prompt to score to set weights regularly
                 )
 
                 return connection.execute(query).fetchall()
