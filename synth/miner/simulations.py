@@ -36,6 +36,13 @@ def generate_simulations(
     if current_price is None:
         raise ValueError(f"Failed to fetch current price for asset: {asset}")
 
+    if asset == "BTC":
+        sigma *= 3
+    elif asset == "ETH":
+        sigma *= 1.25
+    elif asset == "CPX":
+        sigma *= 0.5
+
     simulations = simulate_crypto_price_paths(
         current_price=current_price,
         time_increment=time_increment,

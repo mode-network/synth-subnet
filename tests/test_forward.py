@@ -14,7 +14,7 @@ from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_rewards_and_update_scores,
 )
-from synth.db.models import miners as miners_model, miner_rewards
+from synth.db.models import Miner, MinerReward
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
 from tests.utils import prepare_random_predictions
@@ -45,7 +45,6 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
     assert len(miner_scores_df) == len(miner_uids)
 
     print("miner_scores_df", miner_scores_df)
-    # print(miner_scores_df['score_details_v2'][0])
 
 
 def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
@@ -82,7 +81,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
     miner_uids = [10, 20, 33, 40, 50, 60]
     with db_engine.connect() as connection:
         with connection.begin():
-            insert_stmt_validator = insert(miners_model).values(
+            insert_stmt_validator = insert(Miner).values(
                 [{"miner_uid": uid} for uid in miner_uids]
             )
             connection.execute(insert_stmt_validator)
@@ -195,7 +194,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
                     }
                 )
 
-            insert_stmt_validator = insert(miners_model).values(records)
+            insert_stmt_validator = insert(Miner).values(records)
             connection.execute(insert_stmt_validator)
 
     handler = MinerDataHandler(db_engine)
@@ -258,7 +257,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         if i == 3:
             with db_engine.connect() as connection:
                 with connection.begin():
-                    insert_stmt_validator = insert(miners_model).values(
+                    insert_stmt_validator = insert(Miner).values(
                         [
                             {
                                 "miner_uid": miner_uids[0],
@@ -307,8 +306,8 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         # sum the reward weights
         with db_engine.connect() as connection:
             with connection.begin():
-                rewards_rows_select = select(miner_rewards).where(
-                    miner_rewards.c.updated_at == scored_time
+                rewards_rows_select = select(MinerReward).where(
+                    MinerReward.updated_at == scored_time
                 )
                 rewards_rows = connection.execute(rewards_rows_select).all()
                 print("rewards_rows", rewards_rows)

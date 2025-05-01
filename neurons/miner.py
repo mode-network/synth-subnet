@@ -41,7 +41,7 @@ class Miner(BaseMinerNeuron):
 
         # TODO(developer): Anything specific to your use case you can do here
 
-    async def forward(self, synapse: Simulation) -> Simulation:
+    async def forward_miner(self, synapse: Simulation) -> Simulation:
         """
         Processes the incoming 'Dummy' synapse by performing a predefined operation on the input data.
         This method should be replaced with actual logic relevant to the miner's purpose.
@@ -60,25 +60,14 @@ class Miner(BaseMinerNeuron):
             f"Received prediction request from: {synapse.dendrite.hotkey} for timestamp: {simulation_input.start_time}"
         )
 
-        dt = simulation_input.start_time
-        asset = simulation_input.asset
-        time_increment = simulation_input.time_increment
-        time_length = simulation_input.time_length
-        num_simulations = simulation_input.num_simulations
-
-        # Standard deviation of the simulated price path
-        sigma = self.config.simulation.sigma
-
-        prediction = generate_simulations(
-            asset=asset,
-            start_time=dt,
-            time_increment=time_increment,
-            time_length=time_length,
-            num_simulations=num_simulations,
-            sigma=sigma,
+        synapse.simulation_output = generate_simulations(
+            asset=simulation_input.asset,
+            start_time=simulation_input.start_time,
+            time_increment=simulation_input.time_increment,
+            time_length=simulation_input.time_length,
+            num_simulations=simulation_input.num_simulations,
+            sigma=self.config.simulation.sigma,  # Standard deviation of the simulated price path
         )
-
-        synapse.simulation_output = prediction
 
         return synapse
 
@@ -206,6 +195,9 @@ class Miner(BaseMinerNeuron):
         pass
 
     def set_weights(self):
+        pass
+
+    async def forward_validator(self):
         pass
 
     def print_info(self):
