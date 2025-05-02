@@ -369,9 +369,6 @@ class MinerDataHandler:
                         )
                     )
                     .order_by(ValidatorRequest.start_time.asc())
-                    .limit(
-                        500
-                    )  # avoid too many prompt to score to set weights regularly
                 )
 
                 return connection.execute(query).fetchall()
