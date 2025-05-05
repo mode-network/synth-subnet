@@ -127,6 +127,8 @@ class Validator(BaseValidatorNeuron):
                 "WANDB_API_KEY not found in environment variables."
             )
 
+        self.miner_data_handler.print_miner_scores_duplicates()
+
         bt.logging.info("calling forward_validator()")
         return [
             asyncio.create_task(self.forward_prompt()),

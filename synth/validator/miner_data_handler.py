@@ -18,6 +18,7 @@ from sqlalchemy import (
     func,
     desc,
     not_,
+    text,
 )
 from sqlalchemy.dialects.postgresql import insert
 
@@ -516,5 +517,171 @@ class MinerDataHandler:
         except Exception as e:
             bt.logging.error(
                 f"in update_weights_history (got an exception): {e}"
+            )
+            traceback.print_exc(file=sys.stderr)
+
+    def print_miner_scores_duplicates(
+        self,
+    ):
+
+        try:
+            with self.engine.connect() as connection:
+                with connection.begin():
+                    result = connection.execute(
+                        text(
+                            """
+                            SELECT count(1) FROM miner_scores
+                            WHERE miner_predictions_id IS NULL
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with miner_predictions_id IS NULL: {result.scalar()}"
+                    )
+
+                    result = connection.execute(
+                        text(
+                            """
+                            SELECT count(1)
+                            FROM
+                                MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, PROMPT_SCORE, ID) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID,
+                                        PROMPT_SCORE,
+                                        ID
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID,
+                                                        PROMPT_SCORE
+                                                    ORDER BY
+                                                        SCORED_TIME asc
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE
+                                        T.RN > 1
+                                )
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on (MINER_PREDICTIONS_ID, PROMPT_SCORE): {result.scalar()}"
+                    )
+
+                    result = connection.execute(
+                        text(
+                            """
+                            SELECT count(1) FROM MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, PROMPT_SCORE, ID) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID,
+                                        PROMPT_SCORE,
+                                        ID
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID
+                                                    ORDER BY
+                                                        SCORED_TIME DESC
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE
+                                        T.RN > 1
+                                )
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on MINER_PREDICTIONS_ID by PROMPT_SCORE: {result.scalar()}"
+                    )
+
+                    result = connection.execute(
+                        text(
+                            """
+                            SELECT count(1) FROM MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, PROMPT_SCORE_V2, ID) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID,
+                                        PROMPT_SCORE_V2,
+                                        ID
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID
+                                                    ORDER BY
+                                                        SCORED_TIME DESC
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE
+                                        T.RN > 1
+                                )
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on MINER_PREDICTIONS_ID by PROMPT_SCORE_V2: {result.scalar()}"
+                    )
+
+                    result = connection.execute(
+                        text(
+                            """
+                            SELECT count(1) FROM MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, PROMPT_SCORE_V2, ID) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID,
+                                        PROMPT_SCORE_V2,
+                                        ID
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID,
+                                                        PROMPT_SCORE_V2
+                                                    ORDER BY
+                                                        SCORED_TIME DESC
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE
+                                        T.RN > 1
+                                )
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on (MINER_PREDICTIONS_ID, PROMPT_SCORE_V2): {result.scalar()}"
+                    )
+
+        except Exception as e:
+            bt.logging.error(
+                f"in print_miner_scores_duplicates (got an exception): {e}"
             )
             traceback.print_exc(file=sys.stderr)
