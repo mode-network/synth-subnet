@@ -72,12 +72,12 @@ class Validator(BaseValidatorNeuron):
                 time_length=86400,
                 num_simulations=100,
             ),
-            # SimulationInput(
-            #     asset="ETH",
-            #     time_increment=300,
-            #     time_length=86400,
-            #     num_simulations=100,
-            # ),
+            SimulationInput(
+                asset="ETH",
+                time_increment=300,
+                time_length=86400,
+                num_simulations=100,
+            ),
         ]
         self.len_simulations = len(self.simulation_input_list)
         self.timeout_extra_seconds = 120
