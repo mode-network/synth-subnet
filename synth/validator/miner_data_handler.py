@@ -459,7 +459,7 @@ class MinerDataHandler:
                     miner_uid_map = self.get_miner_ids_map(connection)
         except Exception as e:
             bt.logging.error(
-                f"in update_miner_rewards (got an exception): {e}"
+                f"in populate_miner_uid_in_miner_data (got an exception): {e}"
             )
             traceback.print_exc(file=sys.stderr)
             return None
