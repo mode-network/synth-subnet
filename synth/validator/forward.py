@@ -127,12 +127,12 @@ def calculate_rewards_and_update_scores(
         bt.logging.warning("No prediction requests found")
         return False
 
-    bt.logging.trace(f"found {len(validator_requests)} prediction requests")
+    bt.logging.debug(f"found {len(validator_requests)} prediction requests")
 
     fail_count = 0
     for validator_request in validator_requests:
 
-        bt.logging.trace(f"validator_request_id: {validator_request.id}")
+        bt.logging.debug(f"validator_request_id: {validator_request.id}")
 
         prompt_scores, detailed_info = get_rewards(
             miner_data_handler=miner_data_handler,
