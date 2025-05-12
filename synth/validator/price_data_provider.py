@@ -26,7 +26,7 @@ class PriceDataProvider:
     TOKEN_MAP = {
         "BTC": "Crypto.BTC/USD",
         "ETH": "Crypto.ETH/USD",
-        "CPX": "Equity.GB.CSPX/USD",
+        "CSPX": "Equity.GB.CSPX/USD",
     }
 
     @retry(
