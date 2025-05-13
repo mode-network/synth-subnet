@@ -3,7 +3,7 @@
 # Copyright © 2023 Mode Labs
 import os
 import asyncio
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -79,7 +79,6 @@ class Validator(BaseValidatorNeuron):
                 num_simulations=100,
             ),
         ]
-        self.len_simulations = len(self.simulation_input_list)
         self.timeout_extra_seconds = 120
 
         self.assert_assets_supported()
@@ -142,14 +141,23 @@ class Validator(BaseValidatorNeuron):
 
         async def wait_till_next_simulation():
             # wait until the next simulation
-            wait_time = timeout_until(next_iteration) / self.len_simulations
+            wait_time = timeout_until(next_iteration) / len(
+                self.simulation_input_list
+            )
             bt.logging.info(
                 f"Waiting for {wait_time} seconds until the next simulation",
                 "forward_prompt",
             )
             await asyncio.sleep(wait_time)
 
-        for simulation_index in range(self.len_simulations):
+        eth_launch_time = datetime(2025, 5, 19, 2, 0, 0, 0, timezone.utc)
+        simulation_input_list = (
+            self.simulation_input_list
+            if request_time > eth_launch_time
+            else self.simulation_input_list[:1]
+        )
+
+        for simulation_index in range(len(simulation_input_list)):
             # round validation time to the closest minute and add extra minutes
             start_time = round_time_to_minutes(
                 request_time, 60, self.timeout_extra_seconds
@@ -178,7 +186,7 @@ class Validator(BaseValidatorNeuron):
             # ========================================== #
 
             # input data: from the list declared above, at the index of the loop
-            simulation_input = self.simulation_input_list[simulation_index]
+            simulation_input = simulation_input_list[simulation_index]
             # add the start time
             simulation_input.start_time = start_time.isoformat()
 
