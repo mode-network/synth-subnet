@@ -10,7 +10,7 @@ from synth.validator.response_validation import validate_responses
 
 if __name__ == "__main__":
     simulation_input = SimulationInput(
-        asset="CPX",
+        asset="BTC",
         time_increment=300,
         time_length=86400,
         num_simulations=100,
