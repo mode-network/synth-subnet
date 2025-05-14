@@ -139,23 +139,23 @@ class Validator(BaseValidatorNeuron):
         request_time = get_current_time()
         next_iteration = request_time + timedelta(hours=1)
 
-        async def wait_till_next_simulation():
-            # wait until the next simulation
-            wait_time = timeout_until(next_iteration) / len(
-                self.simulation_input_list
-            )
-            bt.logging.info(
-                f"Waiting for {wait_time} seconds until the next simulation",
-                "forward_prompt",
-            )
-            await asyncio.sleep(wait_time)
-
         eth_launch_time = datetime(2025, 5, 19, 14, 0, 0, 0, timezone.utc)
         simulation_input_list = (
             self.simulation_input_list
             if request_time > eth_launch_time
             else self.simulation_input_list[:1]
         )
+
+        async def wait_till_next_simulation():
+            # wait until the next simulation
+            wait_time = timeout_until(next_iteration) / len(
+                simulation_input_list
+            )
+            bt.logging.info(
+                f"Waiting for {wait_time} seconds until the next simulation",
+                "forward_prompt",
+            )
+            await asyncio.sleep(wait_time)
 
         for simulation_index in range(len(simulation_input_list)):
             # round validation time to the closest minute and add extra minutes
