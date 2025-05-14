@@ -150,7 +150,7 @@ class Validator(BaseValidatorNeuron):
             )
             await asyncio.sleep(wait_time)
 
-        eth_launch_time = datetime(2025, 5, 19, 2, 0, 0, 0, timezone.utc)
+        eth_launch_time = datetime(2025, 5, 19, 14, 0, 0, 0, timezone.utc)
         simulation_input_list = (
             self.simulation_input_list
             if request_time > eth_launch_time
