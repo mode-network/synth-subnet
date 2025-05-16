@@ -21,7 +21,7 @@
         <b>Discord</b>
     </a>
 ·
-    <a href="https://synth.mode.network/docs" target="_blank">
+    <a href="https://api.synthdata.co/docs" target="_blank">
         <b>API Documentation</b>
     </a>
 </div>
