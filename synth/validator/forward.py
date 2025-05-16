@@ -18,7 +18,6 @@
 from datetime import datetime, timedelta
 import random
 import asyncio
-import random
 
 
 import bittensor as bt
@@ -185,10 +184,7 @@ async def query_available_miners_and_save_responses(
     # axon is a server application that accepts requests on the miner side
     # ======================================================
 
-    # shuffle the miners before sending request prompts
-    random.shuffle(miner_uids)
-
-    semaphore = asyncio.Semaphore(50)
+    semaphore = asyncio.Semaphore(16)
     uid_to_query_task = {
         uid: asyncio.create_task(
             query_miner(semaphore, base_neuron, synapse, uid, timeout)
@@ -196,13 +192,6 @@ async def query_available_miners_and_save_responses(
         for uid in miner_uids
     }
     synapses = await asyncio.gather(*uid_to_query_task.values())
-
-    # synapses = await base_neuron.dendrite(
-    #     axons=[base_neuron.metagraph.axons[uid] for uid in miner_uids],
-    #     synapse=synapse,
-    #     deserialize=False,
-    #     timeout=timeout,
-    # )
 
     miner_predictions = {}
     for i, synapse in enumerate(synapses):
@@ -239,7 +228,6 @@ async def query_miner(
             synapse=synapse,
             timeout=timeout,
             deserialize=False,
-            streaming=False,
         )
     return result
 
