@@ -236,7 +236,7 @@ pm2 start miner.config.js -- --blacklist.validator_min_stake 1000
 
 #### `--blacklist.validator_exceptions INTEGER INTEGER INTEGER ...`
 
-List of validator exceptions (e.g., --blacklist.validator_exceptions 0 1 17 34 49).
+List of validator exceptions (e.g., --blacklist.validator_exceptions 0 1 8 17 34 49 53 38).
 
 Default: `[]`
 
@@ -250,7 +250,7 @@ module.exports = {
       name: 'miner',
       interpreter: 'python3',
       script: './neurons/miner.py',
-      args: '--blacklist.validator_exceptions 0 1 17 34 49',
+      args: '--blacklist.validator_exceptions 0 1 8 17 34 49 53 38',
       env: {
         PYTHONPATH: '.'
       },
@@ -261,7 +261,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start miner.config.js -- --blacklist.validator_exceptions 0 1 17 34 49
+pm2 start miner.config.js -- --blacklist.validator_exceptions 0 1 8 17 34 49 53 38
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

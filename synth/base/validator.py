@@ -75,8 +75,8 @@ class BaseValidatorNeuron(BaseNeuron):
         self.loop = asyncio.get_event_loop()
 
         # Instantiate runners
-        self.should_exit: bool = False
-        self.is_running: bool = False
+        self.should_exit = False
+        self.is_running = False
         self.thread: Union[threading.Thread, None] = None
         self.lock = asyncio.Lock()
 
@@ -104,10 +104,7 @@ class BaseValidatorNeuron(BaseNeuron):
             )
 
     async def concurrent_forward(self):
-        coroutines = [
-            self.forward()
-            for _ in range(self.config.neuron.num_concurrent_forwards)
-        ]
+        coroutines = await self.forward_validator()
         await asyncio.gather(*coroutines)
 
     def run(self):
@@ -129,17 +126,11 @@ class BaseValidatorNeuron(BaseNeuron):
             KeyboardInterrupt: If the miner is stopped by a manual interruption.
             Exception: For unforeseen errors during the miner's operation, which are logged for diagnosis.
         """
-
-        # Check that validator is registered on the network.
-        self.sync()
-
         bt.logging.info(f"Validator starting at block: {self.block}")
 
         # This loop maintains the validator's operations until intentionally stopped.
         try:
             while True:
-                bt.logging.info(f"step({self.step}) block({self.block})")
-
                 # Run multiple forwards concurrently.
                 self.loop.run_until_complete(self.concurrent_forward())
 
@@ -154,18 +145,15 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # If someone intentionally stops the validator, it'll safely terminate operations.
         except KeyboardInterrupt:
-            self.axon.stop()
+            if not self.config.neuron.axon_off:
+                self.axon.stop()
             bt.logging.success("Validator killed by keyboard interrupt.")
             exit()
 
         # In case of unforeseen errors, the validator will log the error and continue operations.
         except Exception as err:
             bt.logging.error(f"Error during validation: {str(err)}")
-            bt.logging.debug(
-                str(print_exception(type(err), err, err.__traceback__))
-            )
-            bt.logging.debug("Scheduling validator to stop.")
-            self.should_exit = True
+            print_exception(type(err), err, err.__traceback__)
 
     def run_in_background_thread(self):
         """
@@ -187,7 +175,8 @@ class BaseValidatorNeuron(BaseNeuron):
         if self.is_running:
             bt.logging.debug("Stopping validator in background thread.")
             self.should_exit = True
-            self.thread.join(5)
+            if self.thread is not None:
+                self.thread.join(5)
             self.is_running = False
             bt.logging.debug("Stopped")
 
@@ -218,7 +207,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # Check if self.scores contains any NaN values and log a warning if it does.
         if np.isnan(self.scores).any():
             bt.logging.warning(
-                f"Scores contain NaN values. This may be due to a lack of responses from miners, or a bug in your reward functions."
+                "Scores contain NaN values. This may be due to a lack of responses from miners, or a bug in your reward functions."
             )
 
         # Calculate the average reward for each uid across non-zero values.
@@ -233,8 +222,8 @@ class BaseValidatorNeuron(BaseNeuron):
         # Compute raw_weights safely
         raw_weights = self.scores / norm
 
-        bt.logging.debug("raw_weights", raw_weights)
-        bt.logging.debug("raw_weight_uids", str(self.metagraph.uids.tolist()))
+        bt.logging.debug(raw_weights, "raw_weights")
+        bt.logging.debug(str(self.metagraph.uids.tolist()), "raw_weight_uids")
         # Process the raw weights to final_weights via subtensor limitations.
         (
             processed_weight_uids,
@@ -246,8 +235,8 @@ class BaseValidatorNeuron(BaseNeuron):
             subtensor=self.subtensor,
             metagraph=self.metagraph,
         )
-        bt.logging.debug("processed_weights", processed_weights)
-        bt.logging.debug("processed_weight_uids", processed_weight_uids)
+        bt.logging.debug(processed_weights, "processed_weights")
+        bt.logging.debug(processed_weight_uids, "processed_weight_uids")
 
         # Convert to uint16 weights and uids.
         (
@@ -256,8 +245,8 @@ class BaseValidatorNeuron(BaseNeuron):
         ) = convert_weights_and_uids_for_emit(
             uids=processed_weight_uids, weights=processed_weights
         )
-        bt.logging.debug("uint_weights", uint_weights)
-        bt.logging.debug("uint_uids", uint_uids)
+        bt.logging.debug(uint_weights, "uint_weights")
+        bt.logging.debug(uint_uids, "uint_uids")
 
         # Set the weights on chain via our subtensor connection.
         result, msg = self.subtensor.set_weights(
@@ -301,7 +290,7 @@ class BaseValidatorNeuron(BaseNeuron):
             new_moving_average = np.zeros((self.metagraph.n))
             min_len = min(len(self.hotkeys), len(self.scores))
             new_moving_average[:min_len] = self.scores[:min_len]
-            self.scores = new_moving_average
+            self.scores = new_moving_average.astype(np.float32)
 
         # Update the hotkeys.
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
@@ -349,9 +338,7 @@ class BaseValidatorNeuron(BaseNeuron):
             # Update scores with rewards produced by this step.
             # shape: [ metagraph.n ]
             alpha: float = self.config.neuron.moving_average_alpha
-            self.scores: np.ndarray = (
-                alpha * scattered_rewards + (1 - alpha) * self.scores
-            )
+            self.scores = alpha * scattered_rewards + (1 - alpha) * self.scores
         else:
             # Directly update the scores for the given uids.
             self.scores[uids_array] = rewards

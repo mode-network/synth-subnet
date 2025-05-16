@@ -1,20 +1,43 @@
+import logging
 import requests
+from datetime import datetime, timezone
+
+
+from tenacity import (
+    before_log,
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)
+import bittensor as bt
+
 
 from synth.utils.helpers import from_iso_to_unix_time
-from datetime import datetime, timezone
+
+# Python API benchmarks doc: https://benchmarks.pyth.network/docs
+# get the list of stocks supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_stock
+# get the list of crypto supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_crypto
+# get the ticket: https://benchmarks.pyth.network/v1/shims/tradingview/symbols?symbol=CSPX
 
 
 class PriceDataProvider:
     BASE_URL = "https://benchmarks.pyth.network/v1/shims/tradingview/history"
 
-    TOKEN_MAP = {"BTC": "Crypto.BTC/USD", "ETH": "Crypto.ETH/USD"}
+    TOKEN_MAP = {
+        "BTC": "Crypto.BTC/USD",
+        "ETH": "Crypto.ETH/USD",
+        "CSPX": "Equity.GB.CSPX/USD",
+    }
 
-    one_day_seconds = 24 * 60 * 60
-
-    def __init__(self, token):
-        self.token = self._get_token_mapping(token)
-
-    def fetch_data(self, time_point: str):
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_random_exponential(multiplier=5),
+        reraise=True,
+        before=before_log(bt.logging._logger, logging.DEBUG),
+    )
+    def fetch_data(
+        self, token: str, start_time: str, time_length: int, transformed=True
+    ):
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
@@ -22,26 +45,30 @@ class PriceDataProvider:
         :return: List of dictionaries with 'time' and 'price' keys.
         """
 
-        end_time = from_iso_to_unix_time(time_point)
-        start_time = end_time - self.one_day_seconds
+        start_time_int = from_iso_to_unix_time(start_time)
+        end_time_int = start_time_int + time_length
 
         params = {
-            "symbol": self.token,
+            "symbol": self._get_token_mapping(token),
             "resolution": 1,
-            "from": start_time,
-            "to": end_time,
+            "from": start_time_int,
+            "to": end_time_int,
         }
 
         response = requests.get(self.BASE_URL, params=params)
         response.raise_for_status()
 
         data = response.json()
-        transformed_data = self._transform_data(data, start_time)
+
+        if not transformed:
+            return data
+
+        transformed_data = self._transform_data(data, start_time_int)
 
         return transformed_data
 
     @staticmethod
-    def _transform_data(data, start_time):
+    def _transform_data(data, start_time) -> list[dict]:
         if data is None or len(data) == 0:
             return []
 

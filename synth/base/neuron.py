@@ -59,7 +59,7 @@ class BaseNeuron(ABC):
 
     def __init__(self, config=None):
         base_config = copy.deepcopy(config or BaseNeuron.config())
-        self.config = self.config()
+        self.config = self.config()  # type: ignore[method-assign]
         self.config.merge(base_config)
         self.check_config(self.config)
 
@@ -98,7 +98,16 @@ class BaseNeuron(ABC):
         self.step = 0
 
     @abstractmethod
-    async def forward(self, synapse: bt.Synapse) -> bt.Synapse: ...
+    async def forward_miner(self, synapse: bt.Synapse) -> bt.Synapse: ...
+
+    @abstractmethod
+    async def forward_validator(self): ...
+
+    @abstractmethod
+    def resync_metagraph(self): ...
+
+    @abstractmethod
+    def set_weights(self): ...
 
     @abstractmethod
     def run(self): ...
@@ -113,8 +122,8 @@ class BaseNeuron(ABC):
         if self.should_sync_metagraph():
             self.resync_metagraph()
 
-        if self.should_set_weights():
-            self.set_weights()
+        # we don't set_weights here because we control the set weights process
+        # in the run() method. This to save to database the result of the set_weights.
 
         # Always save state.
         self.save_state()

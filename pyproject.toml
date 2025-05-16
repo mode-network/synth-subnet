@@ -1,0 +1,22 @@
+[tool.black]
+line-length = 79
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+  | env
+  | venv
+  | bt_venv
+  | .eggs
+)/
+'''
+
+[tool.mypy]
+disable_error_code = ["import-untyped", "attr-defined"]

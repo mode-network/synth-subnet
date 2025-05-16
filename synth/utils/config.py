@@ -27,8 +27,8 @@ def is_cuda_available():
     try:
         output = subprocess.check_output(
             ["nvidia-smi", "-L"], stderr=subprocess.STDOUT
-        )
-        if "NVIDIA" in output.decode("utf-8"):
+        ).decode("utf-8")
+        if "NVIDIA" in output:
             return "cuda"
     except Exception:
         pass
@@ -210,13 +210,6 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
-        "--neuron.num_concurrent_forwards",
-        type=int,
-        help="The number of concurrent forwards running at any time.",
-        default=1,
-    )
-
-    parser.add_argument(
         "--neuron.sample_size",
         type=int,
         help="The number of miners to query in a single step.",
@@ -276,13 +269,6 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
-        "--ewma.alpha",
-        type=float,
-        help="The exponent to raise the EWMA to, before normalization.",
-        default=2.0,
-    )
-
-    parser.add_argument(
         "--ewma.half_life_days",
         type=float,
         help="The half-life in days for the exponential decay.",
@@ -307,7 +293,7 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
         "--softmax.beta",
         type=float,
         help="Negative beta to give higher weight to lower scores.",
-        default=-0.002,
+        default=-0.003,
     )
 
 
