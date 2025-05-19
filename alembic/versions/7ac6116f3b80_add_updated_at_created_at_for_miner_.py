@@ -1,7 +1,7 @@
 """add updated_at created_at for miner_scores
 
 Revision ID: 7ac6116f3b80
-Revises: c03e71fa935b
+Revises: 627fae0edb48
 Create Date: 2025-05-02 18:58:59.375937
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "7ac6116f3b80"
-down_revision: Union[str, None] = "c03e71fa935b"
+down_revision: Union[str, None] = "627fae0edb48"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
