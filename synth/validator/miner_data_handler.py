@@ -632,6 +632,108 @@ class MinerDataHandler:
                         f"Number of miner_scores with duplicates on (MINER_PREDICTIONS_ID, PROMPT_SCORE_V2): {result.scalar()}"
                     )
 
+                    result = connection.execute(
+                        text(
+                            """
+                            SELECT count(1) FROM MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, PROMPT_SCORE_V3, ID) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID,
+                                        PROMPT_SCORE_V3,
+                                        ID
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID
+                                                    ORDER BY
+                                                        SCORED_TIME DESC
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE
+                                        T.RN > 1
+                                );
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on MINER_PREDICTIONS_ID by PROMPT_SCORE_V3: {result.scalar()}"
+                    )
+
+                    result = connection.execute(
+                        text(
+                            """
+                            SELECT count(1) FROM MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, PROMPT_SCORE_V3, ID) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID,
+                                        PROMPT_SCORE_V3,
+                                        ID
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID,
+                                                        PROMPT_SCORE_V3
+                                                    ORDER BY
+                                                        SCORED_TIME DESC
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE
+                                        T.RN > 1
+                                );
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on (MINER_PREDICTIONS_ID, PROMPT_SCORE_V3): {result.scalar()}"
+                    )
+
+                    result = connection.execute(
+                        text(
+                            """
+                            select count(1)
+                            FROM
+                                MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, id) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID, id
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID
+                                                    ORDER BY
+                                                        prompt_score_v3 ASC
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE T.RN > 1
+                            );
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on (MINER_PREDICTIONS_ID): {result.scalar()}"
+                    )
+
         except Exception as e:
             bt.logging.error(
                 f"in print_miner_scores_duplicates (got an exception): {e}"

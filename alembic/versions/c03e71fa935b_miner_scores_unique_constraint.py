@@ -1,7 +1,7 @@
 """miner scores unique constraint
 
 Revision ID: c03e71fa935b
-Revises: d45ce8e801b8
+Revises: a00eb91223cd
 Create Date: 2025-05-02 18:27:07.359860
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "c03e71fa935b"
-down_revision: Union[str, None] = "d45ce8e801b8"
+down_revision: Union[str, None] = "a00eb91223cd"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
