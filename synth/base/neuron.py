@@ -18,6 +18,7 @@
 import copy
 
 import bittensor as bt
+from bittensor.core.metagraph import MetagraphMixin
 
 from abc import ABC, abstractmethod
 
@@ -37,7 +38,7 @@ class BaseNeuron(ABC):
     neuron_type: str = "BaseNeuron"
 
     @classmethod
-    def check_config(cls, config: "bt.Config"):
+    def check_config(cls, config: bt.Config):
         check_config(cls, config)
 
     @classmethod
@@ -48,9 +49,9 @@ class BaseNeuron(ABC):
     def config(cls):
         return config(cls)
 
-    subtensor: "bt.subtensor"
-    wallet: "bt.wallet"
-    metagraph: "bt.metagraph"
+    subtensor: bt.Subtensor
+    wallet: bt.Wallet
+    metagraph: MetagraphMixin
     spec_version: int = spec_version
 
     @property

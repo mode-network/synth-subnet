@@ -250,6 +250,7 @@ def get_available_miners_and_update_metagraph_history(
                 "coldkey": base_neuron.metagraph.coldkeys[uid],
                 "hotkey": base_neuron.metagraph.hotkeys[uid],
                 "updated_at": start_time.isoformat(),
+                "ip_address": base_neuron.metagraph.addresses[uid],
             }
             metagraph_info.append(metagraph_item)
 

@@ -149,6 +149,7 @@ class MetagraphHistory(Base):
     coldkey = Column(String, nullable=True)
     hotkey = Column(String, nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=False)
+    ip_address = Column(String, nullable=True)
 
 
 class WeightsUpdateHistory(Base):
