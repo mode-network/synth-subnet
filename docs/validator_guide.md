@@ -19,7 +19,6 @@
     - [`--neuron.dont_save_events BOOLEAN`](#--neurondont_save_events-boolean)
     - [`--neuron.epoch_length INTEGER`](#--neuronepoch_length-integer)
     - [`--neuron.events_retention_size TEXT`](#--neuronevents_retention_size-text)
-    - [`--neuron.moving_average_alpha FLOAT`](#--neuronmoving_average_alpha-float)
     - [`--neuron.name TEXT`](#--neuronname-text)
     - [`--neuron.sample_size INTEGER`](#--neuronsample_size-integer)
     - [`--neuron.timeout INTEGER`](#--neurontimeout-integer)
@@ -561,38 +560,6 @@ pm2 start validator.config.js -- --neuron.events_retention_size 2147483648
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-#### `--neuron.moving_average_alpha FLOAT`
-
-Moving average alpha parameter, how much to add of the new observation.
-
-Default: `0.1`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.moving_average_alpha 0.3',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-```shell
-pm2 start validator.config.js -- --neuron.moving_average_alpha 0.3
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
 #### `--neuron.name TEXT`
 
 Trials for this neuron go in neuron.root / (wallet_cold - wallet_hot) / neuron.name.
@@ -809,38 +776,6 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 ```shell
 pm2 start validator.config.js -- --gcp.log_id_prefix my_validator_name
-```
-
-### 3.3. Moving average algorithm
-
-#### `--ewma.standard_ma_disabled`
-
-Boolean toggle for standard moving average algorithm.
-
-Default: `true`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--ewma.standard_ma_disabled',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-```shell
-pm2 start validator.config.js -- --ewma.standard_ma_disabled
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

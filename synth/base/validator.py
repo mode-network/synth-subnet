@@ -328,20 +328,7 @@ class BaseValidatorNeuron(BaseNeuron):
                 f"cannot be broadcast to uids array of shape {uids_array.shape}"
             )
 
-        if not self.config.ewma.standard_ma_disabled:
-            # Compute forward pass rewards, assumes uids are mutually exclusive.
-            # shape: [ metagraph.n ]
-            scattered_rewards: np.ndarray = np.zeros_like(self.scores)
-            scattered_rewards[uids_array] = rewards
-            bt.logging.debug(f"Scattered rewards: {rewards}")
-
-            # Update scores with rewards produced by this step.
-            # shape: [ metagraph.n ]
-            alpha: float = self.config.neuron.moving_average_alpha
-            self.scores = alpha * scattered_rewards + (1 - alpha) * self.scores
-        else:
-            # Directly update the scores for the given uids.
-            self.scores[uids_array] = rewards
+        self.scores[uids_array] = rewards
 
         bt.logging.debug(f"Updated moving avg scores: {self.scores}")
 
