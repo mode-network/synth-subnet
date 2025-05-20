@@ -13,7 +13,6 @@ from sqlalchemy import (
     Engine,
     and_,
     exists,
-    update,
     select,
     func,
     desc,
@@ -154,89 +153,45 @@ class MinerDataHandler:
         try:
             with self.engine.connect() as connection:
                 with connection.begin():
+                    rows_to_insert = []
                     for row in reward_details:
-                        exists_query = exists().where(
-                            MinerScore.scored_time == scored_time,
-                            MinerScore.miner_predictions_id
-                            == row["miner_prediction_id"],
+                        rows_to_insert.append(
+                            {
+                                "miner_uid": row["miner_uid"],  # deprecated
+                                "scored_time": scored_time.isoformat(),
+                                "miner_predictions_id": row[
+                                    "miner_prediction_id"
+                                ],
+                                "score_details_v3": {
+                                    "total_crps": row["total_crps"],
+                                    "percentile90": row["percentile90"],
+                                    "lowest_score": row["lowest_score"],
+                                    "prompt_score_v3": row["prompt_score_v3"],
+                                    "crps_data": row["crps_data"],
+                                },
+                                "prompt_score_v3": row["prompt_score_v3"],
+                                "real_prices": row["real_prices"],
+                            }
                         )
-
-                        result = connection.execute(
-                            select(exists_query)
-                        ).scalar()
-
-                        if result:
-                            # update
-                            update_stmt = (
-                                update(MinerScore)
-                                .where(
-                                    MinerScore.scored_time == scored_time,
-                                    MinerScore.miner_predictions_id
-                                    == row["miner_prediction_id"],
-                                )
-                                .values(
-                                    {
-                                        "miner_uid": row[
-                                            "miner_uid"
-                                        ],  # deprecated
-                                        "score_details_v3": {
-                                            "total_crps": row["total_crps"],
-                                            "percentile90": row[
-                                                "percentile90"
-                                            ],
-                                            "lowest_score": row[
-                                                "lowest_score"
-                                            ],
-                                            "prompt_score_v3": row[
-                                                "prompt_score_v3"
-                                            ],
-                                            "crps_data": row["crps_data"],
-                                        },
-                                        "prompt_score_v3": row[
-                                            "prompt_score_v3"
-                                        ],
-                                        "real_prices": row["real_prices"],
-                                    }
-                                )
-                            )
-
-                            connection.execute(update_stmt)
-
-                        else:
-                            # insert
-
-                            insert_stmt = insert(MinerScore).values(
-                                [
-                                    {
-                                        "miner_uid": row[
-                                            "miner_uid"
-                                        ],  # deprecated
-                                        "scored_time": scored_time.isoformat(),
-                                        "miner_predictions_id": row[
-                                            "miner_prediction_id"
-                                        ],
-                                        "score_details_v3": {
-                                            "total_crps": row["total_crps"],
-                                            "percentile90": row[
-                                                "percentile90"
-                                            ],
-                                            "lowest_score": row[
-                                                "lowest_score"
-                                            ],
-                                            "prompt_score_v3": row[
-                                                "prompt_score_v3"
-                                            ],
-                                            "crps_data": row["crps_data"],
-                                        },
-                                        "prompt_score_v3": row[
-                                            "prompt_score_v3"
-                                        ],
-                                        "real_prices": row["real_prices"],
-                                    }
-                                ]
-                            )
-
-                            connection.execute(insert_stmt)
+                    insert_stmt_miner_scores = (
+                        insert(MinerScore)
+                        .values(rows_to_insert)
+                        .on_conflict_do_update(
+                            constraint="uq_miner_scores_miner_predictions_id",
+                            set_={
+                                "score_details_v3": {
+                                    "total_crps": row["total_crps"],
+                                    "percentile90": row["percentile90"],
+                                    "lowest_score": row["lowest_score"],
+                                    "prompt_score_v3": row["prompt_score_v3"],
+                                    "crps_data": row["crps_data"],
+                                },
+                                "prompt_score_v3": row["prompt_score_v3"],
+                                "real_prices": row["real_prices"],
+                            },
+                        )
+                    )
+                    connection.execute(insert_stmt_miner_scores)
         except Exception as e:
             bt.logging.error(f"in set_miner_scores (got an exception): {e}")
             traceback.print_exc(file=sys.stderr)
@@ -675,6 +630,108 @@ class MinerDataHandler:
 
                     bt.logging.debug(
                         f"Number of miner_scores with duplicates on (MINER_PREDICTIONS_ID, PROMPT_SCORE_V2): {result.scalar()}"
+                    )
+
+                    result = connection.execute(
+                        text(
+                            """
+                            SELECT count(1) FROM MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, PROMPT_SCORE_V3, ID) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID,
+                                        PROMPT_SCORE_V3,
+                                        ID
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID
+                                                    ORDER BY
+                                                        SCORED_TIME DESC
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE
+                                        T.RN > 1
+                                );
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on MINER_PREDICTIONS_ID by PROMPT_SCORE_V3: {result.scalar()}"
+                    )
+
+                    result = connection.execute(
+                        text(
+                            """
+                            SELECT count(1) FROM MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, PROMPT_SCORE_V3, ID) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID,
+                                        PROMPT_SCORE_V3,
+                                        ID
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID,
+                                                        PROMPT_SCORE_V3
+                                                    ORDER BY
+                                                        SCORED_TIME DESC
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE
+                                        T.RN > 1
+                                );
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on (MINER_PREDICTIONS_ID, PROMPT_SCORE_V3): {result.scalar()}"
+                    )
+
+                    result = connection.execute(
+                        text(
+                            """
+                            select count(1)
+                            FROM
+                                MINER_SCORES
+                            WHERE
+                                (MINER_PREDICTIONS_ID, id) IN (
+                                    SELECT
+                                        MINER_PREDICTIONS_ID, id
+                                    FROM
+                                        (
+                                            SELECT
+                                                *,
+                                                ROW_NUMBER() OVER (
+                                                    PARTITION BY
+                                                        MINER_PREDICTIONS_ID
+                                                    ORDER BY
+                                                        prompt_score_v3 ASC
+                                                ) AS RN
+                                            FROM
+                                                MINER_SCORES
+                                        ) T
+                                    WHERE T.RN > 1
+                            );
+                            """
+                        )
+                    )
+
+                    bt.logging.debug(
+                        f"Number of miner_scores with duplicates on (MINER_PREDICTIONS_ID): {result.scalar()}"
                     )
 
         except Exception as e:
