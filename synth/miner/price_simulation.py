@@ -1,32 +1,34 @@
-import datetime
+import requests
 
 
 import numpy as np
 
 
-from synth.validator.price_data_provider import PriceDataProvider
+TOKEN_MAP = {
+    "BTC": "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+    "ETH": "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+}
+
+pyth_base_url = "https://hermes.pyth.network/v2/updates/price/latest"
 
 
 def get_asset_price(asset="BTC"):
-    """
-    Retrieves the current price of the specified asset.
-    Currently, supports BTC via Pyth Network.
+    pyth_params = {"ids[]": [TOKEN_MAP[asset]]}
+    response = requests.get(pyth_base_url, params=pyth_params)
+    if response.status_code != 200:
+        print("Error in response of Pyth API")
+        return
 
-    Returns:
-        float: Current asset price.
-    """
-    price_data_provider = PriceDataProvider()
-    prices = price_data_provider.fetch_data(
-        asset,
-        (
-            datetime.datetime.now(datetime.timezone.utc)
-            - datetime.timedelta(minutes=2)
-        ).isoformat(),
-        60 * 2,
-        False,
-    )
+    data = response.json()
+    parsed_data = data.get("parsed", [])
 
-    return prices["c"][-1]
+    asset = parsed_data[0]
+    price = int(asset["price"]["price"])
+    expo = int(asset["price"]["expo"])
+
+    live_price = price * (10**expo)
+
+    return live_price
 
 
 def simulate_single_price_path(
