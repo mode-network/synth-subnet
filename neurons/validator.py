@@ -22,7 +22,6 @@ from datetime import datetime, timedelta, timezone
 
 import bittensor as bt
 import wandb
-import google.cloud.logging
 
 from synth.base.validator import BaseValidatorNeuron
 
@@ -32,7 +31,7 @@ from synth.utils.helpers import (
     round_time_to_minutes,
     timeout_until,
 )
-from synth.utils.logging import setup_wandb_alert
+from synth.utils.logging import setup_gcp_logging, setup_wandb_alert
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_rewards_and_update_scores,
@@ -57,6 +56,9 @@ class Validator(BaseValidatorNeuron):
 
     def __init__(self, config=None):
         super(Validator, self).__init__(config=config)
+
+        print("setting up GCP log forwarder")
+        setup_gcp_logging(project_id=self.config.gcp.project_id)
 
         bt.logging.info("load_state()")
         self.load_state()
@@ -289,7 +291,4 @@ class Validator(BaseValidatorNeuron):
 
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
-    print("setting up GCP log forwarder")
-    client = google.cloud.logging.Client()
-    client.setup_logging()
     Validator().run()

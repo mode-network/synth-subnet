@@ -2,7 +2,11 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 import bittensor as bt
-
+from google.cloud.logging_v2.services.logging_service_v2 import (
+    LoggingServiceV2Client,
+)
+from google.cloud.logging_v2.types import LogEntry, WriteLogEntriesRequest
+from google.api.monitored_resource_pb2 import MonitoredResource
 
 EVENTS_LEVEL_NUM = 38
 DEFAULT_LOG_BACKUP_COUNT = 10
@@ -69,3 +73,31 @@ def setup_wandb_alert(wandb_run):
     wandb_handler.setFormatter(formatter)
 
     return wandb_handler
+
+
+class BucketLogHandler(logging.Handler):
+    def __init__(self, project_id, log_id="python-app-log"):
+        super().__init__()
+        self.client = LoggingServiceV2Client()
+        self.log_name = f"projects/{project_id}/logs/{log_id}"
+        self.resource = MonitoredResource(type="global", labels={})
+
+    def emit(self, record):
+        payload = self.format(record)
+        entry = LogEntry(
+            log_name=self.log_name,
+            resource=self.resource,
+            text_payload=payload,
+        )
+        req = WriteLogEntriesRequest(entries=[entry])
+        self.client.write_log_entries(request=req)
+
+
+def setup_gcp_logging(project_id, log_id="synth-validator"):
+    handler = BucketLogHandler(project_id, log_id=log_id)
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    root_logger.addHandler(handler)
+
+    return handler

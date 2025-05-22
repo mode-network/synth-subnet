@@ -248,6 +248,12 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
+        "--gcp.project_id",
+        type=str,
+        help="The GCP project ID.",
+    )
+
+    parser.add_argument(
         "--wandb.enabled",
         type=bool,
         help="Boolean toggle for wandb integration",

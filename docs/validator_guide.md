@@ -26,7 +26,8 @@
     - [`--neuron.vpermit_tao_limit INTEGER`](#--neuronvpermit_tao_limit-integer)
     - [`--wallet.hotkey TEXT`](#--wallethotkey-text)
     - [`--wallet.name TEXT`](#--walletname-text)
-  - [3.2. Weights & Bases Options](#32-weights--bases-options)
+  - [3.2. Logging Options](#32-logging-options)
+    - [`--gcp.project_id TEXT`](#--gcpproject_id-text)
     - [`--wandb.enabled BOOLEAN`](#--wandbenabled-boolean)
     - [`--wandb.entity TEXT`](#--wandbentity-text)
     - [`--wandb.project_name TEXT`](#--wandbenabled-boolean)
@@ -783,7 +784,35 @@ pm2 start validator.config.js -- --wallet.name validator
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-### 3.2. Weights & Bases Options
+### 3.2. Logging Options
+
+#### `--gcp.project_id TEXT`
+
+String to set the GCP project ID.
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: 'validator',
+      interpreter: 'python3',
+      script: './neurons/validator.py',
+      args: '--gcp.project_id my_project_id',
+      env: {
+        PYTHONPATH: '.'
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+```shell
+pm2 start validator.config.js -- --gcp.project_id my_project_id
+```
 
 #### `--wandb.enabled BOOLEAN`
 
