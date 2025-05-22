@@ -77,7 +77,7 @@ def setup_wandb_alert(wandb_run):
 
 
 class BucketLogHandler(logging.Handler):
-    def __init__(self, project_id, log_id="python-app-log"):
+    def __init__(self, project_id, log_id):
         super().__init__()
         self.client = LoggingServiceV2Client()
         self.log_name = f"projects/{project_id}/logs/{log_id}"
@@ -94,8 +94,9 @@ class BucketLogHandler(logging.Handler):
         self.client.write_log_entries(request=req)
 
 
-def setup_gcp_logging(project_id, log_id="synth-validator"):
-    handler = BucketLogHandler(project_id, log_id=log_id)
+def setup_gcp_logging(project_id, log_id_prefix):
+    log_id = f"{log_id_prefix}-synth-validator"
+    handler = BucketLogHandler(project_id, log_id)
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)

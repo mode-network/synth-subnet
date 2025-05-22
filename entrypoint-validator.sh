@@ -13,6 +13,7 @@ ewma_cutoff_days=7
 softmax_beta=-0.0475
 
 project_id=my_project_id
+log_id_prefix=my_validator_name
 
 python3.10 ./neurons/validator.py \
 		--wallet.name $validator_coldkey_name \
@@ -27,3 +28,4 @@ python3.10 ./neurons/validator.py \
 		--softmax.beta $softmax_beta \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
 		--gcp.project_id $project_id \
+		--gcp.log_id_prefix $log_id_prefix \

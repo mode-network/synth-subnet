@@ -28,6 +28,7 @@
     - [`--wallet.name TEXT`](#--walletname-text)
   - [3.2. Logging Options](#32-logging-options)
     - [`--gcp.project_id TEXT`](#--gcpproject_id-text)
+    - [`--gcp.log_id_prefix TEXT`](#--gcplog_id_prefix-text)
 * [4. Appendix](#4-appendix)
   - [4.1. Useful Commands](#41-useful-commands)
 
@@ -811,6 +812,33 @@ Alternatively, you can add the args directly to the command:
 pm2 start validator.config.js -- --gcp.project_id my_project_id
 ```
 
+#### `--gcp.log_id_prefix TEXT`
+
+String to set the GCP log ID prefix.
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: 'validator',
+      interpreter: 'python3',
+      script: './neurons/validator.py',
+      args: '--gcp.log_id_prefix my_validator_name',
+      env: {
+        PYTHONPATH: '.'
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+```shell
+pm2 start validator.config.js -- --gcp.log_id_prefix my_validator_name
+```
 
 ### 3.3. Moving average algorithm
 

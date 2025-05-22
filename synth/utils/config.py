@@ -233,6 +233,12 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
+        "--gcp.log_id_prefix",
+        type=str,
+        help="The GCP log ID prefix.",
+    )
+
+    parser.add_argument(
         "--ewma.half_life_days",
         type=float,
         help="The half-life in days for the exponential decay.",
