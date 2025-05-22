@@ -53,7 +53,6 @@ class Validator(BaseValidatorNeuron):
     def __init__(self, config=None):
         super(Validator, self).__init__(config=config)
 
-        print("setting up GCP log forwarder")
         setup_gcp_logging(self.config.gcp.log_id_prefix)
 
         bt.logging.info("load_state()")

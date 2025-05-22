@@ -76,5 +76,12 @@ def setup_wandb_alert(wandb_run):
 
 def setup_gcp_logging(log_id_prefix):
     log_id = f"{log_id_prefix}-synth-validator"
-    client = google.cloud.logging.Client()
-    client.setup_logging(labels={"log_id": log_id})
+    bt.logging.info(f"setting up GCP log forwarder with log_id: {log_id}")
+    try:
+        client = google.cloud.logging.Client()
+        client.setup_logging(labels={"log_id": log_id})
+    except google.auth.exceptions.GoogleAuthError as e:
+        bt.logging.warning(
+            "Failed to set up GCP logging. GoogleAuthError: ", e
+        )
+

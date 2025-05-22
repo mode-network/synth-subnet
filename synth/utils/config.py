@@ -150,6 +150,13 @@ def add_miner_args(cls, parser):
     )
 
     parser.add_argument(
+        "--wandb.enabled",
+        type=bool,
+        help="Boolean toggle for wandb integration",
+        default=False,
+    )
+
+    parser.add_argument(
         "--wandb.project_name",
         type=str,
         default="template-miners",
