@@ -14,10 +14,6 @@ softmax_beta=-0.0475
 
 project_id=my_project_id
 
-wandb_enabled=false
-wandb_project_name=my_wandb_project
-wandb_entity=my_wandb_team
-
 python3.10 ./neurons/validator.py \
 		--wallet.name $validator_coldkey_name \
 		--wallet.hotkey $validator_hotkey_name \
@@ -31,6 +27,3 @@ python3.10 ./neurons/validator.py \
 		--softmax.beta $softmax_beta \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
 		--gcp.project_id $project_id \
-		--wandb.enabled $wandb_enabled \
-		--wandb.project_name $wandb_project_name \
-		--wandb.entity $wandb_entity

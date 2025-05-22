@@ -1,7 +1,6 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
-import os
 import asyncio
 from datetime import datetime, timedelta, timezone
 
@@ -21,7 +20,6 @@ from datetime import datetime, timedelta, timezone
 
 
 import bittensor as bt
-import wandb
 
 from synth.base.validator import BaseValidatorNeuron
 
@@ -31,7 +29,7 @@ from synth.utils.helpers import (
     round_time_to_minutes,
     timeout_until,
 )
-from synth.utils.logging import setup_gcp_logging, setup_wandb_alert
+from synth.utils.logging import setup_gcp_logging
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_rewards_and_update_scores,
@@ -41,8 +39,6 @@ from synth.validator.forward import (
 )
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
-
-from synth import __version__
 
 
 class Validator(BaseValidatorNeuron):
@@ -65,7 +61,6 @@ class Validator(BaseValidatorNeuron):
 
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
-        self.wandb_handler = None
 
         self.simulation_input_list = [
             # input data: give me prediction of BTC price for the next 1 day for every 5 min of time
@@ -100,35 +95,6 @@ class Validator(BaseValidatorNeuron):
         - Rewarding the miners
         - Updating the scores
         """
-        wandb_api_key = os.getenv("WANDB_API_KEY")
-        if wandb_api_key is not None and self.config.wandb.enabled:
-            bt.logging.info("WANDB_API_KEY is set")
-            run = wandb.init(
-                project=f"{self.config.wandb.project_name}",
-                mode=(
-                    "disabled"
-                    if not getattr(self.config.wandb, "enabled", False)
-                    else "online"
-                ),
-                entity=f"{self.config.wandb.entity}",
-                config={
-                    "hotkey": self.wallet.hotkey.ss58_address,
-                },
-                name=f"validator-{self.uid}-{__version__}",
-                resume="auto",
-                dir=self.config.neuron.full_path,
-                reinit=True,
-            )
-            if self.config.subtensor.network != "test":
-                if self.wandb_handler is not None:
-                    bt.logging._logger.removeHandler(self.wandb_handler)
-                self.wandb_handler = setup_wandb_alert(run)
-                bt.logging._logger.addHandler(self.wandb_handler)
-        else:
-            bt.logging.warning(
-                "WANDB_API_KEY not found in environment variables."
-            )
-
         self.miner_data_handler.print_miner_scores_duplicates()
 
         bt.logging.info("calling forward_validator()")

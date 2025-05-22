@@ -65,6 +65,7 @@ class WandBHandler(logging.Handler):
 
 
 def setup_wandb_alert(wandb_run):
+    """Miners can use this to send alerts to wandb."""
     wandb_handler = WandBHandler(wandb_run)
     wandb_handler.setLevel(logging.ERROR)
     formatter = logging.Formatter(

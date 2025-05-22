@@ -28,9 +28,6 @@
     - [`--wallet.name TEXT`](#--walletname-text)
   - [3.2. Logging Options](#32-logging-options)
     - [`--gcp.project_id TEXT`](#--gcpproject_id-text)
-    - [`--wandb.enabled BOOLEAN`](#--wandbenabled-boolean)
-    - [`--wandb.entity TEXT`](#--wandbentity-text)
-    - [`--wandb.project_name TEXT`](#--wandbenabled-boolean)
 * [4. Appendix](#4-appendix)
   - [4.1. Useful Commands](#41-useful-commands)
 
@@ -814,35 +811,6 @@ Alternatively, you can add the args directly to the command:
 pm2 start validator.config.js -- --gcp.project_id my_project_id
 ```
 
-#### `--wandb.enabled BOOLEAN`
-
-Boolean toggle for wandb integration.
-
-Default: `false`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--wandb.enabled true',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-```shell
-pm2 start validator.config.js -- --wandb.enabled true
-```
 
 ### 3.3. Moving average algorithm
 
@@ -874,70 +842,6 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 ```shell
 pm2 start validator.config.js -- --ewma.standard_ma_disabled
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-#### `--wandb.entity TEXT`
-
-The username or team name where you want to send W&B runs.
-
-Default: `mode-synth`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--wandb.entity mode-synth',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-```shell
-pm2 start validator.config.js -- --wandb.entity mode-synth
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-#### `--wandb.project_name TEXT`
-
-The name of the project where W&B runs.
-
-Default: `sn247-validators`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--wandb.project_name sn247-validators',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-```shell
-pm2 start validator.config.js -- --wandb.project_name sn247-validators
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
