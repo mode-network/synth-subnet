@@ -27,5 +27,4 @@ python3.10 ./neurons/validator.py \
 		--ewma.standard_ma_disabled \
 		--softmax.beta $softmax_beta \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
-		--gcp.project_id $project_id \
 		--gcp.log_id_prefix $log_id_prefix \
