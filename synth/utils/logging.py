@@ -2,11 +2,15 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 import bittensor as bt
-from google.cloud.logging_v2.services.logging_service_v2 import (
-    LoggingServiceV2Client,
-)
-from google.cloud.logging_v2.types import LogEntry, WriteLogEntriesRequest
-from google.api.monitored_resource_pb2 import MonitoredResource
+import datetime
+
+# from google.cloud.logging_v2.services.logging_service_v2 import (
+#     LoggingServiceV2Client,
+# )
+# from google.cloud.logging_v2.types import LogEntry, WriteLogEntriesRequest
+# from google.api.monitored_resource_pb2 import MonitoredResource
+from google.auth.transport.requests import AuthorizedSession
+import google.auth
 
 EVENTS_LEVEL_NUM = 38
 DEFAULT_LOG_BACKUP_COUNT = 10
@@ -77,29 +81,78 @@ def setup_wandb_alert(wandb_run):
 
 
 class BucketLogHandler(logging.Handler):
-    def __init__(self, project_id, log_id):
+    def __init__(
+        self,
+        project_id: str,
+        bucket_id: str,
+        log_id: str,
+        timeout: float = 30.0,
+    ):
         super().__init__()
-        self.client = LoggingServiceV2Client()
-        self.log_name = f"projects/{project_id}/logs/{log_id}"
-        self.resource = MonitoredResource(type="global", labels={})
+        self.setFormatter(
+            logging.Formatter("%(asctime)s %(levelname)s %(message)s")
+        )
+
+        # 1) build creds (only needs logging.write)
+        scopes = ["https://www.googleapis.com/auth/logging.write"]
+        creds, _ = google.auth.default(scopes=scopes)
+
+        # 2) figure out your project
+        self.project = project_id
+
+        # 3) prepare an AuthorizedSession
+        self.session = AuthorizedSession(creds)
+        self.timeout = timeout
+
+        # 4) bake your bucket into the JSON resourceNames
+        self.bucket_rn = (
+            f"projects/{self.project}/locations/global/buckets/{bucket_id}"
+        )
+
+        # 5) your logical log name (under that bucket)
+        self.log_name = f"projects/{self.project}/logs/{log_id}"
+
+        # 6) the one and only HTTP endpoint
+        self.url = "https://logging.googleapis.com/v2/entries:write"
 
     def emit(self, record):
-        payload = self.format(record)
-        entry = LogEntry(
-            log_name=self.log_name,
-            resource=self.resource,
-            text_payload=payload,
+        text = self.format(record)
+        now = (
+            datetime.datetime.utcnow()
+            .replace(tzinfo=datetime.timezone.utc)
+            .isoformat()
         )
-        req = WriteLogEntriesRequest(entries=[entry])
-        self.client.write_log_entries(request=req)
+
+        body = {
+            "entries": [
+                {
+                    "logName": self.log_name,  # "projects/.../logs/...”
+                    "resource": {"type": "global", "labels": {}},
+                    "textPayload": text,
+                    "timestamp": now,
+                }
+            ]
+        }
+
+        resp = self.session.post(self.url, json=body, timeout=self.timeout)
+        try:
+            resp.raise_for_status()
+        except Exception as e:
+            raise RuntimeError(
+                f"GCP write failed [{resp.status_code}]: {resp.text}"
+            ) from e
 
 
 def setup_gcp_logging(project_id, log_id_prefix):
+    """
+    bucket_id:     your user-defined bucket
+    log_id_prefix: e.g. "validator-testnet" → logName="validator-testnet-app"
+    keyfile:       (optional) SA JSON keyfile
+    project:       (optional) GCP project override
+    """
     log_id = f"{log_id_prefix}-synth-validator"
-    handler = BucketLogHandler(project_id, log_id)
-
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-    root_logger.addHandler(handler)
-
-    return handler
+    bucket_id = "synth-validators"
+    handler = BucketLogHandler(project_id, bucket_id, log_id)
+    root = logging.getLogger()
+    root.setLevel(logging.INFO)
+    root.addHandler(handler)
