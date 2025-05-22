@@ -127,10 +127,6 @@ class Validator(BaseValidatorNeuron):
                 "WANDB_API_KEY not found in environment variables."
             )
 
-        print("setting up GCP log forwarder")
-        client = google.cloud.logging.Client()
-        client.setup_logging()
-
         self.miner_data_handler.print_miner_scores_duplicates()
 
         bt.logging.info("calling forward_validator()")
@@ -293,4 +289,7 @@ class Validator(BaseValidatorNeuron):
 
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
+    print("setting up GCP log forwarder")
+    client = google.cloud.logging.Client()
+    client.setup_logging()
     Validator().run()
