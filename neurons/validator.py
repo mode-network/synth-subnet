@@ -22,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 
 import bittensor as bt
 import wandb
+import google.cloud.logging
 
 from synth.base.validator import BaseValidatorNeuron
 
@@ -125,6 +126,10 @@ class Validator(BaseValidatorNeuron):
             bt.logging.warning(
                 "WANDB_API_KEY not found in environment variables."
             )
+
+        print("setting up GCP log forwarder")
+        client = google.cloud.logging.Client()
+        client.setup_logging()
 
         self.miner_data_handler.print_miner_scores_duplicates()
 
