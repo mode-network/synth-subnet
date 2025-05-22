@@ -1,6 +1,6 @@
 <div align="center">
-  <a href="https://mode.network">
-    <img alt="Rounded Mode icon" src="docs/images/banner_logo.svg" height="64" />
+  <a href="https://www.synthdata.co/">
+    <img alt="Synth banner logo" src="https://github.com/mode-network/synth-subnet/blob/main/docs/images/banner_logo.svg" height="64" />
   </a>
 </div>
 
