@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 # DEALINGS IN THE SOFTWARE.
 
 
+from dotenv import load_dotenv
 import bittensor as bt
 
 from synth.base.validator import BaseValidatorNeuron
@@ -29,7 +30,7 @@ from synth.utils.helpers import (
     round_time_to_minutes,
     timeout_until,
 )
-from synth.utils.logging import setup_gcp_logging
+from synth.utils.logging import setup_gcp_logging, setup_slack_alert
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_rewards_and_update_scores,
@@ -39,6 +40,9 @@ from synth.validator.forward import (
 )
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
+
+
+load_dotenv()
 
 
 class Validator(BaseValidatorNeuron):
@@ -54,6 +58,7 @@ class Validator(BaseValidatorNeuron):
         super(Validator, self).__init__(config=config)
 
         setup_gcp_logging(self.config.gcp.log_id_prefix)
+        setup_slack_alert()
 
         bt.logging.info("load_state()")
         self.load_state()
