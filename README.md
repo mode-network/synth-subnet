@@ -1,6 +1,6 @@
 <div align="center">
-  <a href="https://mode.network">
-    <img alt="Rounded Mode icon" src="docs/images/banner_logo.svg" height="64" />
+  <a href="https://www.synthdata.co/">
+    <img alt="Synth banner logo" src="https://github.com/mode-network/synth-subnet/blob/main/docs/images/banner_logo.svg" height="64" />
   </a>
 </div>
 
@@ -26,7 +26,7 @@
     </a>
 </div>
 
-<div align="center">
+<div align="center" style="padding-top:10px;">
 
 [![License: MIT](https://img.shields.io/github/license/mode-network/synth-subnet)](https://github.com/mode-network/synth-subnet/blob/main/LICENSE)
 
@@ -34,7 +34,7 @@
 
 ---
 
-### Table Of Contents
+### Table of contents
 
 * [1. Overview](#-1-overview)
   - [1.1. Introduction](#11-introduction)
