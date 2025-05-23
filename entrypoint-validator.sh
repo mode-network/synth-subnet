@@ -24,7 +24,6 @@ python3.10 ./neurons/validator.py \
 		--neuron.axon_off true \
 		--ewma.half_life_days $ewma_half_life_days \
 		--ewma.cutoff_days $ewma_cutoff_days \
-		--ewma.standard_ma_disabled \
 		--softmax.beta $softmax_beta \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
 		--gcp.log_id_prefix $log_id_prefix \
