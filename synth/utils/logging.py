@@ -81,12 +81,18 @@ def setup_gcp_logging(log_id_prefix):
     bt.logging.info(f"setting up GCP log forwarder with log_id: {log_id}")
     try:
         client = google.cloud.logging.Client()
-        client.setup_logging(labels={"log_id": log_id})
     except google.auth.exceptions.GoogleAuthError as e:
         bt.logging.warning(
             f"Failed to set up GCP logging. GoogleAuthError: {e}",
             "log forwarder",
         )
+    else:
+        if log_id_prefix is None:
+            bt.logging.warning(
+                "log_id_prefix is None. GCP logging will not be set up."
+            )
+        else:
+            client.setup_logging(labels={"log_id": log_id})
 
 
 class SlackHandler(logging.Handler):
