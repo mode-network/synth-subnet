@@ -109,27 +109,6 @@ def add_args(cls, parser):
         default=False,
     )
 
-    parser.add_argument(
-        "--wandb.off",
-        action="store_true",
-        help="Turn off wandb.",
-        default=False,
-    )
-
-    parser.add_argument(
-        "--wandb.offline",
-        action="store_true",
-        help="Runs wandb in offline mode.",
-        default=False,
-    )
-
-    parser.add_argument(
-        "--wandb.notes",
-        type=str,
-        help="Notes to add to the wandb run.",
-        default="",
-    )
-
 
 def add_miner_args(cls, parser):
     """Add miner specific arguments to the parser."""
@@ -168,6 +147,13 @@ def add_miner_args(cls, parser):
         nargs="+",
         default=[],
         help="List of validator exceptions (e.g., --blacklist.validator_exceptions 1 3 10)",
+    )
+
+    parser.add_argument(
+        "--wandb.enabled",
+        type=bool,
+        help="Boolean toggle for wandb integration",
+        default=False,
     )
 
     parser.add_argument(
@@ -248,24 +234,9 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
-        "--wandb.enabled",
-        type=bool,
-        help="Boolean toggle for wandb integration",
-        default=False,
-    )
-
-    parser.add_argument(
-        "--wandb.project_name",
+        "--gcp.log_id_prefix",
         type=str,
-        help="The name of the project where you are sending the new run.",
-        default="sn247-validators",
-    )
-
-    parser.add_argument(
-        "--wandb.entity",
-        type=str,
-        help="The name of the project where you are sending the new run.",
-        default="mode-synth",
+        help="The GCP log ID prefix.",
     )
 
     parser.add_argument(

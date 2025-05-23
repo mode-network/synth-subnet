@@ -23,7 +23,6 @@ import asyncio
 
 import bittensor as bt
 import numpy as np
-import wandb
 
 
 from synth.base.validator import BaseValidatorNeuron
@@ -55,9 +54,6 @@ def send_weights_to_bittensor_and_update_weights_history(
     miner_uids = [item["miner_uid"] for item in moving_averages_data]
 
     base_neuron.update_scores(np.array(miner_weights), miner_uids)
-
-    wandb_on = base_neuron.config.wandb.enabled
-    _log_to_wandb(wandb_on, miner_uids, miner_weights)
 
     base_neuron.resync_metagraph()
     result, msg, uint_uids, uint_weights = base_neuron.set_weights()
@@ -286,17 +282,3 @@ def get_available_miners_and_update_metagraph_history(
     random.shuffle(miner_uids)
 
     return miner_uids
-
-
-def _log_to_wandb(wandb_on, miner_uids, rewards):
-    if wandb_on:
-        # Log results to wandb
-        wandb_val_log = {
-            "miners_info": {
-                miner_uid: {
-                    "miner_reward": reward,
-                }
-                for miner_uid, reward in zip(miner_uids, rewards)
-            }
-        }
-        wandb.log(wandb_val_log)

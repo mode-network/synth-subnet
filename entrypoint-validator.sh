@@ -8,13 +8,12 @@ vpermit_tao_limit=999999
 validator_coldkey_name=validator
 validator_hotkey_name=default
 
-ewma_half_life_days=2.0
-ewma_cutoff_days=4
-softmax_beta=-0.003
+ewma_half_life_days=3.5
+ewma_cutoff_days=7
+softmax_beta=-0.0475
 
-wandb_enabled=false
-wandb_project_name=my_wandb_project
-wandb_entity=my_wandb_team
+project_id=my_project_id
+log_id_prefix=my_validator_name
 
 python3.10 ./neurons/validator.py \
 		--wallet.name $validator_coldkey_name \
@@ -28,6 +27,4 @@ python3.10 ./neurons/validator.py \
 		--ewma.standard_ma_disabled \
 		--softmax.beta $softmax_beta \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
-		--wandb.enabled $wandb_enabled \
-		--wandb.project_name $wandb_project_name \
-		--wandb.entity $wandb_entity
+		--gcp.log_id_prefix $log_id_prefix \
