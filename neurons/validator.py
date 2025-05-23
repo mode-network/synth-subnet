@@ -110,7 +110,6 @@ class Validator(BaseValidatorNeuron):
     async def forward_prompt(self):
         # getting current validation time
         request_time = get_current_time()
-        next_iteration = request_time + timedelta(hours=1)
 
         eth_launch_time = datetime(2025, 5, 19, 14, 0, 0, 0, timezone.utc)
         simulation_input_list = (
@@ -121,9 +120,10 @@ class Validator(BaseValidatorNeuron):
 
         async def wait_till_next_simulation():
             # wait until the next simulation
-            wait_time = timeout_until(next_iteration) / len(
-                simulation_input_list
+            next_iteration = request_time + timedelta(
+                minutes=60 / len(simulation_input_list)
             )
+            wait_time = timeout_until(next_iteration)
             bt.logging.info(
                 f"Waiting for {wait_time} seconds until the next simulation",
                 "forward_prompt",
