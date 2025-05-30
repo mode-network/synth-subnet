@@ -109,13 +109,13 @@ The checking prompts sent to the miners will have the format:
 
 Initially prompt parameters will always have the following values:
 - **Start Time ($t_0$)**: 1 minute from the time of the request.
-- **Asset**: BTC
+- **Asset**: BTC, ETH 
 - **Time Increment ($\Delta t$)**: 5 minutes.
 - **Time Horizon ($T$)**: 24 hours.
 - **Number of Simulations ($N_{\text{sim}}$)**: 100.
 
 
-The miner has until the start time to return ($N_{\text{sim}}$) paths, each containing price predictions at times given by:
+Validators will alternate between sending out requests for BTC and ETH predictions, at 30min intervals. The miner has until the start time to return ($N_{\text{sim}}$) paths, each containing price predictions at times given by:
 
 $$
 t_i = t_0 + i \times \Delta t, \quad \text{for }\, i = 0, 1, 2, \dots, N
@@ -150,17 +150,18 @@ where:
 - The first term $\dfrac{1}{N}\sum_{n=1}^N \left| y_n - x \right|$ measures the average absolute difference between the ensemble members and the observation $x$.
 - The second term $\dfrac{1}{2N^2} \sum_{n=1}^N \sum_{m=1}^N \left| y_n - y_m \right|$ accounts for the spread within the ensemble, ensuring the score reflects the ensemble's uncertainty.
 
-
 This formulation allows us to assess the miners' forecasts directly from their simulated paths without the need to construct an explicit probability distribution.
+
+The CRPS values are calculated on the price change in basis points for each interval. This allows the prompt scores to have the same 'units' for all assets, and hence for the smoothed score to be calculated using an EMA over all prompts, irrespective of which asset the prompt corresponds to. 
 
 #### Application to Multiple Time Increments
 
-To comprehensively assess the miners' forecasts, the CRPS is applied to sets of price changes over different time increments. These increments include short-term and long-term intervals (in the case of the initial checking prompt parameters, these will be 5 minutes, 30 minutes, 3 hours, 24 hours).
+To comprehensively assess the miners' forecasts, the CRPS is applied to sets of price changes in basis points over different time increments. These increments include short-term and long-term intervals (in the case of the initial checking prompt parameters, these will be 5 minutes, 30 minutes, 3 hours, 24 hours).
 
 For each time increment:
-- **Predicted Price Changes**: The miners' ensemble forecasts are used to compute predicted price changes over the specified intervals
-- **Observed Price Changes**: The real asset prices are used to calculate the observed price changes over the same intervals. We recommend the validators collect and store the prices by sending requests to the Pyth oracle at each time increment, to be used at the end of the time horizon.
-- **CRPS Calculation**: The CRPS is calculated for each increment by comparing the ensemble of predicted price changes to the observed price change.
+- **Predicted Price Changes**: The miners' ensemble forecasts are used to compute predicted price changes in basis points over the specified intervals
+- **Observed Price Changes**: The real asset prices are used to calculate the observed price changes in basis points over the same intervals. We recommend the validators collect and store the prices by sending requests to the Pyth oracle at each time increment, to be used at the end of the time horizon.
+- **CRPS Calculation**: The CRPS is calculated for each increment by comparing the ensemble of predicted changes in basis points to the observed price change.
   
 The final score for a miner for a single checking prompt is the sum of these CRPS values over all the time increments.
 
