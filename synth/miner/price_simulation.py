@@ -40,12 +40,12 @@ def simulate_single_price_path(
     one_hour = 3600
     dt = time_increment / one_hour
     num_steps = int(time_length / time_increment)
-    std_dev = sigma * np.sqrt(dt)
-    price_change_pcts = np.random.normal(0, std_dev, size=num_steps)
-    cumulative_returns = np.cumprod(1 + price_change_pcts)
-    cumulative_returns = np.insert(cumulative_returns, 0, 1.0)
-    price_path = current_price * cumulative_returns
-    return price_path
+    """ std_dev = sigma * np.sqrt(dt) """
+    z = np.random.normal(0, 1, size=num_steps)
+    forecasted_returns = (np.sqrt(sigma))*z
+    """cumulative_returns = np.insert(cumulative_returns, 0, 1.0) """
+    current_return = np.log(current_price)
+    price_path = np.exp(np.cumsum(forecasted_returns/1000) + current_return)
 
 
 def simulate_crypto_price_paths(
