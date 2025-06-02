@@ -829,7 +829,8 @@ class Synapse(BaseModel):
                     continue
             else:
                 # setting this to warning fills up logs unnecessarily
-                logging.trace(f"Unexpected header key encountered: {key}")
+                # logging.trace(f"Unexpected header key encountered: {key}")
+                pass
 
         # Assign the remaining known headers directly
         inputs_dict["timeout"] = headers.get("timeout", None)

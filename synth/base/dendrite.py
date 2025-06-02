@@ -13,7 +13,7 @@ from bittensor.core.axon import Axon
 from bittensor.core.chain_data import AxonInfo
 from bittensor.core.settings import version_as_int
 from bittensor.core.stream import StreamingSynapse
-from bittensor.core.synapse import Synapse, TerminalInfo
+from synth.base.synapse import Synapse, TerminalInfo
 from bittensor.utils import networking
 from bittensor.utils.btlogging import logging
 from bittensor.utils.registration import torch, use_torch
@@ -55,7 +55,6 @@ class DendriteMixin:
         keypair (Option[Union[bittensor_wallet.Wallet, bittensor_wallet.Keypair]]): The wallet or keypair used for
             signing messages.
         external_ip (str): The external IP address of the local system.
-        synapse_history (list): A list of Synapse objects representing the historical responses.
 
     Methods:
         __str__(): Returns a string representation of the Dendrite object.
@@ -120,8 +119,6 @@ class DendriteMixin:
         self.keypair = (
             wallet.hotkey if isinstance(wallet, Wallet) else wallet
         ) or Wallet().hotkey
-
-        self.synapse_history: list = []
 
         self._session: Optional[aiohttp.ClientSession] = None
 
@@ -614,6 +611,9 @@ class DendriteMixin:
                 # Extract the JSON response from the server
                 json_response = await response.json()
                 # Process the server response and fill synapse
+                logging.trace(
+                    f"response just arrived | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)}"
+                )
                 self.process_server_response(response, json_response, synapse)
 
             # Set process time and log the response
@@ -625,13 +625,8 @@ class DendriteMixin:
         finally:
             self._log_incoming_response(synapse)
 
-            # Log synapse event history
-            self.synapse_history.append(
-                Synapse.from_headers(synapse.to_headers())
-            )
-
             # Return the updated synapse object after deserializing if requested
-            return synapse.deserialize() if deserialize else synapse
+            return synapse
 
     async def call_stream(
         self,
@@ -709,11 +704,6 @@ class DendriteMixin:
 
         finally:
             self._log_incoming_response(synapse)
-
-            # Log synapse event history
-            self.synapse_history.append(
-                Synapse.from_headers(synapse.to_headers())
-            )
 
             # Return the updated synapse object after deserializing if requested
             if deserialize:
