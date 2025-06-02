@@ -225,6 +225,7 @@ async def _query_miner(
             axons=base_neuron.metagraph.axons[uid],
             synapse=synapse,
             timeout=timeout,
+            run_async=False,
             deserialize=False,
         )
     return result
