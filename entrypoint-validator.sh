@@ -12,7 +12,6 @@ ewma_half_life_days=3.5
 ewma_cutoff_days=7
 softmax_beta=-0.0475
 
-project_id=my_project_id
 log_id_prefix=my_validator_name
 
 python3.10 ./neurons/validator.py \

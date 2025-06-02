@@ -193,6 +193,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env*.local
 .venv
 env/
 venv/
@@ -246,3 +247,6 @@ prediction*.json
 
 miner.*local.config.js
 validator.*local.config.js
+
+# GCP
+google-credentials.json
