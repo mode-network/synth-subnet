@@ -28,7 +28,6 @@ import bittensor as bt
 from typing import List, Union
 from traceback import print_exception
 
-from synth.base.dendrite import Dendrite
 from synth.base.neuron import BaseNeuron
 from synth.base.utils.weight_utils import (
     process_weights_for_netuid,
@@ -56,7 +55,7 @@ class BaseValidatorNeuron(BaseNeuron):
         self.hotkeys = copy.deepcopy(self.metagraph.hotkeys)
 
         # Dendrite lets us send messages to other nodes (axons) in the network.
-        self.dendrite = Dendrite(wallet=self.wallet)
+        self.dendrite = bt.Dendrite(wallet=self.wallet)
         bt.logging.info(f"Dendrite: {self.dendrite}")
 
         # Set up initial scoring weights for validation
