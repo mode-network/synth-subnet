@@ -188,7 +188,7 @@ async def query_available_miners_and_save_responses(
         timeout=timeout,
         run_async=True,
         deserialize=False,
-        use_thread_pool=True,
+        use_thread_pool=False,
     )
 
     miner_predictions = {}

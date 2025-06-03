@@ -1,14 +1,23 @@
+import sys
+import traceback
 from typing import Optional, Union
 import time
 import asyncio
+import uuid
 import aiohttp
 import concurrent.futures
 
 
 import bittensor as bt
 from bittensor_wallet import Keypair, Wallet
+import httpx
+import uvloop
+
 
 from synth.protocol import Simulation
+
+
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 
 class SynthDendrite(bt.Dendrite):
@@ -233,17 +242,25 @@ class SynthDendrite(bt.Dendrite):
             # Log outgoing request
             self._log_outgoing_request(synapse)
 
-            # Make the HTTP POST request
-            async with (await self.session).post(
-                url=url,
-                headers=synapse.to_headers(),
-                json=synapse.model_dump(),
-                timeout=aiohttp.ClientTimeout(total=timeout),
-            ) as response:
+            async with httpx.AsyncClient(
+                http2=True, limits=httpx.Limits(max_connections=None)
+            ) as client:
+                # Make the HTTP POST request
+                response = await client.post(
+                    url=url,
+                    headers=synapse.to_headers(),
+                    json=synapse.model_dump(),
+                    timeout=timeout,
+                )
+                response.raise_for_status()
                 # Extract the JSON response from the server
-                json_response = await response.json()
+                json_response = response.json()
                 # Process the server response and fill synapse
-                self.process_server_response(response, json_response, synapse)
+                status = response.status_code
+                headers = response.headers
+                self.process_server_response(
+                    status, headers, json_response, synapse
+                )
 
             # Set process time and log the response
             synapse.dendrite.process_time = str(time.time() - start_time)  # type: ignore
@@ -256,3 +273,91 @@ class SynthDendrite(bt.Dendrite):
 
             # Return the updated synapse object after deserializing if requested
             return synapse
+
+    def process_server_response(
+        self, status, headers, json_response: dict, local_synapse: Simulation
+    ):
+        """
+        Processes the server response, updates the local synapse state with the server's state and merges headers set
+        by the server.
+
+        Args:
+            json_response (dict): The parsed JSON response from the server.
+            local_synapse (bittensor.core.synapse.Synapse): The local synapse object to be updated.
+
+        Raises:
+            None: But errors in attribute setting are silently ignored.
+        """
+        # Check if the server responded with a successful status code
+        if status == 200:
+            # If the response is successful, overwrite local synapse state with
+            # server's state only if the protocol allows mutation. To prevent overwrites,
+            # the protocol must set Frozen = True
+            server_synapse = local_synapse.__class__(**json_response)
+            for key in local_synapse.model_dump().keys():
+                try:
+                    # Set the attribute in the local synapse from the corresponding
+                    # attribute in the server synapse
+                    setattr(local_synapse, key, getattr(server_synapse, key))
+                except Exception:
+                    # Ignore errors during attribute setting
+                    pass
+        else:
+            # If the server responded with an error, update the local synapse state
+            if local_synapse.axon is None:
+                local_synapse.axon = bt.TerminalInfo()
+            local_synapse.axon.status_code = status
+            local_synapse.axon.status_message = json_response.get("message")
+
+        # Extract server headers and overwrite None values in local synapse headers
+        server_headers = bt.Synapse.from_headers(headers)  # type: ignore
+
+        # Merge dendrite headers
+        local_synapse.dendrite.__dict__.update(
+            {
+                **local_synapse.dendrite.model_dump(exclude_none=True),  # type: ignore
+                **server_headers.dendrite.model_dump(exclude_none=True),  # type: ignore
+            }
+        )
+
+        # Merge axon headers
+        local_synapse.axon.__dict__.update(
+            {
+                **local_synapse.axon.model_dump(exclude_none=True),  # type: ignore
+                **server_headers.axon.model_dump(exclude_none=True),  # type: ignore
+            }
+        )
+
+        # Update the status code and status message of the dendrite to match the axon
+        local_synapse.dendrite.status_code = local_synapse.axon.status_code  # type: ignore
+        local_synapse.dendrite.status_message = local_synapse.axon.status_message  # type: ignore
+
+    def log_exception(self, exception: Exception):
+        """
+        Logs an exception with a unique identifier.
+
+        This method generates a unique UUID for the error, extracts the error type,
+        and logs the error message using Bittensor's logging system.
+
+        Args:
+            exception (Exception): The exception object to be logged.
+
+        Returns:
+            None
+        """
+        error_id = str(uuid.uuid4())
+        error_type = exception.__class__.__name__
+        if isinstance(
+            exception,
+            (
+                aiohttp.ClientOSError,
+                asyncio.TimeoutError,
+                httpx.ConnectError,
+                httpx.ReadError,
+                httpx.HTTPStatusError,
+            ),
+        ):
+            bt.logging.debug(f"{error_type}#{error_id}: {exception}")
+        else:
+            bt.logging.error(f"{error_type}#{error_id}: {exception}")
+            traceback.print_exc(file=sys.stderr)
