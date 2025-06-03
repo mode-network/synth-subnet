@@ -24,6 +24,7 @@ import bittensor as bt
 import numpy as np
 
 
+from synth.base.dendrite_multiprocess import sync_forward_multiprocess
 from synth.base.validator import BaseValidatorNeuron
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
@@ -182,14 +183,24 @@ async def query_available_miners_and_save_responses(
     # ======================================================
 
     axons = [base_neuron.metagraph.axons[uid] for uid in miner_uids]
-    synapses = await base_neuron.dendrite.forward(
-        axons=axons,
-        synapse=synapse,
-        timeout=timeout,
-        run_async=True,
-        deserialize=False,
-        use_thread_pool=False,
-    )
+
+    use_multiprocess = True
+
+    if use_multiprocess:
+        synapses = sync_forward_multiprocess(
+            base_neuron.dendrite.keypair,
+            base_neuron.dendrite.uuid,
+            base_neuron.dendrite.external_ip,
+            axons,
+            synapse,
+            timeout,
+        )
+    else:
+        synapses = await base_neuron.dendrite.forward(
+            axons=axons,
+            synapse=synapse,
+            timeout=timeout,
+        )
 
     miner_predictions = {}
     for i, synapse in enumerate(synapses):
