@@ -1,10 +1,14 @@
 from typing import Optional, Union
+import time
+import asyncio
 import aiohttp
 import concurrent.futures
 
 
 import bittensor as bt
 from bittensor_wallet import Keypair, Wallet
+
+from synth.protocol import Simulation
 
 
 class SynthDendrite(bt.Dendrite):
@@ -17,16 +21,15 @@ class SynthDendrite(bt.Dendrite):
     async def forward(
         self,
         axons: Union[
-            list[Union["AxonInfo", "Axon"]], Union["AxonInfo", "Axon"]
+            list[Union[bt.AxonInfo, bt.Axon]], Union[bt.AxonInfo, bt.Axon]
         ],
-        synapse: "Synapse" = Synapse(),
+        synapse: Simulation,
         timeout: float = 12,
         deserialize: bool = True,
         run_async: bool = True,
         streaming: bool = False,
-    ) -> list[
-        Union["AsyncGenerator[Any, Any]", "Synapse", "StreamingSynapse"]
-    ]:
+        use_thread_pool: bool = False,
+    ) -> list[Simulation]:
         """
         Asynchronously sends requests to one or multiple Axons and collates their responses.
 
@@ -87,16 +90,18 @@ class SynthDendrite(bt.Dendrite):
             axons = [axons]
 
         # Check if synapse is an instance of the StreamingSynapse class or if streaming flag is set.
-        is_streaming_subclass = issubclass(synapse.__class__, StreamingSynapse)
+        is_streaming_subclass = issubclass(
+            synapse.__class__, bt.StreamingSynapse
+        )
         if streaming != is_streaming_subclass:
-            logging.warning(
+            bt.logging.warning(
                 f"Argument streaming is {streaming} while issubclass(synapse, StreamingSynapse) is {synapse.__class__.__name__}. This may cause unexpected behavior."
             )
         streaming = is_streaming_subclass or streaming
 
         async def query_all_axons(
             is_stream: bool,
-        ) -> Union["AsyncGenerator[Any, Any]", "Synapse", "StreamingSynapse"]:
+        ):
             """
             Handles the processing of requests to all targeted axons, accommodating both streaming and non-streaming responses.
 
@@ -115,10 +120,8 @@ class SynthDendrite(bt.Dendrite):
             """
 
             async def single_axon_response(
-                target_axon: Union["AxonInfo", "Axon"],
-            ) -> Union[
-                "AsyncGenerator[Any, Any]", "Synapse", "StreamingSynapse"
-            ]:
+                target_axon: Union[bt.AxonInfo, bt.Axon],
+            ) -> Simulation:
                 """
                 Manages the request and response process for a single axon, supporting both streaming and non-streaming modes.
 
@@ -155,12 +158,26 @@ class SynthDendrite(bt.Dendrite):
                     )
 
             # If run_async flag is False, get responses one by one.
+            # If run_async flag is True, get responses concurrently using asyncio.gather().
             if not run_async:
                 return [
                     await single_axon_response(target_axon)
                     for target_axon in axons
                 ]  # type: ignore
-            # If run_async flag is True, get responses concurrently using asyncio.gather().
+
+            if use_thread_pool:
+                with self.thread_pool as executor:
+                    loop = asyncio.get_event_loop()
+                    tasks = [
+                        loop.run_in_executor(
+                            executor, lambda: single_axon_response(target_axon)
+                        )
+                        for target_axon in axons
+                    ]
+                    results = await asyncio.gather(*tasks)
+
+                return results
+
             return await asyncio.gather(
                 *(single_axon_response(target_axon) for target_axon in axons)
             )  # type: ignore
@@ -172,11 +189,11 @@ class SynthDendrite(bt.Dendrite):
 
     async def call(
         self,
-        target_axon: Union["AxonInfo", "Axon"],
-        synapse: "Synapse" = Synapse(),
+        target_axon: Union[bt.AxonInfo, bt.Axon],
+        synapse: Simulation,
         timeout: float = 12.0,
         deserialize: bool = True,
-    ) -> "Synapse":
+    ) -> Simulation:
         """
         Asynchronously sends a request to a specified Axon and processes the response.
 
@@ -199,7 +216,7 @@ class SynthDendrite(bt.Dendrite):
         start_time = time.time()
         target_axon = (
             target_axon.info()
-            if isinstance(target_axon, Axon)
+            if isinstance(target_axon, bt.Axon)
             else target_axon
         )
 
@@ -237,18 +254,5 @@ class SynthDendrite(bt.Dendrite):
         finally:
             self._log_incoming_response(synapse)
 
-            # Log synapse event history
-            self.synapse_history.append(
-                Synapse.from_headers(synapse.to_headers())
-            )
-
             # Return the updated synapse object after deserializing if requested
-            return synapse.deserialize() if deserialize else synapse
-
-    def process_server_response(
-        self,
-        server_response: aiohttp.ClientResponse,
-        json_response: dict,
-        local_synapse: bt.Synapse,
-    ):
-        bt.logging.trace("skipping dendrite processing for synth dendrite")
+            return synapse
