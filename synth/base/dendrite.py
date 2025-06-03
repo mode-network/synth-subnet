@@ -275,7 +275,7 @@ class SynthDendrite(bt.Dendrite):
             return synapse
 
     def process_server_response(
-        self, status, headers, json_response: dict, local_synapse: Simulation
+        self, status, _, json_response: dict, local_synapse: Simulation
     ):
         """
         Processes the server response, updates the local synapse state with the server's state and merges headers set
@@ -308,25 +308,6 @@ class SynthDendrite(bt.Dendrite):
                 local_synapse.axon = bt.TerminalInfo()
             local_synapse.axon.status_code = status
             local_synapse.axon.status_message = json_response.get("message")
-
-        # Extract server headers and overwrite None values in local synapse headers
-        server_headers = bt.Synapse.from_headers(headers)  # type: ignore
-
-        # Merge dendrite headers
-        local_synapse.dendrite.__dict__.update(
-            {
-                **local_synapse.dendrite.model_dump(exclude_none=True),  # type: ignore
-                **server_headers.dendrite.model_dump(exclude_none=True),  # type: ignore
-            }
-        )
-
-        # Merge axon headers
-        local_synapse.axon.__dict__.update(
-            {
-                **local_synapse.axon.model_dump(exclude_none=True),  # type: ignore
-                **server_headers.axon.model_dump(exclude_none=True),  # type: ignore
-            }
-        )
 
         # Update the status code and status message of the dendrite to match the axon
         local_synapse.dendrite.status_code = local_synapse.axon.status_code  # type: ignore
