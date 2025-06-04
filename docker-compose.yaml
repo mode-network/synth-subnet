@@ -19,7 +19,7 @@ services:
       context: .
       dockerfile: Dockerfile.migrations
     env_file:
-      - .env.validator
+      - .env.validator.local
     environment:
       POSTGRES_HOST: postgres
     depends_on:
@@ -30,7 +30,7 @@ services:
     container_name: postgres
     image: postgres:15.8
     env_file:
-      - .env.validator
+      - .env.validator.local
     ports:
       - "5432:5432"
     volumes:
