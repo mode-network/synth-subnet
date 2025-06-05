@@ -12,6 +12,7 @@ from itertools import repeat
 import bittensor as bt
 from bittensor.core.settings import version_as_int
 
+from synth.base.dendrite import log_exception
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
 
@@ -24,6 +25,7 @@ def silent_thread_hook(args):
     sys.__excepthook__(args.exc_type, args.exc_value, args.exc_traceback)
 
 
+# Silent EOFError
 threading.excepthook = silent_thread_hook
 
 
@@ -45,8 +47,11 @@ if hasattr(logging.handlers, "QueueListener"):
     logging.handlers.QueueListener._monitor = safe_monitor
 
 
+REQUEST_NAME = "Simulation"
+
+
 def get_endpoint_url(
-    external_ip: str, target_axon: bt.Axon, request_name: str = "Simulation"
+    external_ip: str, target_axon: bt.Axon, request_name: str = REQUEST_NAME
 ):
     endpoint = (
         f"0.0.0.0:{str(target_axon.port)}"
@@ -128,6 +133,34 @@ def process_server_response(
     local_synapse.dendrite.status_message = local_synapse.axon.status_message  # type: ignore
 
 
+def process_error_message(
+    synapse: Simulation,
+    request_name: str,
+    exception: Exception,
+) -> Simulation:
+    log_exception(exception)
+
+    error_info = bt.core.dendrite.DENDRITE_ERROR_MAPPING.get(
+        type(exception), bt.core.dendrite.DENDRITE_DEFAULT_ERROR
+    )
+    status_code, status_message = error_info
+
+    if status_code:
+        synapse.dendrite.status_code = status_code  # type: ignore
+    elif isinstance(exception, aiohttp.ClientResponseError):
+        synapse.dendrite.status_code = str(exception.code)  # type: ignore
+
+    message = f"{status_message}: {str(exception)}"
+    if isinstance(exception, aiohttp.ClientConnectorError):
+        message = f"{status_message} at {synapse.axon.ip}:{synapse.axon.port}/{request_name}"  # type: ignore
+    elif isinstance(exception, asyncio.TimeoutError):
+        message = f"{status_message} after {synapse.timeout} seconds"
+
+    synapse.dendrite.status_message = message  # type: ignore
+
+    return synapse
+
+
 async def call(
     ss58_address: str,
     nonce: int,
@@ -178,8 +211,8 @@ async def call(
 
         synapse.dendrite.process_time = str(time.time() - start_time)  # type: ignore
 
-    except Exception:
-        pass
+    except Exception as e:
+        synapse = process_error_message(synapse, REQUEST_NAME, e)
 
     finally:
         bt.logging.trace(
