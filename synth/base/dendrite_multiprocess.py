@@ -12,9 +12,11 @@ from itertools import repeat
 import bittensor as bt
 from bittensor.core.settings import version_as_int
 
+
 from synth.base.dendrite import log_exception
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
+from synth.utils.logging import setup_log_filter
 
 
 def silent_thread_hook(args):
@@ -23,10 +25,6 @@ def silent_thread_hook(args):
         return
     # Fall back to default
     sys.__excepthook__(args.exc_type, args.exc_value, args.exc_traceback)
-
-
-# Silent EOFError
-threading.excepthook = silent_thread_hook
 
 
 def safe_monitor(self):
@@ -110,27 +108,27 @@ def process_server_response(
         local_synapse.axon.status_message = json_response.get("message")
 
     # Extract server headers and overwrite None values in local synapse headers
-    server_headers = bt.Synapse.from_headers(server_response.headers)  # type: ignore
+    server_headers = bt.Synapse.from_headers(server_response.headers)
 
     # Merge dendrite headers
     local_synapse.dendrite.__dict__.update(
         {
-            **local_synapse.dendrite.model_dump(exclude_none=True),  # type: ignore
-            **server_headers.dendrite.model_dump(exclude_none=True),  # type: ignore
+            **local_synapse.dendrite.model_dump(exclude_none=True),
+            **server_headers.dendrite.model_dump(exclude_none=True),
         }
     )
 
     # Merge axon headers
     local_synapse.axon.__dict__.update(
         {
-            **local_synapse.axon.model_dump(exclude_none=True),  # type: ignore
-            **server_headers.axon.model_dump(exclude_none=True),  # type: ignore
+            **local_synapse.axon.model_dump(exclude_none=True),
+            **server_headers.axon.model_dump(exclude_none=True),
         }
     )
 
     # Update the status code and status message of the dendrite to match the axon
-    local_synapse.dendrite.status_code = local_synapse.axon.status_code  # type: ignore
-    local_synapse.dendrite.status_message = local_synapse.axon.status_message  # type: ignore
+    local_synapse.dendrite.status_code = local_synapse.axon.status_code
+    local_synapse.dendrite.status_message = local_synapse.axon.status_message
 
 
 def process_error_message(
@@ -146,17 +144,17 @@ def process_error_message(
     status_code, status_message = error_info
 
     if status_code:
-        synapse.dendrite.status_code = status_code  # type: ignore
+        synapse.dendrite.status_code = status_code
     elif isinstance(exception, aiohttp.ClientResponseError):
-        synapse.dendrite.status_code = str(exception.code)  # type: ignore
+        synapse.dendrite.status_code = str(exception.code)
 
     message = f"{status_message}: {str(exception)}"
     if isinstance(exception, aiohttp.ClientConnectorError):
-        message = f"{status_message} at {synapse.axon.ip}:{synapse.axon.port}/{request_name}"  # type: ignore
+        message = f"{status_message} at {synapse.axon.ip}:{synapse.axon.port}/{request_name}"
     elif isinstance(exception, asyncio.TimeoutError):
         message = f"{status_message} after {synapse.timeout} seconds"
 
-    synapse.dendrite.status_message = message  # type: ignore
+    synapse.dendrite.status_message = message
 
     return synapse
 
@@ -360,3 +358,10 @@ def sync_forward_multiprocess(
                 results.append(synapse_result.model_copy())
 
     return results
+
+
+# Setup logging filter to ignore unwanted logs
+setup_log_filter("Unexpected header key encountered")
+
+# Silent EOFError
+threading.excepthook = silent_thread_hook
