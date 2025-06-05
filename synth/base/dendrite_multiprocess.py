@@ -11,6 +11,8 @@ from itertools import repeat
 
 import bittensor as bt
 from bittensor.core.settings import version_as_int
+import httpx
+import uvloop
 
 
 from synth.base.dendrite import log_exception
@@ -88,12 +90,13 @@ def preprocess_synapse_for_request(
 
 
 def process_server_response(
-    server_response: aiohttp.ClientResponse,
+    status: int,
+    headers: httpx.Headers,
     json_response: dict,
     local_synapse: Simulation,
 ):
     # Check if the server responded with a successful status code
-    if server_response.status == 200:
+    if status == 200:
         # If the response is successful, overwrite local synapse state with
         # server's state only if the protocol allows mutation. To prevent overwrites,
         # the protocol must set Frozen = True
@@ -104,11 +107,11 @@ def process_server_response(
         # If the server responded with an error, update the local synapse state
         if local_synapse.axon is None:
             local_synapse.axon = bt.TerminalInfo()
-        local_synapse.axon.status_code = server_response.status
+        local_synapse.axon.status_code = status
         local_synapse.axon.status_message = json_response.get("message")
 
     # Extract server headers and overwrite None values in local synapse headers
-    server_headers = bt.Synapse.from_headers(server_response.headers)
+    server_headers = bt.Synapse.from_headers(headers)
 
     # Merge dendrite headers
     local_synapse.dendrite.__dict__.update(
@@ -165,7 +168,7 @@ async def call(
     signature: str,
     uuid: str,
     external_ip: str,
-    session: aiohttp.ClientSession,
+    client: httpx.AsyncClient,
     target_axon: Union[bt.AxonInfo, bt.Axon],
     synapse_headers: dict,
     synapse_body: dict,
@@ -198,16 +201,19 @@ async def call(
         bt.logging.trace(
             f"dendrite | --> | {synapse.get_total_size()} B | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)} | 0 | Success"
         )
-        async with session.post(
+        response = await client.post(
             url=url,
             headers=synapse.to_headers(),
             json=synapse_body,
-            timeout=aiohttp.ClientTimeout(total=timeout),
-        ) as response:
-            json_response = await response.json()
-            process_server_response(response, json_response, synapse)
+            timeout=timeout,
+        )
+        response.raise_for_status()
+        json_response = response.json()
+        process_server_response(
+            response.status_code, response.headers, json_response, synapse
+        )
 
-        synapse.dendrite.process_time = str(time.time() - start_time)  # type: ignore
+        synapse.dendrite.process_time = str(time.time() - start_time)
 
     except Exception as e:
         synapse = process_error_message(synapse, REQUEST_NAME, e)
@@ -230,8 +236,9 @@ async def worker(
     axon_sig_pairs: list,
     timeout: float,
 ):
-    conn = aiohttp.TCPConnector(limit=0)  # no per-host limit
-    async with aiohttp.ClientSession(connector=conn) as sessions:
+    async with httpx.AsyncClient(
+        http2=True, limits=httpx.Limits(max_connections=None)
+    ) as client:
         return await asyncio.gather(
             *(
                 call(
@@ -240,7 +247,7 @@ async def worker(
                     signature=signature,
                     uuid=uuid,
                     external_ip=external_ip,
-                    session=sessions,
+                    client=client,
                     target_axon=bt.AxonInfo.from_parameter_dict(
                         axon_dict,
                     ),
@@ -359,6 +366,9 @@ def sync_forward_multiprocess(
 
     return results
 
+
+# Set the event loop policy to use uvloop for better performance
+asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 # Setup logging filter to ignore unwanted logs
 setup_log_filter("Unexpected header key encountered")
