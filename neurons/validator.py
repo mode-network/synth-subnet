@@ -99,8 +99,6 @@ class Validator(BaseValidatorNeuron):
         - Rewarding the miners
         - Updating the scores
         """
-        self.miner_data_handler.print_miner_scores_duplicates()
-
         bt.logging.info("calling forward_validator()")
         return [
             asyncio.create_task(self.forward_prompt()),
