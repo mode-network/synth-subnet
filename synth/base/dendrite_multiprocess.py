@@ -4,7 +4,6 @@ import logging.handlers
 import time
 from typing import Union
 import asyncio
-import aiohttp
 import concurrent.futures
 from itertools import repeat
 
@@ -15,7 +14,7 @@ import httpx
 import uvloop
 
 
-from synth.base.dendrite import log_exception
+from synth.base.dendrite import process_error_message
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
 from synth.utils.logging import setup_log_filter
@@ -134,34 +133,6 @@ def process_server_response(
     local_synapse.dendrite.status_message = local_synapse.axon.status_message
 
 
-def process_error_message(
-    synapse: Simulation,
-    request_name: str,
-    exception: Exception,
-) -> Simulation:
-    log_exception(exception)
-
-    error_info = bt.core.dendrite.DENDRITE_ERROR_MAPPING.get(
-        type(exception), bt.core.dendrite.DENDRITE_DEFAULT_ERROR
-    )
-    status_code, status_message = error_info
-
-    if status_code:
-        synapse.dendrite.status_code = status_code
-    elif isinstance(exception, aiohttp.ClientResponseError):
-        synapse.dendrite.status_code = str(exception.code)
-
-    message = f"{status_message}: {str(exception)}"
-    if isinstance(exception, aiohttp.ClientConnectorError):
-        message = f"{status_message} at {synapse.axon.ip}:{synapse.axon.port}/{request_name}"
-    elif isinstance(exception, asyncio.TimeoutError):
-        message = f"{status_message} after {synapse.timeout} seconds"
-
-    synapse.dendrite.status_message = message
-
-    return synapse
-
-
 async def call(
     ss58_address: str,
     nonce: int,
@@ -205,7 +176,6 @@ async def call(
             url=url,
             headers=synapse.to_headers(),
             json=synapse_body,
-            timeout=timeout,
         )
         response.raise_for_status()
         json_response = response.json()
@@ -237,7 +207,11 @@ async def worker(
     timeout: float,
 ):
     async with httpx.AsyncClient(
-        http2=True, limits=httpx.Limits(max_connections=None)
+        http2=True,
+        limits=httpx.Limits(
+            max_connections=None, max_keepalive_connections=25
+        ),
+        timeout=timeout,
     ) as client:
         return await asyncio.gather(
             *(
