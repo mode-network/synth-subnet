@@ -99,8 +99,6 @@ class Validator(BaseValidatorNeuron):
         - Rewarding the miners
         - Updating the scores
         """
-        self.miner_data_handler.print_miner_scores_duplicates()
-
         bt.logging.info("calling forward_validator()")
         return [
             asyncio.create_task(self.forward_prompt()),
@@ -125,7 +123,7 @@ class Validator(BaseValidatorNeuron):
             )
             wait_time = timeout_until(next_iteration)
             bt.logging.info(
-                f"Waiting for {wait_time} seconds until the next simulation",
+                f"Waiting for {wait_time/60} minutes until the next simulation",
                 "forward_prompt",
             )
             await asyncio.sleep(wait_time)
@@ -184,7 +182,7 @@ class Validator(BaseValidatorNeuron):
             # wait until the next iteration
             wait_time = timeout_until(next_iteration)
             bt.logging.info(
-                f"Waiting for {wait_time} seconds until the next iteration",
+                f"Waiting for {wait_time/60} minutes until the next iteration",
                 "forward_score",
             )
             await asyncio.sleep(wait_time)
@@ -198,7 +196,7 @@ class Validator(BaseValidatorNeuron):
         # wait until the score_time
         wait_time = timeout_until(scored_time)
         bt.logging.info(
-            f"Waiting for {wait_time} seconds to start validating",
+            f"Waiting for {wait_time/60} minutes to start validating",
             "forward_score",
         )
         await asyncio.sleep(wait_time)

@@ -16,3 +16,6 @@ wandb>=0.19.4
 tenacity==9.0.0
 google-cloud-logging==3.12.1
 slack_sdk==3.35.0
+uvloop==0.21.0
+httpx==0.28.1
+httpx[http2]
