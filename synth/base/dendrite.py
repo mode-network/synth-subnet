@@ -115,11 +115,19 @@ class SynthDendrite(bt.Dendrite):
             async def single_axon_response(
                 target_axon: Union[bt.AxonInfo, bt.Axon],
             ) -> Simulation:
-                return await self.call_http2(
-                    target_axon=target_axon,
-                    synapse=synapse.model_copy(),  # type: ignore
+                async with httpx.AsyncClient(
+                    http2=True,
+                    limits=httpx.Limits(
+                        max_connections=None, max_keepalive_connections=25
+                    ),
                     timeout=timeout,
-                )
+                ) as client:
+                    return await self.call_http2(
+                        client=client,
+                        target_axon=target_axon,
+                        synapse=synapse.model_copy(),  # type: ignore
+                        timeout=timeout,
+                    )
 
             # If run_async flag is False, get responses one by one.
             # If run_async flag is True, get responses concurrently using asyncio.gather().
@@ -140,6 +148,7 @@ class SynthDendrite(bt.Dendrite):
 
     async def call_http2(
         self,
+        client: httpx.AsyncClient,
         target_axon: Union[bt.AxonInfo, bt.Axon],
         synapse: Simulation,
         timeout: float = 12.0,
@@ -165,25 +174,22 @@ class SynthDendrite(bt.Dendrite):
             # Log outgoing request
             self._log_outgoing_request(synapse)
 
-            async with httpx.AsyncClient(
-                http2=True, limits=httpx.Limits(max_connections=None)
-            ) as client:
-                # Make the HTTP POST request
-                response = await client.post(
-                    url=url,
-                    headers=synapse.to_headers(),
-                    json=synapse.model_dump(),
-                    timeout=timeout,
-                )
-                response.raise_for_status()
-                # Extract the JSON response from the server
-                json_response = response.json()
-                # Process the server response and fill synapse
-                status = response.status_code
-                headers = response.headers
-                self.process_server_response(
-                    status, headers, json_response, synapse
-                )
+            # Make the HTTP POST request
+            response = await client.post(
+                url=url,
+                headers=synapse.to_headers(),
+                json=synapse.model_dump(),
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            # Extract the JSON response from the server
+            json_response = response.json()
+            # Process the server response and fill synapse
+            status = response.status_code
+            headers = response.headers
+            self.process_server_response(
+                status, headers, json_response, synapse
+            )
 
             # Set process time and log the response
             synapse.dendrite.process_time = str(time.time() - start_time)  # type: ignore
