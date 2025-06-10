@@ -135,3 +135,19 @@ def setup_slack_alert():
     slack_handler.setFormatter(formatter)
 
     bt.logging._logger.addHandler(slack_handler)
+
+
+class SubstringFilter(logging.Filter):
+    def __init__(self, forbidden):
+        super().__init__()
+        self.forbidden = forbidden
+
+    def filter(self, record):
+        # keep only those records whose formatted message does *not* contain the substring
+        return self.forbidden not in record.getMessage()
+
+
+def setup_log_filter(forbidden_substring):
+    logging.getLogger("bittensor").addFilter(
+        SubstringFilter(forbidden_substring)
+    )

@@ -18,13 +18,13 @@
 
 from datetime import datetime, timedelta
 import random
-import asyncio
 
 
 import bittensor as bt
 import numpy as np
 
 
+from synth.base.dendrite_multiprocess import sync_forward_multiprocess
 from synth.base.validator import BaseValidatorNeuron
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
@@ -182,14 +182,25 @@ async def query_available_miners_and_save_responses(
     # axon is a server application that accepts requests on the miner side
     # ======================================================
 
-    semaphore = asyncio.Semaphore(16)
-    uid_to_query_task = {
-        uid: asyncio.create_task(
-            _query_miner(semaphore, base_neuron, synapse, uid, timeout)
+    axons = [base_neuron.metagraph.axons[uid] for uid in miner_uids]
+
+    use_multiprocess = True
+
+    if use_multiprocess:
+        synapses = sync_forward_multiprocess(
+            base_neuron.dendrite.keypair,
+            base_neuron.dendrite.uuid,
+            base_neuron.dendrite.external_ip,
+            axons,
+            synapse,
+            timeout,
         )
-        for uid in miner_uids
-    }
-    synapses = await asyncio.gather(*uid_to_query_task.values())
+    else:
+        synapses = await base_neuron.dendrite.forward(
+            axons=axons,
+            synapse=synapse,
+            timeout=timeout,
+        )
 
     miner_predictions = {}
     for i, synapse in enumerate(synapses):
@@ -211,23 +222,6 @@ async def query_available_miners_and_save_responses(
         )
     else:
         bt.logging.info("skip saving because no prediction")
-
-
-async def _query_miner(
-    semaphore: asyncio.Semaphore,
-    base_neuron: BaseValidatorNeuron,
-    synapse: bt.Synapse,
-    uid: int,
-    timeout: float,
-) -> bt.Synapse:
-    async with semaphore:
-        result = await base_neuron.dendrite.forward(
-            axons=base_neuron.metagraph.axons[uid],
-            synapse=synapse,
-            timeout=timeout,
-            deserialize=False,
-        )
-    return result
 
 
 def get_available_miners_and_update_metagraph_history(
