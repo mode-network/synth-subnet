@@ -4,12 +4,8 @@ import time
 
 def downloadtest(url):
     starttime = time.time()
-    response = requests.get(url, stream=True)
-    totaldownloaded = 0
-
-    for chunk in response.iter_content(chunk_size=1024):
-        if chunk:
-            totaldownloaded += len(chunk)
+    response = requests.get(url)
+    totaldownloaded = len(response.content)
 
     endtime = time.time()
     elapsedtime = endtime - starttime
