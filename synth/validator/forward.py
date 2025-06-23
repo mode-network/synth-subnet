@@ -18,6 +18,7 @@
 
 from datetime import datetime, timedelta
 import random
+import time
 
 
 import bittensor as bt
@@ -185,6 +186,7 @@ async def query_available_miners_and_save_responses(
     axons = [base_neuron.metagraph.axons[uid] for uid in miner_uids]
 
     use_multiprocess = True
+    start_time = time.time()
 
     if use_multiprocess:
         synapses = sync_forward_multiprocess(
@@ -201,6 +203,9 @@ async def query_available_miners_and_save_responses(
             synapse=synapse,
             timeout=timeout,
         )
+
+    total_process_time = str(time.time() - start_time)
+    bt.logging.debug(f"Forwarding took {total_process_time} seconds")
 
     miner_predictions = {}
     for i, synapse in enumerate(synapses):
