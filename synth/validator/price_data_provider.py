@@ -17,7 +17,7 @@ from synth.utils.helpers import from_iso_to_unix_time
 # Pyth API benchmarks doc: https://benchmarks.pyth.network/docs
 # get the list of stocks supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_stock
 # get the list of crypto supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_crypto
-# get the ticket: https://benchmarks.pyth.network/v1/shims/tradingview/symbols?symbol=CSPX
+# get the ticket: https://benchmarks.pyth.network/v1/shims/tradingview/symbols?symbol=Metal.XAU/USD
 
 
 class PriceDataProvider:
@@ -26,7 +26,7 @@ class PriceDataProvider:
     TOKEN_MAP = {
         "BTC": "Crypto.BTC/USD",
         "ETH": "Crypto.ETH/USD",
-        "CSPX": "Equity.GB.CSPX/USD",
+        "XAU": "Metal.XAU/USD",
     }
 
     @retry(
