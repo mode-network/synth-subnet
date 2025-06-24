@@ -14,7 +14,7 @@ import bittensor as bt
 
 from synth.utils.helpers import from_iso_to_unix_time
 
-# Python API benchmarks doc: https://benchmarks.pyth.network/docs
+# Pyth API benchmarks doc: https://benchmarks.pyth.network/docs
 # get the list of stocks supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_stock
 # get the list of crypto supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_crypto
 # get the ticket: https://benchmarks.pyth.network/v1/shims/tradingview/symbols?symbol=CSPX
