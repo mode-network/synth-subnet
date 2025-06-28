@@ -33,6 +33,36 @@ def convert_prices_to_time_format(prices, start_time, time_increment):
     return result
 
 
+def full_fill_real_prices(
+    prediction: list[dict], real_prices: list[dict]
+) -> list[dict]:
+    """
+    Fills missing real prices in the prediction with None.
+
+    :param prediction: List of dictionaries with 'time' and 'price' keys.
+    :param real_prices: List of dictionaries with 'time' and 'price' keys.
+    :return: List of dictionaries with filled prices.
+    """
+    # transform real_prices into a dictionary for fast lookup
+    real_prices_dict = {}
+    for entry in real_prices:
+        real_prices_dict[entry["time"]] = entry["price"]
+
+    # fill missing times in the real_prices_dict
+    for entry in prediction:
+        if entry["time"] not in real_prices_dict:
+            real_prices_dict[entry["time"]] = None
+
+    real_prices_filled = []
+    # recreate the real_prices list of dict sorted by time
+    for time in sorted(real_prices_dict.keys()):
+        real_prices_filled.append(
+            {"time": time, "price": real_prices_dict[time]}
+        )
+
+    return real_prices_filled
+
+
 def get_intersecting_arrays(array1, array2):
     """
     Filters two arrays of dictionaries, keeping only entries that intersect by 'time'.

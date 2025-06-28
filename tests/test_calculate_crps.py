@@ -2,7 +2,10 @@ import unittest
 
 import numpy as np
 
-from synth.validator.crps_calculation import calculate_crps_for_miner
+from synth.validator.crps_calculation import (
+    calculate_crps_for_miner,
+    calculate_price_changes_over_intervals,
+)
 from synth.validator.reward import compute_softmax
 
 
@@ -124,3 +127,15 @@ class TestCalculateCrps(unittest.TestCase):
         result = compute_softmax(np.array([]), beta=-0.002)
 
         self.assertEqual(result.tolist(), [])
+
+    def test_calculate_price_changes_with_none(self):
+        # Create a price path with a None value
+        price_paths = np.array([[100.0, 105.0, None, 110.0]], dtype=object)
+        interval_steps = 1
+        calculate_price_changes_over_intervals(price_paths, interval_steps)
+
+    def test_calculate_price_changes_with_none_2(self):
+        # Create a price path with a None value
+        price_paths = np.array([[100.0, 105.0, None, 110.0]], dtype=object)
+        interval_steps = 4
+        calculate_price_changes_over_intervals(price_paths, interval_steps)
