@@ -127,7 +127,7 @@ def calculate_price_changes_over_intervals(
     interval_prices = price_paths[:, ::interval_steps]
 
     # skip if any price is None
-    if np.any(interval_prices is None):
+    if np.any(interval_prices == None):  # noqa: E711
         return None
 
     # Calculate price changes over intervals
