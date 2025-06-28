@@ -23,7 +23,7 @@ import pandas as pd
 import bittensor as bt
 
 
-from synth.utils.helpers import get_intersecting_arrays
+from synth.utils.helpers import full_fill_real_prices
 from synth.validator.crps_calculation import calculate_crps_for_miner
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
@@ -59,20 +59,15 @@ def reward(
     if len(real_prices) == 0:
         return -1, [], miner_prediction
 
-    # in case some of the time points is not overlapped
-    intersecting_predictions = []
-    intersecting_real_price = real_prices
-    for prediction in miner_prediction.prediction:
-        intersecting_prediction, intersecting_real_price = (
-            get_intersecting_arrays(prediction, intersecting_real_price)
-        )
-        intersecting_predictions.append(intersecting_prediction)
+    full_filled_real_prices = full_fill_real_prices(
+        miner_prediction.prediction[0], real_prices
+    )
 
     predictions_path = [
         [entry["price"] for entry in sublist]
-        for sublist in intersecting_predictions
+        for sublist in miner_prediction.prediction
     ]
-    real_price_path = [entry["price"] for entry in intersecting_real_price]
+    real_price_path = [entry["price"] for entry in full_filled_real_prices]
 
     try:
         score, detailed_crps_data = calculate_crps_for_miner(

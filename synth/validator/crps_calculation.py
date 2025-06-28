@@ -54,12 +54,12 @@ def calculate_crps_for_miner(
         simulated_changes = calculate_price_changes_over_intervals(
             simulation_runs,
             interval_steps,
-            absolute_price=absolute_price,
+            absolute_price,
         )
         real_changes = calculate_price_changes_over_intervals(
             real_price_path.reshape(1, -1),
             interval_steps,
-            absolute_price=absolute_price,
+            absolute_price,
         )
 
         # Calculate CRPS over intervals
