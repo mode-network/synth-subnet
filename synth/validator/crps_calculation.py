@@ -1,3 +1,4 @@
+from typing import Optional
 import numpy as np
 from properscoring import crps_ensemble
 
@@ -62,6 +63,11 @@ def calculate_crps_for_miner(
             absolute_price,
         )
 
+        # skip if the start or end of the interval is None
+        # it means a real price is missing (e.g. market closed or missing data)
+        if real_changes is None or simulated_changes is None:
+            continue
+
         # Calculate CRPS over intervals
         num_intervals = simulated_changes.shape[1]
         crps_values = np.zeros(num_intervals)
@@ -105,7 +111,7 @@ def calculate_crps_for_miner(
 
 def calculate_price_changes_over_intervals(
     price_paths: np.ndarray, interval_steps: int, absolute_price=False
-) -> np.ndarray:
+) -> Optional[np.ndarray]:
     """
     Calculate price changes over specified intervals.
 
@@ -119,6 +125,11 @@ def calculate_price_changes_over_intervals(
     """
     # Get the prices at the interval points
     interval_prices = price_paths[:, ::interval_steps]
+
+    # skip if any price is None
+    if np.any(interval_prices is None):
+        return None
+
     # Calculate price changes over intervals
     if absolute_price:
         return interval_prices[:, 1:]
