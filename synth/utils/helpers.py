@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import typing
-import numpy as np 
+import numpy as np
 
 
 def get_current_time() -> datetime:
@@ -51,11 +51,13 @@ def full_fill_real_prices(
 
     # fill missing times and prices in the real_prices_dict
     for entry in prediction:
-        if entry["time"] not in real_prices_dict or \
-        real_prices_dict[entry["time"]] is None or \
-        np.isnan(real_prices_dict[entry["time"]]) or \
-        np.isna(real_prices_dict[entry["time"]]):
-            real_prices_dict[entry["time"]] = np.nan 
+        if (
+            entry["time"] not in real_prices_dict
+            or real_prices_dict[entry["time"]] is None
+            or np.isnan(real_prices_dict[entry["time"]])
+            or np.isna(real_prices_dict[entry["time"]])
+        ):
+            real_prices_dict[entry["time"]] = np.nan
 
     real_prices_filled = []
     # recreate the real_prices list of dict sorted by time

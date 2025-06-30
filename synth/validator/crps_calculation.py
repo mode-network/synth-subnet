@@ -65,12 +65,12 @@ def calculate_crps_for_miner(
         data_blocks = label_observed_blocks(real_changes[0])
 
         # Calculate CRPS over intervals
-        total_increment = 0 
-        crps_values = 0.0 
-        for block in np.unique(data_blocks): 
-            # skip missing value blocks 
-            if block == -1: 
-                continue 
+        total_increment = 0
+        crps_values = 0.0
+        for block in np.unique(data_blocks):
+            # skip missing value blocks
+            if block == -1:
+                continue
 
             simulated_changes_block = simulated_changes[data_blocks == block]
             real_changes_block = real_changes[:, data_blocks == block]
@@ -81,7 +81,9 @@ def calculate_crps_for_miner(
                 observation = real_changes_block[0, t]
                 crps_values_block[t] = crps_ensemble(observation, forecasts)
                 if absolute_price:
-                    crps_values_block[t] = crps_values_block[t] / real_price_path[-1] * 10_000
+                    crps_values_block[t] = (
+                        crps_values_block[t] / real_price_path[-1] * 10_000
+                    )
                 crps_values += crps_values_block[t]
 
                 # Append detailed data for this increment
@@ -92,7 +94,7 @@ def calculate_crps_for_miner(
                         "CRPS": crps_values_block[t],
                     }
                 )
-                total_increment += 1 
+                total_increment += 1
 
         # Total CRPS for this interval
         total_crps_interval = crps_values
@@ -115,17 +117,19 @@ def calculate_crps_for_miner(
     # Return the sum of all scores
     return sum_all_scores, detailed_crps_data
 
+
 def label_observed_blocks(arr: np.array) -> np.array:
-    '''
-    Groups blocks of consecutive observed data together. 
-    Example input/output: 
+    """
+    Groups blocks of consecutive observed data together.
+    Example input/output:
     [1.0, 2.0, np.nan, 4.0, np.nan, np.nan, 7.0, 8.0] -> [0, 0, -1, 1, -1, -1, 2, 2]
-    '''
+    """
     not_nan = ~np.isnan(arr)
     block_start = not_nan & np.concatenate(([True], ~not_nan[:-1]))
-    group_numbers = np.cumsum(block_start) - 1 
+    group_numbers = np.cumsum(block_start) - 1
     group_labels = np.where(not_nan, group_numbers, -1)
     return group_labels
+
 
 def calculate_price_changes_over_intervals(
     price_paths: np.ndarray, interval_steps: int, absolute_price=False
