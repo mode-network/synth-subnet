@@ -117,7 +117,7 @@ class Validator(BaseValidatorNeuron):
         # getting current validation time
         request_time = get_current_time()
 
-        xau_launch_time = datetime(2025, 6, 24, 14, 0, 0, 0, timezone.utc)
+        xau_launch_time = datetime(2025, 7, 9, 14, 0, 0, 0, timezone.utc)
         simulation_input_list = (
             self.simulation_input_list
             if request_time > xau_launch_time
