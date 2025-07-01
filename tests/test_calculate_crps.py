@@ -120,6 +120,110 @@ class TestCalculateCrps(unittest.TestCase):
 
         self.assertEqual(sum_all_scores, 13413.59914105867)
 
+    def test_calculate_crps_for_miner_5(self):
+        """
+        Test crps calculation with gaps inside the real price array.
+        """
+        time_increment = 300  # 300 seconds = 5 minutes
+        predictions_path = [50, 60, 70, 80, 90, 100, 110, 120, 130]
+        real_price_path = [50, 60, np.nan, 80, 90, np.nan, np.nan, 120, 130]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]),
+            np.array(real_price_path),
+            time_increment,
+        )
+
+        self.assertEqual(sum_all_scores, 0.0)
+
+    def test_calculate_crps_for_miner_6(self):
+        """
+        Test crps calculation with gaps in the real price array.
+        """
+        time_increment = 300  # 300 seconds = 5 minutes
+        predictions_path = [50, 60, 70, 80, 90, 100, 110, 120, 130]
+        real_price_path = [50, 60, np.nan, 80, 90, np.nan, np.nan, 120, 130]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]),
+            np.array(real_price_path),
+            time_increment,
+        )
+
+        self.assertEqual(sum_all_scores, 0.0)
+
+    def test_calculate_crps_for_miner_7(self):
+        """
+        Test crps calculation with gaps inside and in the extremes of the real price array.
+        """
+        time_increment = 300  # 300 seconds = 5 minutes
+        predictions_path = [50, 60, 70, 80, 90, 100, 110, 120, 130]
+        real_price_path = [np.nan, 60, 70, np.nan, 90, 100, 110, 120, np.nan]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]),
+            np.array(real_price_path),
+            time_increment,
+        )
+
+        self.assertEqual(sum_all_scores, 0.0)
+
+    def test_calculate_crps_for_miner_8(self):
+        """
+        Assess that the crps is 0 with fully unobserved price array.
+        """
+        time_increment = 300  # 300 seconds = 5 minutes
+        predictions_path = [50, 60, 70, 80, 90, 100, 110, 120, 130]
+        real_price_path = [
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+        ]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]),
+            np.array(real_price_path),
+            time_increment,
+        )
+
+        self.assertEqual(sum_all_scores, 0.0)
+
+    def test_calculate_crps_for_miner_9(self):
+        """
+        Test crps calculation with gaps in the real price array.
+        Assess that it is different than the fully observed price array.
+        """
+        time_increment = 300  # 300 seconds = 5 minutes
+        predictions_path = [55, 64, 70, 82.5, 89.2, 100, 110, 123.5, 131.2]
+        real_price_path = [50, 60, np.nan, 80, 90, np.nan, np.nan, 120, 130]
+        real_price_path_full = [50, 60, 70, 80, 90, 100, 110, 120, 130]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]),
+            np.array(real_price_path),
+            time_increment,
+        )
+
+        sum_all_scores_2, _ = calculate_crps_for_miner(
+            np.array([predictions_path]),
+            np.array(real_price_path_full),
+            time_increment,
+        )
+
+        with self.subTest("Check sum_all_scores equals expected"):
+            self.assertEqual(sum_all_scores, 1103.6743957796587)
+
+        with self.subTest(
+            "Check sum_all_scores is less than sum_all_scores_2"
+        ):
+            self.assertLess(sum_all_scores, sum_all_scores_2)
+
     def test_normalization(self):
         result = compute_softmax(np.array([]), beta=-0.002)
 

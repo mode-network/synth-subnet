@@ -1,5 +1,6 @@
+from typing import Any, Optional
 from datetime import datetime, timedelta, timezone
-import typing
+import numpy as np
 
 
 def get_current_time() -> datetime:
@@ -31,6 +32,41 @@ def convert_prices_to_time_format(prices, start_time, time_increment):
         result.append(single_prediction)
 
     return result
+
+
+def full_fill_real_prices(
+    prediction: list[dict[str, Any]], real_prices: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """
+    Fills missing real prices in the prediction with None.
+
+    :param prediction: List of dictionaries with 'time' and 'price' keys.
+    :param real_prices: List of dictionaries with 'time' and 'price' keys.
+    :return: List of dictionaries with filled prices.
+    """
+    # transform real_prices into a dictionary for fast lookup
+    real_prices_dict = {}
+    for entry in real_prices:
+        real_prices_dict[entry["time"]] = entry["price"]
+
+    # fill missing times and prices in the real_prices_dict
+    for entry in prediction:
+        if (
+            entry["time"] not in real_prices_dict
+            or real_prices_dict[entry["time"]] is None
+            or np.isnan(real_prices_dict[entry["time"]])
+            or not np.isfinite(real_prices_dict[entry["time"]])
+        ):
+            real_prices_dict[entry["time"]] = np.nan
+
+    real_prices_filled = []
+    # recreate the real_prices list of dict sorted by time
+    for time in sorted(real_prices_dict.keys()):
+        real_prices_filled.append(
+            {"time": time, "price": real_prices_dict[time]}
+        )
+
+    return real_prices_filled
 
 
 def get_intersecting_arrays(array1, array2):
@@ -95,7 +131,7 @@ def from_iso_to_unix_time(iso_time: str):
 
 
 def timeout_from_start_time(
-    config_timeout: typing.Optional[float], start_time_str: str
+    config_timeout: Optional[float], start_time_str: str
 ) -> float:
     """
     Calculate the timeout duration from the start_time to the current time.

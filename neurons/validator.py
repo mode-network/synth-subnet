@@ -32,6 +32,7 @@ from synth.utils.helpers import (
     timeout_until,
 )
 from synth.utils.logging import setup_gcp_logging, setup_slack_alert
+from synth.utils.opening_hours import should_skip_xau
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_rewards_and_update_scores,
@@ -81,6 +82,12 @@ class Validator(BaseValidatorNeuron):
                 time_length=86400,
                 num_simulations=100,
             ),
+            SimulationInput(
+                asset="XAU",
+                time_increment=300,
+                time_length=86400,
+                num_simulations=100,
+            ),
         ]
         self.timeout_extra_seconds = 120
 
@@ -110,11 +117,11 @@ class Validator(BaseValidatorNeuron):
         # getting current validation time
         request_time = get_current_time()
 
-        eth_launch_time = datetime(2025, 5, 19, 14, 0, 0, 0, timezone.utc)
+        xau_launch_time = datetime(2025, 7, 9, 14, 0, 0, 0, timezone.utc)
         simulation_input_list = (
             self.simulation_input_list
-            if request_time > eth_launch_time
-            else self.simulation_input_list[:1]
+            if request_time > xau_launch_time
+            else self.simulation_input_list[:2]
         )
 
         async def wait_till_next_simulation():
@@ -135,6 +142,13 @@ class Validator(BaseValidatorNeuron):
                 request_time, 60, self.timeout_extra_seconds
             )
 
+            if should_skip_xau(start_time):
+                bt.logging.info(
+                    "Skipping XAU simulation as market is closed",
+                    "forward_prompt",
+                )
+                await wait_till_next_simulation()
+
             # ================= Step 1 ================= #
             # Getting available miners from metagraph and saving information about them
             # and their properties (rank, incentives, emission) at the current moment in the database
@@ -148,9 +162,11 @@ class Validator(BaseValidatorNeuron):
             )
 
             if len(miner_uids) == 0:
-                bt.logging.error("No miners available")
+                bt.logging.error(
+                    "No miners available",
+                    "forward_prompt",
+                )
                 await wait_till_next_simulation()
-                return
 
             # ================= Step 2 ================= #
             # Query all the available miners and save all their responses

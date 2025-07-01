@@ -54,35 +54,55 @@ def calculate_crps_for_miner(
         simulated_changes = calculate_price_changes_over_intervals(
             simulation_runs,
             interval_steps,
-            absolute_price=absolute_price,
+            absolute_price,
         )
         real_changes = calculate_price_changes_over_intervals(
             real_price_path.reshape(1, -1),
             interval_steps,
-            absolute_price=absolute_price,
+            absolute_price,
         )
+        data_blocks = label_observed_blocks(real_changes[0])
+
+        # Not enough observed data -> continue
+        if len(data_blocks) == 0:
+            continue
 
         # Calculate CRPS over intervals
-        num_intervals = simulated_changes.shape[1]
-        crps_values = np.zeros(num_intervals)
-        for t in range(num_intervals):
-            forecasts = simulated_changes[:, t]
-            observation = real_changes[0, t]
-            crps_values[t] = crps_ensemble(observation, forecasts)
-            if absolute_price:
-                crps_values[t] = crps_values[t] / real_price_path[-1] * 10_000
+        total_increment = 0
+        crps_values = 0.0
+        for block in np.unique(data_blocks):
+            # skip missing value blocks
+            if block == -1:
+                continue
 
-            # Append detailed data for this increment
-            detailed_crps_data.append(
-                {
-                    "Interval": interval_name,
-                    "Increment": t + 1,
-                    "CRPS": crps_values[t],
-                }
-            )
+            simulated_changes_block = simulated_changes[
+                :, data_blocks == block
+            ]
+            real_changes_block = real_changes[:, data_blocks == block]
+            num_intervals = simulated_changes_block.shape[1]
+            crps_values_block = np.zeros(num_intervals)
+            for t in range(num_intervals):
+                forecasts = simulated_changes_block[:, t]
+                observation = real_changes_block[0, t]
+                crps_values_block[t] = crps_ensemble(observation, forecasts)
+                if absolute_price:
+                    crps_values_block[t] = (
+                        crps_values_block[t] / real_price_path[-1] * 10_000
+                    )
+                crps_values += crps_values_block[t]
+
+                # Append detailed data for this increment
+                detailed_crps_data.append(
+                    {
+                        "Interval": interval_name,
+                        "Increment": total_increment + 1,
+                        "CRPS": crps_values_block[t],
+                    }
+                )
+                total_increment += 1
 
         # Total CRPS for this interval
-        total_crps_interval = np.sum(crps_values)
+        total_crps_interval = crps_values
         sum_all_scores += float(total_crps_interval)
 
         # Append total CRPS for this interval to detailed data
@@ -103,6 +123,19 @@ def calculate_crps_for_miner(
     return sum_all_scores, detailed_crps_data
 
 
+def label_observed_blocks(arr: np.ndarray) -> np.ndarray:
+    """
+    Groups blocks of consecutive observed data together.
+    Example input/output:
+    [1.0, 2.0, np.nan, 4.0, np.nan, np.nan, 7.0, 8.0] -> [0, 0, -1, 1, -1, -1, 2, 2]
+    """
+    not_nan = ~np.isnan(arr)
+    block_start = not_nan & np.concatenate(([True], ~not_nan[:-1]))
+    group_numbers = np.cumsum(block_start) - 1
+    group_labels = np.where(not_nan, group_numbers, -1)
+    return group_labels
+
+
 def calculate_price_changes_over_intervals(
     price_paths: np.ndarray, interval_steps: int, absolute_price=False
 ) -> np.ndarray:
@@ -119,6 +152,7 @@ def calculate_price_changes_over_intervals(
     """
     # Get the prices at the interval points
     interval_prices = price_paths[:, ::interval_steps]
+
     # Calculate price changes over intervals
     if absolute_price:
         return interval_prices[:, 1:]
