@@ -1,5 +1,5 @@
+from typing import Any, Optional
 from datetime import datetime, timedelta, timezone
-import typing
 import numpy as np
 
 
@@ -35,8 +35,8 @@ def convert_prices_to_time_format(prices, start_time, time_increment):
 
 
 def full_fill_real_prices(
-    prediction: list[dict], real_prices: list[dict]
-) -> list[dict]:
+    prediction: list[dict[str, Any]], real_prices: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
     """
     Fills missing real prices in the prediction with None.
 
@@ -131,7 +131,7 @@ def from_iso_to_unix_time(iso_time: str):
 
 
 def timeout_from_start_time(
-    config_timeout: typing.Optional[float], start_time_str: str
+    config_timeout: Optional[float], start_time_str: str
 ) -> float:
     """
     Calculate the timeout duration from the start_time to the current time.

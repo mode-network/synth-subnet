@@ -2,10 +2,7 @@ import unittest
 
 import numpy as np
 
-from synth.validator.crps_calculation import (
-    calculate_crps_for_miner,
-    calculate_price_changes_over_intervals,
-)
+from synth.validator.crps_calculation import calculate_crps_for_miner
 from synth.validator.reward import compute_softmax
 
 
@@ -139,7 +136,7 @@ class TestCalculateCrps(unittest.TestCase):
 
         self.assertEqual(sum_all_scores, 0.0)
 
-    def test_calculate_crps_for_miner_5(self):
+    def test_calculate_crps_for_miner_6(self):
         """
         Test crps calculation with gaps in the real price array.
         """
@@ -155,7 +152,7 @@ class TestCalculateCrps(unittest.TestCase):
 
         self.assertEqual(sum_all_scores, 0.0)
 
-    def test_calculate_crps_for_miner_6(self):
+    def test_calculate_crps_for_miner_7(self):
         """
         Test crps calculation with gaps inside and in the extremes of the real price array.
         """
@@ -171,13 +168,23 @@ class TestCalculateCrps(unittest.TestCase):
 
         self.assertEqual(sum_all_scores, 0.0)
 
-    def test_calculate_crps_for_miner_7(self):
+    def test_calculate_crps_for_miner_8(self):
         """
         Assess that the crps is 0 with fully unobserved price array.
         """
         time_increment = 300  # 300 seconds = 5 minutes
         predictions_path = [50, 60, 70, 80, 90, 100, 110, 120, 130]
-        real_price_path = [np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan, np.nan]
+        real_price_path = [
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+            np.nan,
+        ]
 
         sum_all_scores, _ = calculate_crps_for_miner(
             np.array([predictions_path]),
@@ -187,7 +194,7 @@ class TestCalculateCrps(unittest.TestCase):
 
         self.assertEqual(sum_all_scores, 0.0)
 
-    def test_calculate_crps_for_miner_8(self):
+    def test_calculate_crps_for_miner_9(self):
         """
         Test crps calculation with gaps in the real price array.
         Assess that it is different than the fully observed price array.
@@ -212,7 +219,9 @@ class TestCalculateCrps(unittest.TestCase):
         with self.subTest("Check sum_all_scores equals expected"):
             self.assertEqual(sum_all_scores, 1103.6743957796587)
 
-        with self.subTest("Check sum_all_scores is less than sum_all_scores_2"):
+        with self.subTest(
+            "Check sum_all_scores is less than sum_all_scores_2"
+        ):
             self.assertLess(sum_all_scores, sum_all_scores_2)
 
     def test_normalization(self):
