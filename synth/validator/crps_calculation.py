@@ -137,7 +137,7 @@ def label_observed_blocks(arr: np.array) -> np.array:
 
 def calculate_price_changes_over_intervals(
     price_paths: np.ndarray, interval_steps: int, absolute_price=False
-) -> Optional[np.ndarray]:
+) -> np.ndarray:
     """
     Calculate price changes over specified intervals.
 
