@@ -173,7 +173,7 @@ class TestCalculateCrps(unittest.TestCase):
 
     def test_calculate_crps_for_miner_7(self):
         """
-        Asses that the crps is 0 with fully unobserved price array.
+        Assess that the crps is 0 with fully unobserved price array.
         """
         time_increment = 300  # 300 seconds = 5 minutes
         predictions_path = [50, 60, 70, 80, 90, 100, 110, 120, 130]
