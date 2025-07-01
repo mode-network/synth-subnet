@@ -196,6 +196,7 @@ async def query_available_miners_and_save_responses(
             axons,
             synapse,
             timeout,
+            base_neuron.config.neuron.nprocs,
         )
     else:
         synapses = await base_neuron.dendrite.forward(
