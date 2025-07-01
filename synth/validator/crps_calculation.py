@@ -63,6 +63,10 @@ def calculate_crps_for_miner(
             absolute_price,
         )
         data_blocks = label_observed_blocks(real_changes[0])
+        
+        # Not enough observed data -> continue 
+        if len(data_blocks) == 0: 
+            continue 
 
         # Calculate CRPS over intervals
         total_increment = 0
@@ -71,8 +75,8 @@ def calculate_crps_for_miner(
             # skip missing value blocks
             if block == -1:
                 continue
-
-            simulated_changes_block = simulated_changes[data_blocks == block]
+            
+            simulated_changes_block = simulated_changes[:, data_blocks == block]
             real_changes_block = real_changes[:, data_blocks == block]
             num_intervals = simulated_changes_block.shape[1]
             crps_values_block = np.zeros(num_intervals)

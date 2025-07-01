@@ -1,5 +1,6 @@
 import unittest
 from datetime import datetime, timedelta, timezone
+import numpy as np 
 
 from synth.utils.helpers import (
     convert_prices_to_time_format,
@@ -44,11 +45,17 @@ class TestHelpers(unittest.TestCase):
             {"time": "2024-11-20T00:05:00", "price": 56.78},
             {"time": "2024-11-20T00:10:00", "price": 34.89},
             {"time": "2024-11-20T00:15:00", "price": 75.20},
+            {"time": "2024-11-20T00:20:00", "price": 71.85},
+            {"time": "2024-11-20T00:25:00", "price": 66.50},
+            {"time": "2024-11-20T00:30:00", "price": 82.30},
         ]
 
         real_prices = [
             {"time": "2024-11-20T00:05:00", "price": 56.78},
             {"time": "2024-11-20T00:10:00", "price": 62.15},
+            {"time": "2024-11-20T00:15:00", "price": np.nan},
+            {"time": "2024-11-20T00:20:00", "price": None},
+            {"time": "2024-11-20T00:30:00", "price": 81.15},
         ]
 
         real_prices_filled = full_fill_real_prices(prediction, real_prices)
@@ -56,10 +63,13 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(
             real_prices_filled,
             [
-                {"time": "2024-11-20T00:00:00", "price": None},
+                {"time": "2024-11-20T00:00:00", "price": np.nan},
                 {"time": "2024-11-20T00:05:00", "price": 56.78},
                 {"time": "2024-11-20T00:10:00", "price": 62.15},
-                {"time": "2024-11-20T00:15:00", "price": None},
+                {"time": "2024-11-20T00:15:00", "price": np.nan},
+                {"time": "2024-11-20T00:20:00", "price": np.nan},
+                {"time": "2024-11-20T00:25:00", "price": np.nan},
+                {"time": "2024-11-20T00:30:00", "price": 81.15},
             ],
         )
 

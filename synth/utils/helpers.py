@@ -55,7 +55,7 @@ def full_fill_real_prices(
             entry["time"] not in real_prices_dict
             or real_prices_dict[entry["time"]] is None
             or np.isnan(real_prices_dict[entry["time"]])
-            or np.isna(real_prices_dict[entry["time"]])
+            or not np.isfinite(real_prices_dict[entry["time"]])
         ):
             real_prices_dict[entry["time"]] = np.nan
 
