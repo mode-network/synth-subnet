@@ -76,7 +76,7 @@ def setup_wandb_alert(wandb_run):
     return wandb_handler
 
 
-def setup_gcp_logging(log_id_prefix):
+def setup_gcp_logging(log_id_prefix: str):
     log_id = f"{log_id_prefix}-synth-validator"
     bt.logging.info(f"setting up GCP log forwarder with log_id: {log_id}")
     try:
@@ -113,7 +113,7 @@ class SlackHandler(logging.Handler):
             bt.logging.warning(msg)
 
 
-def setup_slack_alert():
+def setup_slack_alert(log_id_prefix: str):
     """Miners and validators can use this to send alerts to slack."""
     personal_slack_token = os.getenv("SLACK_TOKEN")
     if not personal_slack_token:
@@ -130,7 +130,7 @@ def setup_slack_alert():
     slack_handler = SlackHandler(personal_slack_token, channel_id)
     slack_handler.setLevel(logging.ERROR)
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        f"{log_id_prefix} %(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     slack_handler.setFormatter(formatter)
 

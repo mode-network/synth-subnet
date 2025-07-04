@@ -60,7 +60,7 @@ class Validator(BaseValidatorNeuron):
         super(Validator, self).__init__(config=config)
 
         setup_gcp_logging(self.config.gcp.log_id_prefix)
-        setup_slack_alert()
+        setup_slack_alert(self.config.gcp.log_id_prefix)
 
         bt.logging.info("load_state()")
         self.load_state()
