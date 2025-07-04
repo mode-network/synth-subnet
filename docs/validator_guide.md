@@ -22,6 +22,7 @@
     - [`--neuron.name TEXT`](#--neuronname-text)
     - [`--neuron.sample_size INTEGER`](#--neuronsample_size-integer)
     - [`--neuron.timeout INTEGER`](#--neurontimeout-integer)
+    - [`--neuron.nprocs INTEGER`](#--neuronnprocs-integer)
     - [`--neuron.vpermit_tao_limit INTEGER`](#--neuronvpermit_tao_limit-integer)
     - [`--wallet.hotkey TEXT`](#--wallethotkey-text)
     - [`--wallet.name TEXT`](#--walletname-text)
@@ -652,6 +653,38 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 ```shell
 pm2 start validator.config.js -- --neuron.timeout 120
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### `--neuron.nprocs INTEGER`
+
+The number of processes to run for the validator dendrite, (e.g. 8).
+
+Default: `8`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: 'validator',
+      interpreter: 'python3',
+      script: './neurons/validator.py',
+      args: '--neuron.nprocs 8',
+      env: {
+        PYTHONPATH: '.'
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+```shell
+pm2 start validator.config.js -- --neuron.nprocs 8
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

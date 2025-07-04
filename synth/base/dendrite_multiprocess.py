@@ -169,7 +169,7 @@ async def call(
     synapse.dendrite.signature = signature
 
     try:
-        bt.logging.trace(
+        bt.logging.debug(
             f"dendrite | --> | {synapse.get_total_size()} B | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)} | 0 | Success"
         )
         response = await client.post(
@@ -189,7 +189,7 @@ async def call(
         synapse = process_error_message(synapse, REQUEST_NAME, e)
 
     finally:
-        bt.logging.trace(
+        bt.logging.debug(
             f"dendrite | <-- | {synapse.get_total_size()} B | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)} | {synapse.dendrite.status_code} | {synapse.dendrite.status_message}"
         )
 
@@ -304,9 +304,12 @@ def sync_forward_multiprocess(
     axons: list[bt.AxonInfo],
     synapse: Simulation,
     timeout: float,
+    nprocs: int = 8,
 ) -> list[Simulation]:
+    bt.logging.debug(
+        f"Starting multiprocess forward with {nprocs} processes.", "dendrite"
+    )
     ss58_address = keypair.ss58_address
-    nprocs = 8
     synapse = synapse.model_copy()
     nonce = time.time_ns()
     axon_dicts = [ax.to_parameter_dict() for ax in axons]
