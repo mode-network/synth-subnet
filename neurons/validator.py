@@ -2,7 +2,7 @@
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import multiprocessing as mp
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -128,24 +128,14 @@ class Validator(BaseValidatorNeuron):
         await asyncio.sleep(wait_time)
 
     async def forward_prompt(self):
-        # getting current validation time
-        request_time = get_current_time()
-
-        xau_launch_time = datetime(2025, 7, 9, 14, 0, 0, 0, timezone.utc)
-        simulation_input_list = (
-            self.simulation_input_list
-            if request_time > xau_launch_time
-            else self.simulation_input_list[:2]
-        )
-
-        for simulation_index in range(len(simulation_input_list)):
+        for simulation_input in self.simulation_input_list:
             request_time = get_current_time()
             # round validation time to the closest minute and add extra minutes
             start_time = round_time_to_minutes(
                 request_time, 60, self.timeout_extra_seconds
             )
 
-            if should_skip_xau(start_time):
+            if should_skip_xau(start_time) and simulation_input.asset == "XAU":
                 bt.logging.info(
                     "Skipping XAU simulation as market is closed",
                     "forward_prompt",
@@ -153,6 +143,7 @@ class Validator(BaseValidatorNeuron):
                 await self.wait_till_next_simulation(
                     request_time, self.simulation_input_list
                 )
+                continue
 
             # ================= Step 1 ================= #
             # Getting available miners from metagraph and saving information about them
@@ -174,15 +165,14 @@ class Validator(BaseValidatorNeuron):
                 await self.wait_till_next_simulation(
                     request_time, self.simulation_input_list
                 )
+                continue
 
             # ================= Step 2 ================= #
             # Query all the available miners and save all their responses
             # in the database in miner_predictions table
             # ========================================== #
 
-            # input data: from the list declared above, at the index of the loop
-            simulation_input = simulation_input_list[simulation_index]
-            # add the start time
+            # add the start time to the simulation input
             simulation_input.start_time = start_time.isoformat()
 
             await query_available_miners_and_save_responses(
