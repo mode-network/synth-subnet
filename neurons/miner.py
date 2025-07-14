@@ -121,7 +121,7 @@ class Miner(BaseMinerNeuron):
         uid = self.metagraph.hotkeys.index(synapse.dendrite.hotkey)
         stake = self.metagraph.S[uid]
         bt.logging.info(f"Requesting UID: {uid} | Stake at UID: {stake}")
-        bt.logging.info(
+        bt.logging.debug(
             f"Whitelisted validators: {self.config.blacklist.validator_exceptions}"
         )
 
