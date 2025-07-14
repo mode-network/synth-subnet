@@ -236,7 +236,7 @@ pm2 start miner.config.js -- --blacklist.validator_min_stake 1000
 
 #### `--blacklist.validator_exceptions INTEGER INTEGER INTEGER ...`
 
-List of validator exceptions (e.g., --blacklist.validator_exceptions 0 1 8 17 34 49 53 38).
+Optional list of validator exceptions (e.g., --blacklist.validator_exceptions 0 1 8 17 34 49 53 38).
 
 Default: `[]`
 
