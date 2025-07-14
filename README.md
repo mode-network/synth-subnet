@@ -26,9 +26,11 @@
     </a>
 </div>
 
-<div align="center" style="padding-top:10px;">
+---
 
-[![License: MIT](https://img.shields.io/github/license/mode-network/synth-subnet)](https://github.com/mode-network/synth-subnet/blob/main/LICENSE)
+<div align="center">
+
+[![License: MIT](https://img.shields.io/github/license/mode-network/synth-subnet)][license]
 
 </div>
 
@@ -354,9 +356,10 @@ pre-commit install
 
 ## 📄 3. License
 
-Please refer to the [LICENSE](./LICENSE) file.
+Please refer to the [LICENSE][license] file.
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
 <!-- links -->
+[license]: https://github.com/mode-network/synth-subnet/blob/main/LICENSE
 [table-of-contents]: #table-of-contents
