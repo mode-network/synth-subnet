@@ -29,7 +29,6 @@
     - [`--wandb.project_name TEXT`](#--wandbenabled-boolean)
 * [4. Appendix](#4-appendix)
   - [4.1. Useful Commands](#41-useful-commands)
-  - [4.2. Running Multiple Miners](#42-running-multiple-miners)
   - [4.3. Troubleshooting](#43-troubleshooting)
 
 ## 1. Create a Wallet
@@ -772,42 +771,6 @@ pm2 start miner.config.js -- --wandb.project_name template-miners
 |------------------------------|-----------------------------|
 | `pm2 stop miner`             | Stops the miner.            |
 | `pm2 logs miner --lines 100` | View the logs of the miner. |
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-### 4.2. Running Multiple Miners
-
-In order to run multiple miners on the same machine, you must ensure that you correctly edit the `miner.config.js` file to allow for multiple apps. 
-
-Each app **MUST** use a separate wallet (see [here](#1-create-a-wallet) for instructions on how to create a wallet) and it **MUST** use a different port for the `--axon.port` parameter in the start-up script.
-
-An example for a config using multiple miners:
-
-```js
-// miner.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'miner-1',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--netuid 247 --logging.debug --logging.trace --subtensor.network test --wallet.name miner_1 --wallet.hotkey default --axon.port 8091',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-    {
-      name: 'miner-2',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--netuid 247 --logging.debug --logging.trace --subtensor.network test --wallet.name miner_2 --wallet.hotkey default --axon.port 8092',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
 
 <sup>[Back to top ^][table-of-contents]</sup>
 

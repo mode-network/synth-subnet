@@ -2,10 +2,12 @@
 
 ### Table Of Contents
 
-* [1. Create a Wallet](#1-create-a-wallet)
-* [2. Run the Validator](#2-run-the-validator)
-* [3. Options](#3-options)
-  - [3.1. Common Options](#31-common-options)
+* [1. Requirements](#1-requirements)
+* [2. Setup](#2-setup)
+* [3. Create a Wallet](#3-create-a-wallet)
+* [4. Run the Validator](#4-run-the-validator)
+* [5. Options](#5-options)
+  - [5.1. Common Options](#51-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
     - [`--ewma.cutoff_days INTEGER`](#--ewmacutoff_days-integer)
     - [`--ewma.half_life_days FLOAT`](#--ewmahalf_life_days-float)
@@ -26,12 +28,87 @@
     - [`--neuron.vpermit_tao_limit INTEGER`](#--neuronvpermit_tao_limit-integer)
     - [`--wallet.hotkey TEXT`](#--wallethotkey-text)
     - [`--wallet.name TEXT`](#--walletname-text)
-  - [3.2. Logging Options](#32-logging-options)
+  - [5.2. Logging Options](#52-logging-options)
     - [`--gcp.log_id_prefix TEXT`](#--gcplog_id_prefix-text)
-* [4. Appendix](#4-appendix)
-  - [4.1. Useful Commands](#41-useful-commands)
+* [6. Appendix](#4-appendix)
+  - [6.1. Useful Commands](#41-useful-commands)
 
-## 1. Create a Wallet
+### 1. Requirements
+
+* [Git](https://github.com/git-guides/install-git)
+* [Ubuntu v20.04+](https://ubuntu.com/download)
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 2. Setup
+
+**Step 1: Clone the repository**
+
+```shell
+git clone https://github.com/mode-network/synth-subnet.git
+```
+
+**Step 2: Change directory to the project root**
+
+```shell
+cd ./synth-subnet
+```
+
+**Step 3: Add the required repositories**
+
+```shell
+sudo add-apt-repository ppa:deadsnakes/ppa
+```
+
+> ⚠️ **NOTE:** The [deadsnakes](https://github.com/deadsnakes) repository, while unofficial, it is hugely popular and used by many Python projects.
+
+**Step 4: Install Rust**
+
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+**Step 5: Install the dependencies**
+
+```shell
+sudo apt update && \
+  sudo apt install nodejs npm python3.10 pkg-config
+```
+
+**Step 6: Install [PM2](https://pm2.io/)**
+
+```shell
+sudo npm install pm2 -g
+```
+
+**Step 7: Install the Python environment**
+
+```shell
+sudo apt install python3.10-venv
+```
+
+**Step 8: Create a new Python environment**
+
+```shell
+python3.10 -m venv bt_venv
+```
+
+**Step 9: Activate and switch to the newly created Python virtual environment**
+
+```shell
+source bt_venv/bin/activate
+```
+
+This should activate the `bt_venv` environment and you should see the command line prefixed with `(bt_venv)`.
+
+**Step 10: Install local Python dependencies**
+
+With the Python virtual environment active, install the Python dependencies:
+```shell
+pip install -r requirements.txt
+```
+
+## 3. Create a Wallet
 
 > 💡 **TIP:** For a more extensive list of the Bittensor CLI commands see [here](https://docs.bittensor.com/btcli).
 
@@ -91,7 +168,7 @@ btcli subnet metagraph \
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-## 2. Run the Validator
+## 4. Run the Validator
 
 **Step 1: Database setup**
 - Create a postgres database with the name "synth"
@@ -123,9 +200,9 @@ pm2 list
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-## 3. Options
+## 5. Options
 
-### 3.1. Common Options
+### 5.1. Common Options
 
 #### `--axon.port INTEGER`
 
@@ -781,7 +858,7 @@ pm2 start validator.config.js -- --wallet.name validator
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-### 3.2. Logging Options
+### 5.2. Logging Options
 
 #### `--gcp.log_id_prefix TEXT`
 
@@ -813,9 +890,9 @@ pm2 start validator.config.js -- --gcp.log_id_prefix my_validator_name
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-## 4. Appendix
+## 6. Appendix
 
-### 4.1. Useful Commands
+### 6.1. Useful Commands
 
 | Command                          | Description                     |
 |----------------------------------|---------------------------------|
