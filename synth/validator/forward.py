@@ -185,10 +185,9 @@ async def query_available_miners_and_save_responses(
 
     axons = [base_neuron.metagraph.axons[uid] for uid in miner_uids]
 
-    use_multiprocess = True
     start_time = time.time()
 
-    if use_multiprocess:
+    if base_neuron.config.neuron.use_multiprocess == 1:
         synapses = sync_forward_multiprocess(
             base_neuron.dendrite.keypair,
             base_neuron.dendrite.uuid,

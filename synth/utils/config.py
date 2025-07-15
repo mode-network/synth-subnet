@@ -41,7 +41,7 @@ def is_cuda_available():
     return "cpu"
 
 
-def check_config(cls, config: "bt.Config"):
+def check_config(_, config: "bt.Config"):
     r"""Checks/validates the config namespace object."""
     bt.logging.check_config(config)
 
@@ -67,7 +67,7 @@ def check_config(cls, config: "bt.Config"):
         bt.logging.register_primary_logger(events_logger.name)
 
 
-def add_args(cls, parser):
+def add_args(_, parser):
     """
     Adds relevant arguments to the parser for operation.
     """
@@ -110,7 +110,7 @@ def add_args(cls, parser):
     )
 
 
-def add_miner_args(cls, parser):
+def add_miner_args(_, parser):
     """Add miner specific arguments to the parser."""
 
     parser.add_argument(
@@ -178,7 +178,7 @@ def add_miner_args(cls, parser):
     )
 
 
-def add_validator_args(cls, parser: argparse.ArgumentParser):
+def add_validator_args(_, parser: argparse.ArgumentParser):
     """Add validator specific arguments to the parser."""
 
     parser.add_argument(
@@ -200,6 +200,13 @@ def add_validator_args(cls, parser: argparse.ArgumentParser):
         type=int,
         help="The number of processes to run for the validator dendrite.",
         default=8,
+    )
+
+    parser.add_argument(
+        "--neuron.use_multiprocess",
+        type=int,
+        help="The number of processes to run for the validator dendrite.",
+        default=1,
     )
 
     parser.add_argument(
