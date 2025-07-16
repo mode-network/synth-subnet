@@ -173,7 +173,7 @@ btcli subnet metagraph \
 **Step 1: Database setup**
 - Create a postgres database with the name "synth"
 - Rename the ".env.example" in the root of the repo to ".env"
-- Update the DB_URL in ".env" file to correct postgres server IP, username and password
+- Update the `.env` file with your database credentials.
 
 **Step 2: Activate the Python virtual environment**
 
