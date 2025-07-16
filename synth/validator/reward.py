@@ -107,10 +107,16 @@ def get_rewards(
     if miner_uids is None:
         return None, []
 
-    start_time = validator_request.start_time.isoformat()
-    real_prices = price_data_provider.fetch_data(
-        validator_request.asset, start_time, validator_request.time_length
-    )
+    try:
+        start_time = validator_request.start_time.isoformat()
+        real_prices = price_data_provider.fetch_data(
+            validator_request.asset, start_time, validator_request.time_length
+        )
+    except Exception as e:
+        bt.logging.warning(
+            f"Error fetching data for validator request {validator_request.id}: {e}"
+        )
+        return None, []
 
     scores = []
     detailed_crps_data_list = []
