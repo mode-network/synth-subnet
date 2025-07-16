@@ -46,6 +46,8 @@
   - [1.5. Overall Purpose](#15-overall-purpose)
 * [2. Usage](#-2-usage)
   - [2.1. Miners](#21-miners)
+    - [2.1.1. Tutorial](#211-tutorial)
+    - [2.1.2. Reference](#212-reference)
   - [2.2. Validators](#22-validators)
   - [2.3. Develop](#23-develop)
 * [3. License](#-3-license)
@@ -256,7 +258,17 @@ The system creates a competitive environment through:
 
 ### 2.1. Miners
 
-Please refer to this [tutorial](./docs/launch_a_miner_tutorial.md) for detailed instructions on getting a miner up and running.
+#### 2.1.1. Tutorial
+
+Please refer to this miner [tutorial](./docs/miner_tutorial.md) for detailed instructions on getting a miner up and running.
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### 2.1.2. Reference
+
+Once you have your miner set up, you can check out the miner [reference](./docs/miner_reference.md).
+
+> 💡 **TIP:** Are you having issues? Check out the [FAQs](./docs/miner_reference.md#21-faqs) section of the miner [reference](./docs/miner_reference.md).
 
 <sup>[Back to top ^][table-of-contents]</sup>
 

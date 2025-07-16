@@ -1,4 +1,4 @@
-# Launch a Miner Tutorial
+# Miner Tutorial
 
 ### Table of contents
 
@@ -13,6 +13,13 @@
     - [2.3.1. Install dependencies](#231-install-dependencies)
     - [2.3.2. Clone the repository](#232-clone-the-repository)
     - [2.3.3. Set up & activate Python virtual environment](#233-set-up--activate-python-virtual-environment)
+  - [2.4. Create a wallet](#24-create-a-wallet)
+    - [2.4.1. Create the cold/hot wallets](#241-create-the-coldhot-wallets)
+    - [2.4.2. Register the wallet](#242-register-the-wallet)
+    - [2.4.3. Verify the wallet registration (optional)](#243-verify-the-wallet-registration-optional)
+  - [2.5. Run the miner](#25-run-the-miner)
+    - [2.5.1. Start the miner](#251-start-the-miner)
+    - [2.5.2. Check the miner is running (optional)](#252-check-the-miner-is-running-optional)
 
 ### 1. Requirements
 
@@ -28,7 +35,7 @@ To ensure a miner can successfully connect to the network, the port `8091` **MUS
 
 #### 2.1.1. Check open ports
 
-Before beginning, check what ports are open:
+Before the beginning, check what ports are open:
 
 ```shell
 nmap localhost
@@ -197,6 +204,75 @@ Install local Python dependencies within the virtual environment:
 
 ```shell
 pip install -r requirements.txt
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 2.4. Create a wallet
+
+> 💡 **TIP:** For a more extensive list of the Bittensor CLI commands see [here](https://docs.bittensor.com/btcli).
+
+### 2.4.1. Create the cold/hot wallets
+
+You will need to create the cold and hot wallets:
+
+```shell
+btcli wallet create \
+  --wallet.name miner \
+  --wallet.hotkey default
+```
+
+> 🚨 **WARNING:** You must ensure your wallets have enough TAO (0.1 should be enough) to be able to start mining. For testnet, you can use the [`btcli wallet faucet`](https://docs.bittensor.com/btcli#btcli-wallet-faucet).
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 2.4.2. Register the wallet
+
+Next, register the wallets by acquiring a slot on the Bittensor subnet:
+```shell
+btcli subnet register \
+  --wallet.name miner \
+  --wallet.hotkey default \
+  --netuid 50
+```
+`
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 2.4.3. Verify the wallet registration (optional)
+
+You can verify the wallet registration by running:
+```shell
+btcli wallet overview \
+  --wallet.name miner \
+  --wallet.hotkey default
+```
+
+And, you can also check the network metagraph:
+```shell
+btcli subnet metagraph \
+  --netuid 50
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 2.5. Run the miner
+
+#### 2.5.1. Start the miner
+
+Simply start PM2 with the miner config:
+
+```shell
+pm2 start miner.config.js
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### 2.5.2. Check the miner is running (optional)
+
+You can check if the miner is running by using:
+
+```shell
+pm2 list
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
