@@ -31,7 +31,7 @@ class PriceDataProvider:
 
     @retry(
         stop=stop_after_attempt(5),
-        wait=wait_random_exponential(multiplier=5),
+        wait=wait_random_exponential(multiplier=7),
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
