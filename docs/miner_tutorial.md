@@ -299,7 +299,7 @@ btcli wallet create \
   --wallet.hotkey default
 ```
 
-> 🚨 **WARNING:** You must ensure your wallets have enough TAO (0.1 should be enough) to be able to start mining. For testnet, you can use the [`btcli wallet faucet`](https://docs.bittensor.com/btcli#btcli-wallet-faucet).
+> 🚨 **WARNING:** You must ensure your wallets have enough TAO (0.25 should be enough) to be able to start mining. For testnet, check out the faucet on the Discord.
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
