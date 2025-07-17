@@ -1,11 +1,9 @@
-# Miner Guide
+# Miner Reference
 
-### Table Of Contents
+### Table of contents
 
-* [1. Create a Wallet](#1-create-a-wallet)
-* [2. Run the Miner](#2-run-the-miner)
-* [3. Options](#3-options)
-  - [3.1. Common Options](#31-common-options)
+* [1. Options](#1-options)
+  - [1.1. Common Options](#11-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
     - [`--blacklist.allow_non_registered BOOLEAN`](#--blacklistallow_non_registered-boolean)
     - [`--blacklist.force_validator_permit BOOLEAN`](#--blacklistforce_validator_permit-boolean)
@@ -23,88 +21,18 @@
     - [`--neuron.vpermit_tao_limit INTEGER`](#--neuronvpermit_tao_limit-integer)
     - [`--wallet.hotkey TEXT`](#--wallethotkey-text)
     - [`--wallet.name TEXT`](#--walletname-text)
-  - [3.2. Weights & Bases Options](#32-weights--bases-options)
+  - [1.2. Weights & Bases Options](#12-weights--bases-options)
     - [`--wandb.enabled BOOLEAN`](#--wandbenabled-boolean)
     - [`--wandb.entity TEXT`](#--wandbentity-text)
     - [`--wandb.project_name TEXT`](#--wandbenabled-boolean)
-* [4. Appendix](#4-appendix)
-  - [4.1. Useful Commands](#41-useful-commands)
-  - [4.2. Running Multiple Miners](#42-running-multiple-miners)
-  - [4.3. Troubleshooting](#43-troubleshooting)
+* [2. Appendix](#2-appendix)
+  - [2.1. FAQs](#21-faqs)
+  - [2.2. Useful Commands](#22-useful-commands)
+  - [2.3. Troubleshooting](#23-troubleshooting)
 
-## 1. Create a Wallet
+## 1. Options
 
-> 💡 **TIP:** For a more extensive list of the Bittensor CLI commands see [here](https://docs.bittensor.com/btcli).
-
-**Step 1: Activate the Python virtual environment**
-
-If you haven't already, ensure you are running from the Python virtual environment:
-```shell
-source bt_venv/bin/activate
-```
-
-**Step 2: Create the cold/hot wallets**
-
-```shell
-btcli wallet create \
-  --wallet.name miner \
-  --wallet.hotkey default
-```
-
-> 🚨 **WARNING:** You must ensure your wallets have enough TAO (0.1 should be sufficient) to be start mining. For testnet, you can use the [`btcli wallet faucet`](https://docs.bittensor.com/btcli#btcli-wallet-faucet).
-
-**Step 3: Register wallet**
-
-Acquire a slot on the Bittensor subnet by registering the wallet:
-```shell
-btcli subnet register \
-  --wallet.name miner \
-  --wallet.hotkey default \
-  --netuid 50
-```
-
-**Step 4: Verify wallet registration (optional)**
-
-Check the wallet has been registered:
-```shell
-btcli wallet overview \
-  --wallet.name miner \
-  --wallet.hotkey default
-```
-
-You can also check the network metagraph:
-```shell
-btcli subnet metagraph \
-  --netuid 50
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-## 2. Run the Miner
-
-**Step 1: Activate the Python virtual environment**
-
-```shell
-source bt_venv/bin/activate
-```
-
-**Step 2: Start PM2 with the miner config**
-
-```shell
-pm2 start miner.config.js
-```
-
-**Step 2: Check the miner is running (optional)**
-
-```shell
-pm2 list
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-## 3. Options
-
-### 3.1. Common Options
+### 1.1. Common Options
 
 #### `--axon.port INTEGER`
 
@@ -666,7 +594,7 @@ pm2 start miner.config.js -- --wallet.name miner
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-### 3.2. Weights & Bases Options
+### 1.2. Weights & Bases Options
 
 #### `--wandb.enabled BOOLEAN`
 
@@ -764,9 +692,96 @@ pm2 start miner.config.js -- --wandb.project_name template-miners
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-## 4. Appendix
+## 2. Appendix
 
-### 4.1. Useful Commands
+### 2.1. FAQs
+
+#### 1. What is the best way for me to track my miner’s performance?
+
+Visit the Synth Miner Dashboard: [https://miners.synthdata.co/](https://miners.synthdata.co/).
+
+#### 2. How long do I have to wait for my new miner to get the first CRPS score?
+
+Assuming your setup is correct, and you're submitting predictions, it takes approximately 25–27 hours for your first score to appear. This is because the CRPS is calculated based on the actual price 24 hours after the prediction.
+
+#### 3. What does it mean when I check [https://synth.mode.network/validation/miner?uid=](https://synth.mode.network/validation/miner?uid=) and see: `{"validated":false,"reason":"Number of time points is incorrect: expected 289, got 288","response_time":"4.07"}`?
+
+It means your submission has the wrong number of time points. You should be submitting exactly 289 points for that prompt.
+
+#### 4. Why does my miner keep getting a CRPS score of -1?
+
+Your miner will receive a CRPS score of -1 if the prediction is not in the correct format.
+
+#### 5. What is the correct format for subnet-prompted predictions?
+
+A prediction is considered valid if it meets all the following conditions:
+* Submitted before the timeout specified by the validator.
+* Contains the required number of simulation paths (num_simulations in the prompt).
+* Each path has the correct number of time points:
+```python
+expected_time_points = (time_length / time_increment) + 1
+```
+* The first point of all paths matches the prompt’s start_time.
+* All timestamps are in ISO format, e.g., 2025-07-15T20:59:00+00:00.
+* Time intervals between points match time_increment exactly (in seconds).
+* All price values are of type int or float.
+
+You can find the validation function here:
+
+[response_validation.py#L35](https://github.com/mode-network/synth-subnet/blob/d694aa0bff3742498296809699c86e45b037289c/synth/validator/response_validation.py#L35)
+
+And an example of the prompt parameters here:
+
+[validator.py#L71](https://github.com/mode-network/synth-subnet/blob/44921d343e6f8ba770558018a28508796ce2a3ce/neurons/validator.py#L71)
+
+#### 6. Synth is predicting multiple assets. How does each asset prediction contribute to the smoothed score?
+
+Each asset—BTC, ETH, and XAU—contributes equally to the smoothed score. This means your miner must perform consistently well across all three. Future assets added to Synth will have the same weighting, unless noted otherwise.
+
+#### 7. I am getting fair CRPS scores but my reward weight is still zero. Why?
+
+Miner reward weights are determined by a softmax function over a smoothed average of your CRPS scores over the past 10 days, using a 5-day half-life. This is subject to future change.
+
+#### 8. How do I improve my miner performance?
+
+Synth regularly publishes detailed miner performance reviews highlighting the strategies of top-performing miners. These reviews can help you optimize your own models.
+
+Explore them here: [https://mirror.xyz/synthdata.eth](https://mirror.xyz/synthdata.eth)
+
+#### 9. Do I need to run multiple miners?
+
+If you're using the same model per asset, no—rewards will be the same. If you're using different models, then yes, it's encouraged to experiment and find what works best.
+
+#### 10. Is there a penalty for turning off my miner for a period of time?
+
+Yes. If your miner doesn’t submit a prediction for a prompt, that prompt scores 0. This lowers your moving average CRPS, which directly impacts your reward weight.
+
+#### 11. Could someone explain how trust values are calculated?
+
+Trust is computed based on the subnet's scoring system, outlined here: [https://docs.bittensor.com/emissions#trust](https://docs.bittensor.com/emissions#trust)
+
+It aggregates individual miner scores into a consensus-based weighting system, which determines reward distribution based on prediction quality.
+
+#### 12. How much time do miners have to respond to a prompt?
+
+Each prompt contains a start_time, which acts as the deadline for your response. You’ll always have at least 2 minutes from when the prompt is sent. We recommend submitting your response within 40 seconds.
+
+#### 13. Is Synth running on a testnet too?
+
+Yes. The testnet UID is 247, and it functions identically to mainnet.
+
+#### 14. Once I start a miner using the guide on GitHub, where do I change the code to run my own model?
+
+Modify this function:
+
+[simulations.py#L10](https://github.com/mode-network/synth-subnet/blob/13642c4c3287da52c602ac8c629b26a7cdc66628/synth/miner/simulations.py#L10)
+
+Take into account all prompt parameters except sigma, which you may ignore.
+
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 2.2. Useful Commands
 
 | Command                      | Description                 |
 |------------------------------|-----------------------------|
@@ -775,43 +790,7 @@ pm2 start miner.config.js -- --wandb.project_name template-miners
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-### 4.2. Running Multiple Miners
-
-In order to run multiple miners on the same machine, you must ensure that you correctly edit the `miner.config.js` file to allow for multiple apps. 
-
-Each app **MUST** use a separate wallet (see [here](#1-create-a-wallet) for instructions on how to create a wallet) and it **MUST** use a different port for the `--axon.port` parameter in the start-up script.
-
-An example for a config using multiple miners:
-
-```js
-// miner.config.js
-module.exports = {
-  apps: [
-    {
-      name: 'miner-1',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--netuid 247 --logging.debug --logging.trace --subtensor.network test --wallet.name miner_1 --wallet.hotkey default --axon.port 8091',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-    {
-      name: 'miner-2',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--netuid 247 --logging.debug --logging.trace --subtensor.network test --wallet.name miner_2 --wallet.hotkey default --axon.port 8092',
-      env: {
-        PYTHONPATH: '.'
-      },
-    },
-  ],
-};
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-### 4.3. Troubleshooting
+### 2.3. Troubleshooting
 
 #### `ModuleNotFoundError: No module named 'simulation'`
 

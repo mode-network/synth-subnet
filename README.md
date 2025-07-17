@@ -26,9 +26,11 @@
     </a>
 </div>
 
-<div align="center" style="padding-top:10px;">
+---
 
-[![License: MIT](https://img.shields.io/github/license/mode-network/synth-subnet)](https://github.com/mode-network/synth-subnet/blob/main/LICENSE)
+<div align="center">
+
+[![License: MIT](https://img.shields.io/github/license/mode-network/synth-subnet)][license]
 
 </div>
 
@@ -43,11 +45,11 @@
   - [1.4. Calculation of Leaderboard Score](#14-calculation-of-leaderboard-score)
   - [1.5. Overall Purpose](#15-overall-purpose)
 * [2. Usage](#-2-usage)
-  - [2.1. Requirements](#21-requirements)
-  - [2.2. Setup](#22-setup)
-  - [2.3. Miners](#23-miners)
-  - [2.4. Validators](#24-validators)
-  - [2.5. Develop](#25-develop)
+  - [2.1. Miners](#21-miners)
+    - [2.1.1. Tutorial](#211-tutorial)
+    - [2.1.2. Reference](#212-reference)
+  - [2.2. Validators](#22-validators)
+  - [2.3. Develop](#23-develop)
 * [3. License](#-3-license)
 
 ## 🔭 1. Overview
@@ -109,7 +111,7 @@ The checking prompts sent to the miners will have the format:
 
 Initially prompt parameters will always have the following values:
 - **Start Time ($t_0$)**: 1 minute from the time of the request.
-- **Asset**: BTC, ETH 
+- **Asset**: BTC, ETH, XAU
 - **Time Increment ($\Delta t$)**: 5 minutes.
 - **Time Horizon ($T$)**: 24 hours.
 - **Number of Simulations ($N_{\text{sim}}$)**: 100.
@@ -254,96 +256,29 @@ The system creates a competitive environment through:
 
 ## 🪄 2. Usage
 
-### 2.1. Requirements
+### 2.1. Miners
 
-* [Git](https://github.com/git-guides/install-git)
-* [Ubuntu v20.04+](https://ubuntu.com/download)
+#### 2.1.1. Tutorial
 
-<sup>[Back to top ^][table-of-contents]</sup>
-
-### 2.2. Setup
-
-**Step 1: Clone the repository**
-
-```shell
-git clone https://github.com/mode-network/synth-subnet.git
-```
-
-**Step 2: Change directory to the project root**
-
-```shell
-cd ./synth-subnet
-```
-
-**Step 3: Add the required repositories**
-
-```shell
-sudo add-apt-repository ppa:deadsnakes/ppa
-```
-
-> ⚠️ **NOTE:** The [deadsnakes](https://github.com/deadsnakes) repository, while unofficial, it is hugely popular and used by many Python projects.
-
-**Step 4: Install Rust**
-
-```shell
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
-
-**Step 5: Install the dependencies**
-
-```shell
-sudo apt update && \
-  sudo apt install nodejs npm python3.10 pkg-config
-```
-
-**Step 6: Install [PM2](https://pm2.io/)**
-
-```shell
-sudo npm install pm2 -g
-```
-
-**Step 7: Install the Python environment**
-
-```shell
-sudo apt install python3.10-venv
-```
-
-**Step 8: Create a new Python environment**
-
-```shell
-python3.10 -m venv bt_venv
-```
-
-**Step 9: Activate and switch to the newly created Python virtual environment**
-
-```shell
-source bt_venv/bin/activate
-```
-
-This should activate the `bt_venv` environment and you should see the command line prefixed with `(bt_venv)`.
-
-**Step 10: Install local Python dependencies**
-
-With the Python virtual environment active, install the Python dependencies:
-```shell
-pip install -r requirements.txt
-```
+Please refer to this miner [tutorial](./docs/miner_tutorial.md) for detailed instructions on getting a miner up and running.
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-### 2.3. Miners
+#### 2.1.2. Reference
 
-Please refer to this [guide](./docs/miner_guide.md) for detailed instructions on getting a miner up and running.
+Once you have your miner set up, you can check out the miner [reference](./docs/miner_reference.md).
 
-<sup>[Back to top ^][table-of-contents]</sup>
-
-### 2.4. Validators
-
-Please refer to this [guide](./docs/validator_guide.md) for detailed instructions on getting a validator up and running.
+> 💡 **TIP:** Are you having issues? Check out the [FAQs](./docs/miner_reference.md#21-faqs) section of the miner [reference](./docs/miner_reference.md).
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-### 2.5 Develop
+### 2.2. Validators
+
+Please refer to this [guide](./docs/validator_guide.md) for more detailed instructions on getting a validator up and running.
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+### 2.3 Develop
 
 ```shell
 pip install -r requirements-dev.txt
@@ -354,9 +289,10 @@ pre-commit install
 
 ## 📄 3. License
 
-Please refer to the [LICENSE](./LICENSE) file.
+Please refer to the [LICENSE][license] file.
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
 <!-- links -->
+[license]: https://github.com/mode-network/synth-subnet/blob/main/LICENSE
 [table-of-contents]: #table-of-contents
