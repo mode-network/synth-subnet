@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://www.synthdata.co/">
-    <img alt="Synth banner logo" src="https://github.com/mode-network/synth-subnet/blob/main/docs/images/banner_logo.svg" height="64" />
+    <img alt="Synth banner logo" src="https://github.com/mode-network/synth-subnet/blob/main/docs/images/logo.png" height="64" />
   </a>
 </div>
 
@@ -111,7 +111,7 @@ The checking prompts sent to the miners will have the format:
 
 Initially prompt parameters will always have the following values:
 - **Start Time ($t_0$)**: 1 minute from the time of the request.
-- **Asset**: BTC, ETH, XAU
+- **Asset**: BTC, ETH, XAU (note that CRPS for each asset contributes equally to final miner weights).
 - **Time Increment ($\Delta t$)**: 5 minutes.
 - **Time Horizon ($T$)**: 24 hours.
 - **Number of Simulations ($N_{\text{sim}}$)**: 100.
@@ -205,7 +205,7 @@ After calculating the sum of the CRPS values, the validator transforms the resul
 
 #### Exponentially Decaying Time-Weighted Average (Leaderboard Score)
 
-The validator is required to store the historic request scores (as calculated in the previous step) for each miner. After each new request is scored, the validator recalculates the ‘leaderboard score’ for each miner, using an exponentially decaying time-weighted average over their past **per request** scores, up to a threshold of 4 days in the past.
+The validator is required to store the historic request scores (as calculated in the previous step) for each miner. After each new request is scored, the validator recalculates the ‘leaderboard score’ for each miner, using an exponentially decaying time-weighted average over their past **per request** scores, up to a threshold of 10 days in the past.
 
 This approach emphasizes recent performance while still accounting for historical scores. 
 The leaderboard score for miner $i$ at time $t$ is calculated as:
@@ -219,8 +219,8 @@ where:
 - $S_{i,j}$ is the score of miner $i$ at request $j$.
 - $w_j = e^{-\lambda (t - t_j)}$ is the weight assigned to the score $S_{i,j}$.
 - $t_j$ is the time of request $j$.
-- $\lambda = \dfrac{\ln 2}{h}$ is the decay constant, with half-life $h = 2$ days.
-- The sum runs over all requests $j$ such that $t - t_j \leq T$, where $T = 4$ days is the threshold time.
+- $\lambda = \dfrac{\ln 2}{h}$ is the decay constant, with half-life $h = 5$ days.
+- The sum runs over all requests $j$ such that $t - t_j \leq T$, where $T = 10$ days is the threshold time.
 
 Thus, highest-ranking miners are those with the lowest calculated scores.
 
@@ -231,7 +231,7 @@ $$
 A_i(t) = \frac{e^{-\beta \cdot L_i(t)}}{\sum_j e^{-\beta \cdot L_j(t)}} \cdot E(t)
 $$
 
-where $\beta=-0.003$ and $E(t)$ the emission at time $t$.
+where $\beta=-0.1$ and $E(t)$ the emission at time $t$.
 
 ### 1.5. Overall Purpose
 
