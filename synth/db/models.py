@@ -36,7 +36,7 @@ def get_database_url():
 
 def create_engine_and_session():
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-    engine = create_engine(get_database_url(), echo=False)
+    engine = create_engine(get_database_url(), echo=False, pool_pre_ping=True)
     return engine, Session(engine)
 
 

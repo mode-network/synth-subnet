@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import traceback
 import sys
 import typing
+import logging
 
 
 import bittensor as bt
@@ -19,6 +20,12 @@ from sqlalchemy import (
     not_,
 )
 from sqlalchemy.dialects.postgresql import insert
+from tenacity import (
+    before_log,
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 
 from synth.db.models import (
@@ -333,6 +340,12 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return None
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_random_exponential(multiplier=7),
+        reraise=True,
+        before=before_log(bt.logging._logger, logging.DEBUG),
+    )
     def insert_new_miners(self, metagraph_info: list):
         """Insert or update miners table with the provided data."""
         try:
@@ -359,9 +372,7 @@ class MinerDataHandler:
                     )
                     connection.execute(insert_stmt)
         except Exception as e:
-            bt.logging.error(
-                f"in insert_or_update_miners (got an exception): {e}"
-            )
+            bt.logging.error(f"in insert_new_miners (got an exception): {e}")
             traceback.print_exc(file=sys.stderr)
 
     def update_metagraph_history(self, metagraph_info: list):
