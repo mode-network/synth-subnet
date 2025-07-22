@@ -1,3 +1,4 @@
+import json
 import requests
 
 if __name__ == "__main__":
@@ -10,6 +11,23 @@ if __name__ == "__main__":
         response = requests.get(url)
         data = response.json()
 
+        search = [
+            "SOLUSD",
+            "GLD",
+            "SIVR",
+            "AAPL",
+            "IVV",
+            "TSLA",
+            "SOLANA",
+            "SOL",
+            "BTC",
+            "ETH",
+            "TAO",
+            "MODE",
+            "SOLANA",
+            "SOL",
+        ]
+
         for item in zip(
             data["symbol"],
             data["description"],
@@ -18,14 +36,17 @@ if __name__ == "__main__":
             data["ticker"],
             data["supported-resolutions"],
         ):
-            if item[0] in [
-                "SOLUSD",
-                "GLD",
-                "SIVR",
-                "AAPL",
-                "IVV",
-                "TSLA",
-            ] or item[3] in ["BTC", "ETH", "TAO", "MODE"]:
+            search_result = False
+            for s in search:
+                if (item[0] is not None and s in item[0]) or (
+                    item[3] is not None and s in item[3]
+                ):
+                    search_result = True
+                    break
+                if item[1] is not None and s in item[1]:
+                    search_result = True
+                    break
+            if search_result:
                 assets.append(
                     {
                         "symbol": item[0],
@@ -37,4 +58,4 @@ if __name__ == "__main__":
                     }
                 )
 
-    print(assets)
+    print(json.dumps(assets, indent=2, ensure_ascii=False))
