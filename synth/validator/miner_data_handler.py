@@ -372,9 +372,7 @@ class MinerDataHandler:
                     )
                     connection.execute(insert_stmt)
         except Exception as e:
-            bt.logging.error(
-                f"in insert_new_miners (got an exception): {e}"
-            )
+            bt.logging.error(f"in insert_new_miners (got an exception): {e}")
             traceback.print_exc(file=sys.stderr)
 
     def update_metagraph_history(self, metagraph_info: list):
