@@ -60,7 +60,7 @@ def send_weights_to_bittensor_and_update_weights_history(
     result, msg, uint_uids, uint_weights = base_neuron.set_weights()
 
     if result:
-        bt.logging.info("set_weights on chain successfully!")
+        bt.logging.success("set_weights on chain successfully!")
         msg = "SUCCESS"
     else:
         rate_limit_message = "Perhaps it is too soon to commit weights"
