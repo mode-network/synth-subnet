@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://www.synthdata.co/">
-    <img alt="Synth banner logo" src="https://github.com/mode-network/synth-subnet/blob/main/docs/images/logo.png" height="64" />
+    <img alt="Synth banner logo" src="https://github.com/mode-network/synth-subnet/blob/main/docs/images/logo.png" height="134" />
   </a>
 </div>
 

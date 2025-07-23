@@ -754,7 +754,13 @@ If you're using the same model per asset, no—rewards will be the same. If you'
 
 #### 10. Is there a penalty for turning off my miner for a period of time?
 
-Yes. If your miner doesn’t submit a prediction for a prompt, that prompt scores 0. This lowers your moving average CRPS, which directly impacts your reward weight.
+If you miss a prompt or submit in an incorrect format, your prompt score will be penalized—set to the 90th percentile of all prompt scores, and your CRPS will be -1.
+
+If you make the best prediction, your prompt score will be 0, and your CRPS will also be at its minimum of 0, meaning your prediction perfectly matched the realized price.
+
+The smoothed score is calculated as the moving average of your prompt scores over time.
+
+These rules apply across all assets.
 
 #### 11. Could someone explain how trust values are calculated?
 
