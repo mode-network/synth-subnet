@@ -42,6 +42,8 @@ def generate_simulations(
         sigma *= 1.25
     elif asset == "XAU":
         sigma *= 0.5
+    elif asset == "SOL":
+        sigma *= 0.75
 
     simulations = simulate_crypto_price_paths(
         current_price=current_price,

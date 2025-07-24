@@ -111,7 +111,7 @@ The checking prompts sent to the miners will have the format:
 
 Initially prompt parameters will always have the following values:
 - **Start Time ($t_0$)**: 1 minute from the time of the request.
-- **Asset**: BTC, ETH, XAU (note that CRPS for each asset contributes equally to final miner weights).
+- **Asset**: BTC, ETH, XAU, SOL (note that CRPS for each asset contributes equally to final miner weights).
 - **Time Increment ($\Delta t$)**: 5 minutes.
 - **Time Horizon ($T$)**: 24 hours.
 - **Number of Simulations ($N_{\text{sim}}$)**: 100.

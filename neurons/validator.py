@@ -2,7 +2,7 @@
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import multiprocessing as mp
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -88,6 +88,12 @@ class Validator(BaseValidatorNeuron):
                 time_length=86400,
                 num_simulations=100,
             ),
+            SimulationInput(
+                asset="SOL",
+                time_increment=300,
+                time_length=86400,
+                num_simulations=100,
+            ),
         ]
         self.timeout_extra_seconds = 120
 
@@ -134,6 +140,18 @@ class Validator(BaseValidatorNeuron):
             start_time = round_time_to_minutes(
                 request_time, 60, self.timeout_extra_seconds
             )
+
+            if simulation_input.asset == "SOL" and start_time < datetime(
+                2025, 7, 30, 14, 0, tzinfo=timezone.utc
+            ):
+                bt.logging.info(
+                    "Skipping SOL simulation as it is not supported before July 30, 2025",
+                    "forward_prompt",
+                )
+                await self.wait_till_next_simulation(
+                    request_time, self.simulation_input_list
+                )
+                continue
 
             if should_skip_xau(start_time) and simulation_input.asset == "XAU":
                 bt.logging.info(

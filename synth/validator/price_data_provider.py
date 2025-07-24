@@ -27,6 +27,7 @@ class PriceDataProvider:
         "BTC": "Crypto.BTC/USD",
         "ETH": "Crypto.ETH/USD",
         "XAU": "Metal.XAU/USD",
+        "SOL": "Crypto.SOL/USD",
     }
 
     @retry(
