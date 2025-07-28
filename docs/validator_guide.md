@@ -140,6 +140,15 @@ btcli subnet register \
   --netuid 50
 ```
 
+if you want to try it on testnet first, run the following command:
+```shell
+btcli subnet register \
+  --wallet.name validator \
+  --wallet.hotkey default \
+  --network test \
+  --netuid 247
+```
+
 ```shell
 btcli root register --wallet.name validator --wallet.hotkey default
 ```
@@ -150,6 +159,15 @@ btcli stake add \
   --wallet.name validator \
   --wallet.hotkey default \
   --netuid 50
+```
+
+for testnet:
+```shell
+btcli stake add \
+  --wallet.name validator \
+  --wallet.hotkey default \
+  --network test \
+  --netuid 247
 ```
 
 **Step 4: Verify wallet registration (optional)**
@@ -165,6 +183,13 @@ You can also check the network metagraph:
 ```shell
 btcli subnet metagraph \
   --netuid 50
+```
+
+for testnet it's:
+```shell
+btcli subnet metagraph \
+  --network test \
+  --netuid 247
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -191,6 +216,11 @@ alembic upgrade head
 
 ```shell
 pm2 start validator.config.js
+```
+
+for testnet use:
+```shell
+pm2 start validator.test.config.js
 ```
 
 **Step 5: Check the validator is running (optional)**
@@ -233,6 +263,11 @@ Alternatively, you can add the args directly to the command:
 pm2 start validator.config.js -- --axon.port 8091
 ```
 
+for testnet it's:
+```shell
+pm2 start validator.test.config.js -- --axon.port 8091
+```
+
 <sup>[Back to top ^][table-of-contents]</sup>
 
 #### `--ewma.cutoff_days INTEGER`
@@ -263,6 +298,11 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 ```shell
 pm2 start validator.config.js -- --ewma.cutoff_days 1
+```
+
+for testnet it's:
+```shell
+pm2 start validator.test.config.js -- --ewma.cutoff_days 1
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -920,6 +960,11 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 ```shell
 pm2 start validator.config.js -- --gcp.log_id_prefix my_validator_name
+```
+
+for testnet it's:
+```shell
+pm2 start validator.test.config.js -- --gcp.log_id_prefix my_validator_name
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

@@ -312,7 +312,16 @@ btcli subnet register \
   --wallet.hotkey default \
   --netuid 50
 ```
-`
+
+if you want to try it on testnet first, run the following command:
+```shell
+btcli subnet register \
+  --wallet.name miner \
+  --wallet.hotkey default \
+  --network test \
+  --netuid 247
+```
+
 <sup>[Back to top ^][table-of-contents]</sup>
 
 ### 3.4.3. Verify the wallet registration (optional)
@@ -330,6 +339,13 @@ btcli subnet metagraph \
   --netuid 50
 ```
 
+for testnet it's:
+```shell
+btcli subnet metagraph \
+  --network test \
+  --netuid 247
+```
+
 <sup>[Back to top ^][table-of-contents]</sup>
 
 ### 3.5. Run the miner
@@ -340,6 +356,11 @@ Simply start PM2 with the miner config:
 
 ```shell
 pm2 start miner.config.js
+```
+
+for testnet use:
+```shell
+pm2 start miner.test.config.js
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
