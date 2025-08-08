@@ -157,7 +157,6 @@ class Validator(BaseValidatorNeuron):
                 continue
 
             request_time = get_current_time()
-            # round validation time to the closest minute and add extra minutes
             start_time = round_time_to_minutes(
                 request_time, 60, self.timeout_extra_seconds
             )
