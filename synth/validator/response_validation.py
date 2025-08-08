@@ -71,19 +71,20 @@ def validate_responses(
             return f"Number of time points is incorrect: expected {expected_time_points}, got {len(path)}"
 
         # check the start time
-        if path[0]["time"] != simulation_input.start_time:
-            return f"Start time is incorrect: expected {simulation_input.start_time}, got {path[0]['time']}"
+        first_time = path[0].get("time", "")
+        if first_time != simulation_input.start_time:
+            return f"Start time is incorrect: expected {simulation_input.start_time}, got {first_time}"
 
         for i in range(1, len(path)):
             # check the time formats
-            i_minus_one_str_time = path[i - 1]["time"]
+            i_minus_one_str_time = path[i - 1].get("time", "")
             i_minus_one_datetime, error_message = validate_datetime(
                 i_minus_one_str_time
             )
             if error_message:
                 return error_message
 
-            i_str_time = path[i]["time"]
+            i_str_time = path[i].get("time", "")
             i_datetime, error_message = validate_datetime(i_str_time)
             if error_message:
                 return error_message
@@ -95,7 +96,8 @@ def validate_responses(
                 return f"Time increment is incorrect: expected {expected_delta}, got {actual_delta}"
 
             # check the price format
-            if not isinstance(path[i]["price"], (int, float)):
-                return f"Price format is incorrect: expected int or float, got {type(path[i]['price'])}"
+            price = path[i].get("price")
+            if not isinstance(price, (int, float)):
+                return f"Price format is incorrect: expected int or float, got {type(price)}"
 
     return CORRECT

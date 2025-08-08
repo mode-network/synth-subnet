@@ -30,6 +30,7 @@ from synth.base.validator import BaseValidatorNeuron
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
 from synth.utils.helpers import (
+    get_current_time,
     timeout_from_start_time,
     convert_list_elements_to_str,
 )
@@ -232,8 +233,8 @@ async def query_available_miners_and_save_responses(
 def get_available_miners_and_update_metagraph_history(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
-    start_time: datetime,
 ):
+    start_time = get_current_time()
     miner_uids = []
     miners = []
     metagraph_info = []

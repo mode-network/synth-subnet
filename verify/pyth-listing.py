@@ -5,6 +5,7 @@ if __name__ == "__main__":
     urls = [
         "https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_stock",
         "https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_crypto",
+        "https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_crypto_rr",
     ]
     assets = []
     for url in urls:

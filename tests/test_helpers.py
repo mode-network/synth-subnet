@@ -178,6 +178,10 @@ class TestHelpers(unittest.TestCase):
 
         self.assertEqual(unix_time, 1732551600)
 
+        self.assertEqual(
+            from_iso_to_unix_time("2025-08-05T14:56:00+00:00"), 1754405760
+        )
+
     def test_timeout_until(self):
         # Arrange: Set a future time 10 seconds from now
         future_time = datetime.now(timezone.utc) + timedelta(seconds=10)

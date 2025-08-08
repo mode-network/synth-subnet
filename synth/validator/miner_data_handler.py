@@ -82,6 +82,12 @@ class MinerDataHandler:
 
         return miner_Uid_map
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_random_exponential(multiplier=7),
+        reraise=True,
+        before=before_log(bt.logging._logger, logging.DEBUG),
+    )
     def save_responses(
         self,
         miner_predictions: dict,
@@ -153,6 +159,12 @@ class MinerDataHandler:
             bt.logging.error(f"in save_responses (got an exception): {e}")
             traceback.print_exc(file=sys.stderr)
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_random_exponential(multiplier=7),
+        reraise=True,
+        before=before_log(bt.logging._logger, logging.DEBUG),
+    )
     def set_miner_scores(
         self, reward_details: list[dict], scored_time: datetime
     ):
@@ -437,6 +449,12 @@ class MinerDataHandler:
 
         return miner_data
 
+    @retry(
+        stop=stop_after_attempt(5),
+        wait=wait_random_exponential(multiplier=7),
+        reraise=True,
+        before=before_log(bt.logging._logger, logging.DEBUG),
+    )
     def update_miner_rewards(self, miner_rewards_data: list[dict]):
         try:
             with self.engine.connect() as connection:
