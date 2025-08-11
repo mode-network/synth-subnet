@@ -156,6 +156,48 @@ def test_validate_responses_incorrect_price_format():
     )
 
 
+def test_validate_responses_missing_time():
+    simulation_input = SimulationInput(
+        start_time="2023-01-01T00:00:00",
+        num_simulations=1,
+        time_length=10,
+        time_increment=1,
+    )
+    response: list = [[{"price": 100}] + [{"price": "100"} for _ in range(10)]]
+    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    process_time_str = "0"
+
+    result = validate_responses(
+        response, simulation_input, request_time, process_time_str
+    )
+    assert (
+        result == "Start time is incorrect: expected 2023-01-01T00:00:00, got "
+    )
+
+
+def test_validate_responses_missing_price():
+    simulation_input = SimulationInput(
+        start_time="2023-01-01T00:00:00",
+        num_simulations=1,
+        time_length=10,
+        time_increment=1,
+    )
+    response: list = [
+        [{"time": "2023-01-01T00:00:00"}]
+        + [{"time": "2023-01-01T00:00:01"} for _ in range(10)]
+    ]
+    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    process_time_str = "0"
+
+    result = validate_responses(
+        response, simulation_input, request_time, process_time_str
+    )
+    assert (
+        result
+        == "Price format is incorrect: expected int or float, got <class 'NoneType'>"
+    )
+
+
 def test_validate_responses_incorrect_time_type():
     simulation_input = SimulationInput(
         start_time="2023-01-01T00:00:00",

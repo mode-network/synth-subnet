@@ -2,7 +2,7 @@
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
 import asyncio
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import multiprocessing as mp
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -135,34 +135,6 @@ class Validator(BaseValidatorNeuron):
 
     async def forward_prompt(self):
         for simulation_input in self.simulation_input_list:
-            request_time = get_current_time()
-            # round validation time to the closest minute and add extra minutes
-            start_time = round_time_to_minutes(
-                request_time, 60, self.timeout_extra_seconds
-            )
-
-            if simulation_input.asset == "SOL" and start_time < datetime(
-                2025, 7, 30, 14, 0, tzinfo=timezone.utc
-            ):
-                bt.logging.info(
-                    "Skipping SOL simulation as it is not supported before July 30, 2025",
-                    "forward_prompt",
-                )
-                await self.wait_till_next_simulation(
-                    request_time, self.simulation_input_list
-                )
-                continue
-
-            if should_skip_xau(start_time) and simulation_input.asset == "XAU":
-                bt.logging.info(
-                    "Skipping XAU simulation as market is closed",
-                    "forward_prompt",
-                )
-                await self.wait_till_next_simulation(
-                    request_time, self.simulation_input_list
-                )
-                continue
-
             # ================= Step 1 ================= #
             # Getting available miners from metagraph and saving information about them
             # and their properties (rank, incentives, emission) at the current moment in the database
@@ -172,12 +144,26 @@ class Validator(BaseValidatorNeuron):
             miner_uids = get_available_miners_and_update_metagraph_history(
                 base_neuron=self,
                 miner_data_handler=self.miner_data_handler,
-                start_time=start_time,
             )
 
             if len(miner_uids) == 0:
                 bt.logging.error(
                     "No miners available",
+                    "forward_prompt",
+                )
+                await self.wait_till_next_simulation(
+                    get_current_time(), self.simulation_input_list
+                )
+                continue
+
+            request_time = get_current_time()
+            start_time = round_time_to_minutes(
+                request_time, 60, self.timeout_extra_seconds
+            )
+
+            if should_skip_xau(start_time) and simulation_input.asset == "XAU":
+                bt.logging.info(
+                    "Skipping XAU simulation as market is closed",
                     "forward_prompt",
                 )
                 await self.wait_till_next_simulation(

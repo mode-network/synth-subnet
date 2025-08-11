@@ -99,6 +99,16 @@ def get_intersecting_arrays(array1, array2):
 def round_time_to_minutes(
     dt: datetime, in_seconds: int, extra_seconds=0
 ) -> datetime:
+    """round validation time to the closest minute and add extra minutes
+
+    Args:
+        dt (datetime): request_time
+        in_seconds (int): 60
+        extra_seconds (int, optional): self.timeout_extra_seconds: 120. Defaults to 0.
+
+    Returns:
+        datetime: rounded-up datetime
+    """
     # Define the rounding interval
     rounding_interval = timedelta(seconds=in_seconds)
 
