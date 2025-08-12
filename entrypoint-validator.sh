@@ -1,6 +1,7 @@
 #!/bin/bash
 
-network=finney
+default_network=finney
+network="${NETWORK:-$default_network}"
 netuid=50
 
 vpermit_tao_limit=999999

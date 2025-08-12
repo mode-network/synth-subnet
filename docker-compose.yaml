@@ -2,6 +2,7 @@ services:
   app:
     build:
       context: .
+    restart: always
     env_file:
       - .env.validator.local
     environment:
@@ -29,6 +30,7 @@ services:
   postgres:
     container_name: postgres
     image: postgres:15.8
+    restart: always
     env_file:
       - .env.validator.local
     ports:

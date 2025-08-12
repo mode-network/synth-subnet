@@ -982,3 +982,80 @@ pm2 start validator.test.config.js -- --gcp.log_id_prefix my_validator_name
 
 <!-- links -->
 [table-of-contents]: #table-of-contents
+
+## Run the validator with Docker
+
+You can run the validator with Docker and docker compose.
+
+1. Run this command:
+
+```
+cp .env.validator .env.validator.local
+```
+
+2. Optionally edit "POSTGRES_PASSWORD" in `.env.validator.local` file. Don't change "POSTGRES_DB"
+3. Optionally edit `entrypoint-validator.sh` file, especially `log_id_prefix` if you want to forward the log to a GCP Log Bucket. For this you need the credential file and environment variable GOOGLE_APPLICATION_CREDENTIALS set to the path of this file
+4. Install docker
+
+```
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo groupadd docker
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+5. Setup your bittensor wallet
+6. Start: `docker compose up --build --remove-orphans --force-recreate -d`
+7. Update with the same command
+8. Read the logs: `docker compose logs -f`
+
+### Useful commands
+
+- Enter into the postgres container: `docker exec -it postgres bash`
+- Enter into psql: `psql -U postgres`
+- List databases: `\l`. You should see "synth" database
+- Connect to database: `\c synth`
+
+### Useful SQL queries
+
+- Check the validator requests: `select * from validator_requests order by start_time desc limit 500;`
+- Check the miner predictions:
+```
+select mp.format_validation, vr.start_time, miners.miner_uid, process_time
+from miner_predictions mp
+join validator_requests vr on mp.validator_requests_id = vr.id
+join miners on miners.id = mp.miner_id
+order by start_time desc
+limit 500;
+```
+- Check the miner scores:
+```
+SELECT
+	MS.ID,
+	MP.VALIDATOR_REQUESTS_ID,
+	MS.MINER_PREDICTIONS_ID,
+	VR.START_TIME,
+	VR.ASSET,
+	MS.SCORED_TIME,
+	MINERS.MINER_UID,
+	(MS.SCORE_DETAILS_V3 -> 'total_crps')::FLOAT AS CSRP,
+	MS.PROMPT_SCORE_V3
+FROM
+	MINER_SCORES MS
+	JOIN MINER_PREDICTIONS MP ON MP.ID = MS.MINER_PREDICTIONS_ID
+	JOIN MINERS ON MINERS.ID = MP.MINER_ID
+	JOIN VALIDATOR_REQUESTS VR ON VR.ID = MP.VALIDATOR_REQUESTS_ID
+WHERE
+	MS.SCORED_TIME > NOW()::DATE - 10
+ORDER BY
+	MS.ID DESC;
+```
+- Check the predictions table size: `SELECT pg_size_pretty(pg_total_relation_size('miner_predictions')) as size;`
+- /!\ Delete old predictions
+```
+delete from miner_predictions
+using validator_requests 
+where miner_predictions.validator_requests_id = validator_requests.id
+and validator_requests.start_time < now()::DATE - 20;
+```
