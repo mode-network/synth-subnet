@@ -3,11 +3,11 @@ services:
     build:
       context: .
     env_file:
-      - .env.validator
+      - .env.validator.local
     environment:
       POSTGRES_HOST: postgres
     volumes:
-      - $HOME/.bittensor:/root/.bittensor
+      - ${HOME}/.bittensor:/root/.bittensor
     depends_on:
       migrations:
         condition: service_completed_successfully
