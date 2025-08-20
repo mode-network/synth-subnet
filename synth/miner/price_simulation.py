@@ -2,6 +2,11 @@ import requests
 
 
 import numpy as np
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 
 # Hermes Pyth API documentation: https://hermes.pyth.network/docs/
@@ -16,6 +21,11 @@ TOKEN_MAP = {
 pyth_base_url = "https://hermes.pyth.network/v2/updates/price/latest"
 
 
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_random_exponential(multiplier=2),
+    reraise=True,
+)
 def get_asset_price(asset="BTC"):
     pyth_params = {"ids[]": [TOKEN_MAP[asset]]}
     response = requests.get(pyth_base_url, params=pyth_params)
