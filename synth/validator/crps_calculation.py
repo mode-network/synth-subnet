@@ -50,6 +50,12 @@ def calculate_crps_for_miner(
             ):
                 interval_steps -= 1
 
+        # Make sure there are no zero prices in the simulation runs because it will cause a division by zero error
+        if np.any(simulation_runs == 0):
+            return -1.0, [
+                {"error": "Zero price encountered in simulation runs"}
+            ]
+
         # Calculate price changes over intervals
         simulated_changes = calculate_price_changes_over_intervals(
             simulation_runs,
