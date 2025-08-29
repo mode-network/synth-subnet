@@ -12,6 +12,8 @@
 # the Software.
 
 import typing
+import traceback
+import sys
 
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
 # THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -67,11 +69,12 @@ def reward(
         [entry["price"] for entry in sublist]
         for sublist in miner_prediction.prediction
     ]
+    simulation_runs = np.array(predictions_path).astype(float)
     real_price_path = [entry["price"] for entry in full_filled_real_prices]
 
     try:
         score, detailed_crps_data = calculate_crps_for_miner(
-            np.array(predictions_path).astype(float),
+            simulation_runs,
             np.array(real_price_path),
             time_increment,
         )
@@ -79,7 +82,15 @@ def reward(
         bt.logging.error(
             f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction.id}: {e}"
         )
+        traceback.print_exc(file=sys.stderr)
         return -1, [], miner_prediction
+
+    # if score is nan, return -1
+    if np.isnan(score):
+        bt.logger.warning(
+            f"CRPS calculation returned NaN for miner {miner_uid} with prediction_id {miner_prediction.id}"
+        )
+        return -1, detailed_crps_data, miner_prediction
 
     return score, detailed_crps_data, miner_prediction
 

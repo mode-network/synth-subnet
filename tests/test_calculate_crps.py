@@ -2,7 +2,10 @@ import unittest
 
 import numpy as np
 
-from synth.validator.crps_calculation import calculate_crps_for_miner
+from synth.validator.crps_calculation import (
+    calculate_crps_for_miner,
+    label_observed_blocks,
+)
 from synth.validator.reward import compute_softmax
 
 
@@ -224,7 +227,119 @@ class TestCalculateCrps(unittest.TestCase):
         ):
             self.assertLess(sum_all_scores, sum_all_scores_2)
 
+    def test_calculate_crps_for_miner_10(self):
+        time_increment = 300  # 300 seconds = 5 minutes
+        predictions_path = [50, 60, np.nan, 80, 90, 92, 98, 120, 130]
+        real_price_path = [55, 64, 70, 82.5, 89.2, 100, 110, 123.5, 131.2]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]),
+            np.array(real_price_path),
+            time_increment,
+        )
+
+        self.assertEqual(np.isnan(sum_all_scores), True)
+
+    def test_calculate_crps_for_miner_11(self):
+        time_increment = 300  # 300 seconds = 5 minutes
+        real_price_path = [50, 60, np.nan, 80, 90, np.nan, np.nan, 120, 130]
+        predictions_path = [55, 64, 70, 82.5, 89.2, 100, 110, 123, 131]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]),
+            np.array(real_price_path),
+            time_increment,
+        )
+
+        self.assertEqual(sum_all_scores, 1061.3650577065207)
+
+    def test_calculate_crps_for_miner_12(self):
+        time_increment = 300  # 300 seconds = 5 minutes
+        real_price_path = [50, 60, np.nan, 80, 90, np.nan, np.nan, 120, 130]
+        predictions_path = [
+            1303196869523179600000000000000000000000000000000000000000000000000000000000000000000000000,
+            0.00011997788254371478,
+            70,
+            82.5,
+            89.2,
+            100,
+            110,
+            123,
+            131,
+        ]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]).astype(float),
+            np.array(real_price_path),
+            time_increment,
+        )
+
+        self.assertEqual(sum_all_scores, 12697.728694070156)
+
+    def test_calculate_crps_for_miner_13(self):
+        time_increment = 300  # 300 seconds = 5 minutes
+        real_price_path = [50, 60, np.nan, 80, 90, np.nan, np.nan, 120, 130]
+        predictions_path = [
+            0.00011997788254371478,
+            0,
+            70,
+            82.5,
+            89.2,
+            100,
+            110,
+            123,
+            131,
+        ]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]).astype(float),
+            np.array(real_price_path),
+            time_increment,
+        )
+
+        self.assertEqual(sum_all_scores, -1)
+
     def test_normalization(self):
         result = compute_softmax(np.array([]), beta=-0.002)
 
         self.assertEqual(result.tolist(), [])
+
+    def test_label_observed_blocks_all_observed(self):
+        arr = np.array([1.0, 2.0, 3.0, 4.0])
+        result = label_observed_blocks(arr)
+        np.testing.assert_array_equal(result, [0, 0, 0, 0])
+
+    def test_label_observed_blocks_all_nan(self):
+        arr = np.array([np.nan, np.nan, np.nan])
+        result = label_observed_blocks(arr)
+        np.testing.assert_array_equal(result, [-1, -1, -1])
+
+    def test_label_observed_blocks_single_block_with_nans(self):
+        arr = np.array([1.0, 2.0, np.nan, 4.0, np.nan, np.nan, 7.0, 8.0])
+        result = label_observed_blocks(arr)
+        np.testing.assert_array_equal(result, [0, 0, -1, 1, -1, -1, 2, 2])
+
+    def test_label_observed_blocks_nan_at_start(self):
+        arr = np.array([np.nan, 1.0, 2.0, np.nan, 3.0])
+        result = label_observed_blocks(arr)
+        np.testing.assert_array_equal(result, [-1, 0, 0, -1, 1])
+
+    def test_label_observed_blocks_nan_at_end(self):
+        arr = np.array([1.0, 2.0, np.nan, np.nan])
+        result = label_observed_blocks(arr)
+        np.testing.assert_array_equal(result, [0, 0, -1, -1])
+
+    def test_label_observed_blocks_alternating_nan(self):
+        arr = np.array([1.0, np.nan, 2.0, np.nan, 3.0])
+        result = label_observed_blocks(arr)
+        np.testing.assert_array_equal(result, [0, -1, 1, -1, 2])
+
+    def test_label_observed_blocks_single_value_observed(self):
+        arr = np.array([np.nan, np.nan, 5.0, np.nan])
+        result = label_observed_blocks(arr)
+        np.testing.assert_array_equal(result, [-1, -1, 0, -1])
+
+    def test_label_observed_blocks_empty_array(self):
+        arr = np.array([])
+        result = label_observed_blocks(arr)
+        np.testing.assert_array_equal(result, [])
