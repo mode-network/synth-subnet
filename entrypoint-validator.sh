@@ -1,6 +1,7 @@
 #!/bin/bash
 
-network=finney
+default_network=finney
+network="${NETWORK:-$default_network}"
 netuid=50
 
 vpermit_tao_limit=999999
@@ -8,9 +9,9 @@ vpermit_tao_limit=999999
 validator_coldkey_name=validator
 validator_hotkey_name=default
 
-ewma_half_life_days=3.5
-ewma_cutoff_days=7
-softmax_beta=-0.0475
+ewma_half_life_days=5
+ewma_cutoff_days=10
+softmax_beta=-0.1
 
 log_id_prefix=my_validator_name
 
