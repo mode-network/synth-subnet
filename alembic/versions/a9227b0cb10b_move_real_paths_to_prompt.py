@@ -20,15 +20,25 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.drop_column("miner_scores", "real_prices")
     op.add_column(
         "validator_requests",
         sa.Column("real_prices", sa.JSON(), nullable=True),
     )
+    # Migrate data from miner_scores to validator_requests
+    op.execute(
+        """
+        UPDATE validator_requests vr
+        SET real_prices = ms.real_prices
+        FROM miner_scores ms
+        JOIN miner_predictions mp ON ms.miner_predictions_id = mp.id
+        WHERE vr.id = mp.validator_requests_id
+        """
+    )
+    # op.drop_column("miner_scores", "real_prices")
 
 
 def downgrade() -> None:
-    op.add_column(
-        "miner_scores", sa.Column("real_prices", sa.JSON(), nullable=True)
-    )
+    # op.add_column(
+    #     "miner_scores", sa.Column("real_prices", sa.JSON(), nullable=True)
+    # )
     op.drop_column("validator_requests", "real_prices")
