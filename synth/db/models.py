@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 
 from dotenv import load_dotenv
 from sqlalchemy import (
@@ -49,12 +50,13 @@ class ValidatorRequest(Base):
     __tablename__ = "validator_requests"
 
     id = Column(BigInteger, primary_key=True)
-    start_time = Column(DateTime(timezone=True), nullable=False)
+    start_time: datetime = Column(DateTime(timezone=True), nullable=False)
     asset = Column(String, nullable=True)
     time_increment = Column(Integer, nullable=True)
     time_length = Column(Integer, nullable=True)
     num_simulations = Column(Integer, nullable=True)
     request_time = Column(DateTime(timezone=True), nullable=True)
+    real_prices = Column(JSON, nullable=True)
 
     # backref from MinerPrediction
     predictions = relationship("MinerPrediction", back_populates="request")
@@ -113,7 +115,6 @@ class MinerScore(Base):
     prompt_score_v3 = Column(Float, nullable=False)
     score_details = Column(JSONB, nullable=False)
     score_details_v3 = Column(JSONB, nullable=False)
-    real_prices = Column(JSON, nullable=False)
 
     prediction = relationship("MinerPrediction", back_populates="scores")
 

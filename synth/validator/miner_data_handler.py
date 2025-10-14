@@ -18,6 +18,7 @@ from sqlalchemy import (
     func,
     desc,
     not_,
+    update,
 )
 from sqlalchemy.dialects.postgresql import insert
 from tenacity import (
@@ -166,11 +167,30 @@ class MinerDataHandler:
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
     def set_miner_scores(
-        self, reward_details: list[dict], scored_time: datetime
+        self,
+        real_prices: list[dict],
+        validator_requests_id: int,
+        reward_details: list[dict],
+        scored_time: datetime,
     ):
         try:
             with self.engine.connect() as connection:
                 with connection.begin():
+                    # update validator request with the real paths
+                    if real_prices is not None and len(real_prices) > 0:
+                        update_stmt_validator = (
+                            update(ValidatorRequest)
+                            .where(
+                                ValidatorRequest.id == validator_requests_id
+                            )
+                            .values(
+                                {
+                                    "real_prices": real_prices,
+                                }
+                            )
+                        )
+                        connection.execute(update_stmt_validator)
+
                     rows_to_insert = []
                     for row in reward_details:
                         rows_to_insert.append(
@@ -188,7 +208,6 @@ class MinerDataHandler:
                                     "crps_data": row["crps_data"],
                                 },
                                 "prompt_score_v3": row["prompt_score_v3"],
-                                "real_prices": row["real_prices"],
                             }
                         )
                     insert_stmt_miner_scores = (
@@ -205,7 +224,6 @@ class MinerDataHandler:
                                     "crps_data": row["crps_data"],
                                 },
                                 "prompt_score_v3": row["prompt_score_v3"],
-                                "real_prices": row["real_prices"],
                             },
                         )
                     )
