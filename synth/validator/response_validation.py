@@ -32,6 +32,34 @@ def validate_datetime(
     return datetime.fromisoformat(dt_str), None
 
 
+def validator_point(path, i: int, time_increment: int) -> typing.Optional[str]:
+    # check the time formats
+    i_minus_one_str_time = path[i - 1].get("time", "")
+    i_minus_one_datetime, error_message = validate_datetime(
+        i_minus_one_str_time
+    )
+    if error_message:
+        return error_message
+
+    i_str_time = path[i].get("time", "")
+    i_datetime, error_message = validate_datetime(i_str_time)
+    if error_message:
+        return error_message
+
+    # check the time increment
+    expected_delta = timedelta(seconds=time_increment)
+    actual_delta = i_datetime - i_minus_one_datetime
+    if actual_delta != expected_delta:
+        return f"Time increment is incorrect: expected {expected_delta}, got {actual_delta}"
+
+    # check the price format
+    price = path[i].get("price")
+    if not isinstance(price, (int, float)):
+        return f"Price format is incorrect: expected int or float, got {type(price)}"
+
+    return None
+
+
 def validate_responses(
     response,
     simulation_input: SimulationInput,
@@ -76,28 +104,10 @@ def validate_responses(
             return f"Start time is incorrect: expected {simulation_input.start_time}, got {first_time}"
 
         for i in range(1, len(path)):
-            # check the time formats
-            i_minus_one_str_time = path[i - 1].get("time", "")
-            i_minus_one_datetime, error_message = validate_datetime(
-                i_minus_one_str_time
+            error_message = validator_point(
+                path, i, simulation_input.time_increment
             )
             if error_message:
                 return error_message
-
-            i_str_time = path[i].get("time", "")
-            i_datetime, error_message = validate_datetime(i_str_time)
-            if error_message:
-                return error_message
-
-            # check the time increment
-            expected_delta = timedelta(seconds=simulation_input.time_increment)
-            actual_delta = i_datetime - i_minus_one_datetime
-            if actual_delta != expected_delta:
-                return f"Time increment is incorrect: expected {expected_delta}, got {actual_delta}"
-
-            # check the price format
-            price = path[i].get("price")
-            if not isinstance(price, (int, float)):
-                return f"Price format is incorrect: expected int or float, got {type(price)}"
 
     return CORRECT

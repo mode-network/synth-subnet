@@ -98,7 +98,7 @@ def reward(
 def get_rewards(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
-    validator_request,
+    validator_request: ValidatorRequest,
 ) -> tuple[typing.Optional[np.ndarray], list]:
     """
     Returns an array of rewards for the given query and responses.

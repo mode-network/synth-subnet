@@ -344,7 +344,17 @@ class MinerDataHandler:
                     .order_by(ValidatorRequest.start_time.asc())
                 )
 
-                return connection.execute(query).fetchall()
+                results: list[ValidatorRequest] = []
+                for row in connection.execute(query).fetchall():
+                    vr = ValidatorRequest()
+                    vr.id = row.id
+                    vr.start_time = row.start_time
+                    vr.asset = row.asset
+                    vr.time_length = row.time_length
+                    vr.time_increment = row.time_increment
+                    results.append(vr)
+
+                return results
         except Exception as e:
             bt.logging.error(
                 f"in get_latest_prediction_request (got an exception): {e}"
