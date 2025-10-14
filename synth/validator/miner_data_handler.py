@@ -266,7 +266,9 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return None
 
-    def get_miner_prediction(self, miner_uid: int, validator_request_id: int):
+    def get_miner_prediction(
+        self, miner_uid: int, validator_request_id: int
+    ) -> typing.Optional[MinerPrediction]:
         """Retrieve the record with the longest valid interval for the given miner_id."""
         try:
             with self.engine.connect() as connection:
@@ -290,7 +292,13 @@ class MinerDataHandler:
                     .limit(1)
                 )
 
-                result = connection.execute(query).fetchone()
+                result = MinerPrediction()
+                row = connection.execute(query).fetchone()
+                if row is not None:
+                    result.id = row.id
+                    result.prediction = row.prediction
+                    result.format_validation = row.format_validation
+                    result.process_time = row.process_time
 
             return result
         except Exception as e:

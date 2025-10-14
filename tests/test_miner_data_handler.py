@@ -177,6 +177,8 @@ def test_multiple_records_for_same_miner(db_engine: Engine):
 
     result = handler.get_miner_prediction(miner_uid, validator_requests[1].id)
 
+    assert result is not None
+
     prediction = result.prediction
 
     assert len(prediction) == 1

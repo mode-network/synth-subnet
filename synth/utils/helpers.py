@@ -8,7 +8,9 @@ def get_current_time() -> datetime:
     return datetime.now(timezone.utc).replace(microsecond=0)
 
 
-def convert_prices_to_time_format(prices, start_time, time_increment):
+def convert_prices_to_time_format(
+    prices: list, start_time_str: str, time_increment: int
+):
     """
     Convert an array of float numbers (prices) into an array of dictionaries with 'time' and 'price'.
 
