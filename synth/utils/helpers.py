@@ -18,7 +18,9 @@ def convert_prices_to_time_format(
     :param time_increment: Time increment in seconds between consecutive prices.
     :return: List of dictionaries with 'time' and 'price' keys.
     """
-    start_time = datetime.fromisoformat(start_time_str)
+    start_time = datetime.fromisoformat(start_time_str).replace(
+        tzinfo=timezone.utc
+    )
     result = [start_time.timestamp(), time_increment]
 
     for price_item in prices:

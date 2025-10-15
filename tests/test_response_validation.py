@@ -1,9 +1,11 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from synth.simulation_input import SimulationInput
 from synth.validator.response_validation import validate_responses, CORRECT
 
 
-start_time = datetime.fromisoformat("2023-01-01T00:00:00")
+start_time = datetime.fromisoformat("2023-01-01T00:00:00").replace(
+    tzinfo=timezone.utc
+)
 time_increment = 1
 
 
@@ -15,7 +17,7 @@ def test_validate_responses_process_time_none():
         time_increment=time_increment,
     )
     response: list = []
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = None
 
     result = validate_responses(
@@ -32,7 +34,7 @@ def test_validate_responses_received_after_start_time():
         time_increment=time_increment,
     )
     response: list = []
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "10"
 
     result = validate_responses(
@@ -40,7 +42,7 @@ def test_validate_responses_received_after_start_time():
     )
     assert (
         result
-        == "Response received after the simulation start time: expected 2023-01-01 00:00:00, got 2023-01-01 00:00:10"
+        == "Response received after the simulation start time: expected 2023-01-01 00:00:00+00:00, got 2023-01-01 00:00:10+00:00"
     )
 
 
@@ -52,7 +54,7 @@ def test_validate_responses_empty_response():
         time_increment=time_increment,
     )
     response: list = []
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -73,7 +75,7 @@ def test_validate_responses_incorrect_type():
         "increment": time_increment,
         "paths": [[123.45] * 11],
     }
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -93,7 +95,7 @@ def test_validate_responses_incorrect_number_of_paths():
         time_increment=time_increment,
     )
     response: list = [start_time.timestamp(), time_increment]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -102,7 +104,7 @@ def test_validate_responses_incorrect_number_of_paths():
     assert result == "Number of paths is incorrect: expected 2, got 0"
 
     response: list = [start_time.timestamp(), time_increment, [123.45]]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -124,7 +126,7 @@ def test_validate_responses_incorrect_path_type():
         {"price": 123.45},
         {"price": 123.45},
     ]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -143,7 +145,7 @@ def test_validate_responses_incorrect_number_of_time_points():
         time_increment=time_increment,
     )
     response: list = [start_time.timestamp(), time_increment, [123.45]]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -161,7 +163,7 @@ def test_validate_responses_incorrect_start_time():
     )
 
     response: list = [start_time.isoformat(), time_increment, [123.45] * 11]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -177,7 +179,7 @@ def test_validate_responses_incorrect_start_time():
         time_increment,
         [123.45] * 11,
     ]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -185,7 +187,7 @@ def test_validate_responses_incorrect_start_time():
     )
     assert (
         result
-        == "Start time timestamp is incorrect: expected 1672527600, got 1672527601"
+        == "Start time timestamp is incorrect: expected 1672531200, got 1672531201"
     )
 
 
@@ -197,7 +199,7 @@ def test_validate_responses_incorrect_time_increment():
         time_increment=time_increment,
     )
     response: list = [start_time.timestamp(), "", [123.45] * 11]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -213,7 +215,7 @@ def test_validate_responses_incorrect_time_increment():
         time_increment + 1,
         [123.45] * 11,
     ]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -230,7 +232,7 @@ def test_validate_responses_incorrect_price_format():
         time_increment=time_increment,
     )
     response: list = [start_time.timestamp(), time_increment, ["123.45"] * 11]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -254,7 +256,7 @@ def test_validate_responses_incorrect_price_digits():
         time_increment,
         [123.456789] * 11,
     ]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
@@ -271,7 +273,7 @@ def test_validate_responses_correct():
         time_increment=time_increment,
     )
     response: list = [start_time.timestamp(), time_increment, [123.45678] * 4]
-    request_time = datetime.fromisoformat("2023-01-01T00:00:00")
+    request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(

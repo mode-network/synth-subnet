@@ -18,7 +18,7 @@ class TestHelpers(unittest.TestCase):
 
     def test_convert_prices_to_time_format(self):
         prices = [[45.67, 56.78, 34.89, 62.15]]
-        start_time = "2024-11-20T00:00:00"
+        start_time = "2024-11-19T23:00:00"
         time_increment = 300  # 5 minutes in seconds
 
         formatted_data = convert_prices_to_time_format(
