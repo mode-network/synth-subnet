@@ -7,57 +7,43 @@ from synth.simulation_input import SimulationInput
 CORRECT = "CORRECT"
 
 
-def datetime_valid(dt_str) -> bool:
-    try:
-        datetime.fromisoformat(dt_str)
-    except ValueError:
-        return False
-    return True
+def validate_path(
+    path: typing.List[float], expected_time_points: int
+) -> typing.Optional[str]:
+    if not isinstance(path, list):
+        return f"Path format is incorrect: expected list, got {type(path)}"
 
+    # check the number of time points
+    if len(path) != expected_time_points:
+        return f"Number of time points is incorrect: expected {expected_time_points}, got {len(path)}"
 
-def validate_datetime(
-    dt_str,
-) -> typing.Tuple[datetime, typing.Optional[str]]:
-    if not isinstance(dt_str, str):
-        return (
-            datetime.now(),
-            f"Time format is incorrect: expected str, got {type(dt_str)}",
-        )
-    if not datetime_valid(dt_str):
-        return (
-            datetime.now(),
-            f"Time format is incorrect: expected isoformat, got {dt_str}",
-        )
+    for point in path:
+        # check the price format
+        if not isinstance(point, (int, float)):
+            return f"Price format is incorrect: expected int or float, got {type(point)}"
 
-    return datetime.fromisoformat(dt_str), None
-
-
-def validator_point(path, i: int, time_increment: int) -> typing.Optional[str]:
-    # check the time formats
-    i_minus_one_str_time = path[i - 1].get("time", "")
-    i_minus_one_datetime, error_message = validate_datetime(
-        i_minus_one_str_time
-    )
-    if error_message:
-        return error_message
-
-    i_str_time = path[i].get("time", "")
-    i_datetime, error_message = validate_datetime(i_str_time)
-    if error_message:
-        return error_message
-
-    # check the time increment
-    expected_delta = timedelta(seconds=time_increment)
-    actual_delta = i_datetime - i_minus_one_datetime
-    if actual_delta != expected_delta:
-        return f"Time increment is incorrect: expected {expected_delta}, got {actual_delta}"
-
-    # check the price format
-    price = path[i].get("price")
-    if not isinstance(price, (int, float)):
-        return f"Price format is incorrect: expected int or float, got {type(price)}"
+        if len(str(point).replace(".", "")) > 8:
+            return f"Price format is incorrect: too many digits {point}"
 
     return None
+
+
+def validate_response_type(response) -> typing.Optional[str]:
+    # check if the response is empty
+    if response is None:
+        return "Response is empty"
+
+    if not isinstance(response, list):
+        return f"Response format is incorrect: expected list, got {type(response)}"
+
+    if len(response) == 0:
+        return "Response is empty"
+
+    if not isinstance(response[0], (int, float)):
+        return f"Start time format is incorrect: expected int or float, got {type(response[0])}"
+
+    if not isinstance(response[1], int):
+        return f"Time increment format is incorrect: expected int, got {type(response[1])}"
 
 
 def validate_responses(
@@ -82,32 +68,34 @@ def validate_responses(
     if received_at > start_time:
         return f"Response received after the simulation start time: expected {start_time}, got {received_at}"
 
-    # check if the response is empty
-    if response is None or len(response) == 0:
-        return "Response is empty"
+    error_message = validate_response_type(response)
+    if error_message:
+        return error_message
 
+    # check the start time
+    first_time_timestamp: int = int(response[0])
+    expected_first_time_timestamp = int(start_time.timestamp())
+    if first_time_timestamp != expected_first_time_timestamp:
+        return f"Start time timestamp is incorrect: expected {expected_first_time_timestamp}, got {first_time_timestamp}"
+
+    # check the time increment
+    time_increment: int = response[1]
+    expected_time_increment = simulation_input.time_increment
+    if time_increment != expected_time_increment:
+        return f"Time increment is incorrect: expected {expected_time_increment}, got {time_increment}"
+
+    number_of_paths = len(response[2:])
     # check the number of paths
-    if len(response) != simulation_input.num_simulations:
-        return f"Number of paths is incorrect: expected {simulation_input.num_simulations}, got {len(response)}"
+    if number_of_paths != simulation_input.num_simulations:
+        return f"Number of paths is incorrect: expected {simulation_input.num_simulations}, got {number_of_paths}"
 
-    for path in response:
-        # check the number of time points
-        expected_time_points = (
-            simulation_input.time_length // simulation_input.time_increment + 1
-        )
-        if len(path) != expected_time_points:
-            return f"Number of time points is incorrect: expected {expected_time_points}, got {len(path)}"
-
-        # check the start time
-        first_time = path[0].get("time", "")
-        if first_time != simulation_input.start_time:
-            return f"Start time is incorrect: expected {simulation_input.start_time}, got {first_time}"
-
-        for i in range(1, len(path)):
-            error_message = validator_point(
-                path, i, simulation_input.time_increment
-            )
-            if error_message:
-                return error_message
+    all_paths = response[2:]
+    expected_time_points = (
+        simulation_input.time_length // simulation_input.time_increment + 1
+    )
+    for path in all_paths:
+        error_message = validate_path(path, expected_time_points)
+        if error_message:
+            return error_message
 
     return CORRECT

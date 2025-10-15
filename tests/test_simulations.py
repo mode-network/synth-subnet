@@ -11,8 +11,8 @@ def test_generate_simulations():
     )
 
     assert isinstance(result, list)
-    assert len(result) == 100
+    assert len(result) == 102
     assert all(
         isinstance(sub_array, list) and len(sub_array) == 289
-        for sub_array in result
+        for sub_array in result[2:]
     )
