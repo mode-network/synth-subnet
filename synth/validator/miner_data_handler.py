@@ -179,11 +179,9 @@ class MinerDataHandler:
                     # update validator request with the real paths
                     if real_prices is not None and len(real_prices) > 0:
                         # replace np.nan with None
-                        for entry in real_prices:
-                            if entry["price"] is not None and pd.isna(
-                                entry["price"]
-                            ):
-                                entry["price"] = None
+                        for price in real_prices:
+                            if price is not None and pd.isna(price):
+                                price = None
                         update_stmt_validator = (
                             update(ValidatorRequest)
                             .where(
