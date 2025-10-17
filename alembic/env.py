@@ -23,7 +23,9 @@ if config.config_file_name is not None:
 if os.getenv("DB_URL_TEST") is not None:
     db_url = os.getenv("DB_URL_TEST", "")
 else:
-    print(f'using table {os.getenv("POSTGRES_DB")}')
+    print(
+        f'using table {os.getenv("POSTGRES_DB")} on host {os.getenv("POSTGRES_HOST")}'
+    )
     db_url = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
 
 # Get database URL from environment variable

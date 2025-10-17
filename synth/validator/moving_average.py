@@ -129,7 +129,7 @@ def compute_weighted_averages(
     )
 
     # Filter out None UID
-    filtered_moving_averages_data = []
+    filtered_moving_averages_data: list[dict] = []
     for item in moving_averages_data:
         if item["miner_uid"] is not None:
             filtered_moving_averages_data.append(item)
