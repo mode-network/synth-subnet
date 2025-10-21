@@ -7,6 +7,7 @@ from synth.utils.helpers import (
     round_time_to_minutes,
     from_iso_to_unix_time,
     get_current_time,
+    round_to_8_significant_digits,
     timeout_until,
 )
 
@@ -15,6 +16,16 @@ class TestHelpers(unittest.TestCase):
     def test_get_current_time(self):
         current_time = get_current_time()
         print("current_time", current_time)
+
+    def test_round_to_8_significant_digits(self):
+        assert (
+            round_to_8_significant_digits(123456.789) == 123456.79
+        )  # Rounds to 8 significant digits
+        assert (
+            round_to_8_significant_digits(123) == 123
+        )  # Stays the same, already 3 significant digits
+        assert round_to_8_significant_digits(0.000123456789) == 0.00012345679
+        assert round_to_8_significant_digits(0.0) == 0.0
 
     def test_convert_prices_to_time_format(self):
         prices = [[45.67, 56.78, 34.89, 62.15]]
@@ -27,7 +38,7 @@ class TestHelpers(unittest.TestCase):
 
         self.assertEqual(
             formatted_data,
-            [1732057200.0, 300, [45.67, 56.78, 34.89, 62.15]],
+            (1732057200, 300, [45.67, 56.78, 34.89, 62.15]),
         )
 
     def test_get_intersecting_arrays(self):

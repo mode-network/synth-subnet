@@ -7,6 +7,21 @@ def get_current_time() -> datetime:
     return datetime.now(timezone.utc).replace(microsecond=0)
 
 
+def round_to_8_significant_digits(num: float) -> float:
+    """Round a float to 8 significant digits."""
+    if num == 0:
+        return 0.0
+    from math import log10, floor
+
+    digits = 8
+    # calculate the order of magnitude of the number
+    magnitude = floor(log10(abs(num)))
+    # calculate the decimal places to round to
+    decimal_places = digits - magnitude - 1
+
+    return round(num, decimal_places)
+
+
 def convert_prices_to_time_format(
     prices: list, start_time_str: str, time_increment: int
 ):
@@ -26,10 +41,10 @@ def convert_prices_to_time_format(
     for price_item in prices:
         single_prediction = []
         for price in price_item:
-            single_prediction.append(price)
+            single_prediction.append(round_to_8_significant_digits(price))
         result.append(single_prediction)
 
-    return result
+    return tuple(result)
 
 
 def adjust_predictions(predictions: list) -> list:
