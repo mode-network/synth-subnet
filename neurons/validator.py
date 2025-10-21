@@ -72,27 +72,27 @@ class Validator(BaseValidatorNeuron):
             SimulationInput(
                 asset="BTC",
                 time_increment=300,
-                time_length=86400,
-                num_simulations=100,
+                time_length=900,
+                num_simulations=10,
             ),
-            SimulationInput(
-                asset="ETH",
-                time_increment=300,
-                time_length=86400,
-                num_simulations=100,
-            ),
-            SimulationInput(
-                asset="XAU",
-                time_increment=300,
-                time_length=86400,
-                num_simulations=100,
-            ),
-            SimulationInput(
-                asset="SOL",
-                time_increment=300,
-                time_length=86400,
-                num_simulations=100,
-            ),
+            # SimulationInput(
+            #     asset="ETH",
+            #     time_increment=300,
+            #     time_length=86400,
+            #     num_simulations=100,
+            # ),
+            # SimulationInput(
+            #     asset="XAU",
+            #     time_increment=300,
+            #     time_length=86400,
+            #     num_simulations=100,
+            # ),
+            # SimulationInput(
+            #     asset="SOL",
+            #     time_increment=300,
+            #     time_length=86400,
+            #     num_simulations=100,
+            # ),
         ]
         self.timeout_extra_seconds = 120
 
@@ -194,7 +194,7 @@ class Validator(BaseValidatorNeuron):
         # getting current time
         current_time = get_current_time()
 
-        next_iteration = current_time + timedelta(hours=1)
+        next_iteration = current_time + timedelta(minutes=15)
 
         async def wait_till_next_iteration():
             # wait until the next iteration
