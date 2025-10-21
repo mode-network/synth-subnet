@@ -53,7 +53,7 @@ def test_validate_responses_empty_response():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = []
+    response = ()
     request_time = start_time
     process_time_str = "0"
 
@@ -83,7 +83,7 @@ def test_validate_responses_incorrect_type():
     )
     assert (
         result
-        == "Response format is incorrect: expected list, got <class 'dict'>"
+        == "Response format is incorrect: expected tuple, got <class 'dict'>"
     )
 
 
@@ -94,7 +94,7 @@ def test_validate_responses_incorrect_number_of_paths():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = [int(start_time.timestamp()), time_increment]
+    response = (int(start_time.timestamp()), time_increment)
     request_time = start_time
     process_time_str = "0"
 
@@ -103,7 +103,7 @@ def test_validate_responses_incorrect_number_of_paths():
     )
     assert result == "Number of paths is incorrect: expected 2, got 0"
 
-    response: list = [int(start_time.timestamp()), time_increment, [123.45]]
+    response = (int(start_time.timestamp()), time_increment, [123.45])
     request_time = start_time
     process_time_str = "0"
 
@@ -120,12 +120,12 @@ def test_validate_responses_incorrect_path_type():
         time_length=1,
         time_increment=time_increment,
     )
-    response: list = [
+    response = (
         int(start_time.timestamp()),
         time_increment,
         {"price": 123.45},
         {"price": 123.45},
-    ]
+    )
     request_time = start_time
     process_time_str = "0"
 
@@ -144,7 +144,7 @@ def test_validate_responses_incorrect_number_of_time_points():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = [int(start_time.timestamp()), time_increment, [123.45]]
+    response = (int(start_time.timestamp()), time_increment, [123.45])
     request_time = start_time
     process_time_str = "0"
 
@@ -162,7 +162,7 @@ def test_validate_responses_incorrect_start_time():
         time_increment=time_increment,
     )
 
-    response: list = [start_time.isoformat(), time_increment, [123.45] * 11]
+    response = (start_time.isoformat(), time_increment, [123.45] * 11)
     request_time = start_time
     process_time_str = "0"
 
@@ -174,7 +174,7 @@ def test_validate_responses_incorrect_start_time():
         == "Start time format is incorrect: expected int, got <class 'str'>"
     )
 
-    response: list = [start_time.timestamp(), time_increment, [123.45] * 11]
+    response = (start_time.timestamp(), time_increment, [123.45] * 11)
     request_time = start_time
     process_time_str = "0"
 
@@ -186,11 +186,11 @@ def test_validate_responses_incorrect_start_time():
         == "Start time format is incorrect: expected int, got <class 'float'>"
     )
 
-    response: list = [
+    response = (
         int(start_time.timestamp()) + 1,
         time_increment,
         [123.45] * 11,
-    ]
+    )
     request_time = start_time
     process_time_str = "0"
 
@@ -210,7 +210,7 @@ def test_validate_responses_incorrect_time_increment():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = [int(start_time.timestamp()), "", [123.45] * 11]
+    response = (int(start_time.timestamp()), "", [123.45] * 11)
     request_time = start_time
     process_time_str = "0"
 
@@ -222,11 +222,11 @@ def test_validate_responses_incorrect_time_increment():
         == "Time increment format is incorrect: expected int, got <class 'str'>"
     )
 
-    response: list = [
+    response = (
         int(start_time.timestamp()),
         time_increment + 1,
         [123.45] * 11,
-    ]
+    )
     request_time = start_time
     process_time_str = "0"
 
@@ -243,11 +243,11 @@ def test_validate_responses_incorrect_price_format():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = [
+    response = (
         int(start_time.timestamp()),
         time_increment,
         ["123.45"] * 11,
-    ]
+    )
     request_time = start_time
     process_time_str = "0"
 
@@ -267,11 +267,11 @@ def test_validate_responses_incorrect_price_digits():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = [
+    response = (
         int(start_time.timestamp()),
         time_increment,
         [123.456789] * 11,
-    ]
+    )
     request_time = start_time
     process_time_str = "0"
 
@@ -288,11 +288,11 @@ def test_validate_responses_correct():
         time_length=3,
         time_increment=time_increment,
     )
-    response: list = [
+    response: tuple = (
         int(start_time.timestamp()),
         time_increment,
         [123.45678] * 4,
-    ]
+    )
     request_time = start_time
     process_time_str = "0"
 
