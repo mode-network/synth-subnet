@@ -13,69 +13,75 @@ from synth.validator.reward import compute_softmax
 
 
 def prepare_df_for_moving_average(df):
-    """
-    Prepare the input dataframe for the moving average computation.
-
-    If a miner misses a prompt or has recently joined the network, we backfill
-    the prompt_score_v3 and score_details_v3.
-
-    To determine if a miner has missed a prompt, we check if the miner has a record
-    at the global_min timestamp. If not, we assume the miner has missed the prompt.
-
-    :param df: The input dataframe.
-    :return: The prepared dataframe.
-    """
+    df = df.copy()
     df["scored_time"] = pd.to_datetime(df["scored_time"])
 
-    # Determine the global minimum scored_time and the complete (global) set of times.
+    # 1) compute globals
     global_min = df["scored_time"].min()
     all_times = sorted(df["scored_time"].unique())
 
-    # Create a global mapping for each scored_time to the corresponding worst prompt score.
-    # Here we simply pick (for each timestamp) the percentile90 and the lowest_score from the first row encountered.
+    # build your global‐worst‐score mappings exactly as you had them
     global_worst_score_mapping = {}
     global_score_details_mapping = {}
     for t in all_times:
-        sample_row = df.loc[df["scored_time"] == t].iloc[0]
-        if sample_row["score_details_v3"] is None:
+        sample = df.loc[df["scored_time"] == t].iloc[0]
+        details = sample["score_details_v3"]
+        if details is None:
             continue
         global_worst_score_mapping[t] = (
-            sample_row["score_details_v3"]["percentile90"]
-            - sample_row["score_details_v3"]["lowest_score"]
+            details["percentile90"] - details["lowest_score"]
         )
-        global_score_details_mapping[t] = sample_row["score_details_v3"]
+        global_score_details_mapping[t] = details
 
-    def fill_missing_for_miner(group):
-        miner_min = group["scored_time"].min()
+    # 2) find, for each miner, when they first appear
+    miner_first = (
+        df.groupby("miner_id")["scored_time"]
+        .min()
+        .rename("miner_min")
+        .reset_index()
+    )
 
-        # We assume the miner is missing data if they did not start at the global_min.
-        if miner_min > global_min:
-            # Reindex using the full range of times
-            new_index = pd.Index(all_times, name="scored_time")
-            group = group.set_index("scored_time")
-            group = group.reindex(new_index)
+    # 3) build the full cartesian product of miner_id × all_times
+    miners = df[["miner_id"]].drop_duplicates()
+    full = (
+        miners.assign(_tmp=1)
+        .merge(pd.DataFrame({"scored_time": all_times, "_tmp": 1}), on="_tmp")
+        .drop(columns="_tmp")
+    )
 
-            # Fill in miner_id (assumed constant for the miner)
-            group["miner_id"] = group["miner_id"].ffill().bfill().astype(int)
+    # 4) left‐merge the real data onto that grid
+    full = full.merge(df, on=["miner_id", "scored_time"], how="left").merge(
+        miner_first, on="miner_id", how="left"
+    )
 
-            # For missing prompt_score_v3, use the corresponding worst_score from the mapping.
-            # Note: group.index is the scored_time.
-            group["prompt_score_v3"] = group["prompt_score_v3"].fillna(
-                group.index.to_series().map(global_worst_score_mapping)
-            )
+    # 5) now vectorize the “new‐miner” backfill logic:
+    is_new = full["miner_min"] > global_min
 
-            # Fill in score_details_v3:
-            group["score_details_v3"] = [
-                global_score_details_mapping.get(t) for t in group.index
-            ]
+    # backfill prompt_score_v3 for new miners
+    full.loc[is_new, "prompt_score_v3"] = full.loc[
+        is_new, "prompt_score_v3"
+    ].fillna(full.loc[is_new, "scored_time"].map(global_worst_score_mapping))
 
-            group = group.reset_index()
-        return group
+    # overwrite score_details_v3 for new miners
+    full.loc[is_new, "score_details_v3"] = full.loc[is_new, "scored_time"].map(
+        global_score_details_mapping
+    )
 
-    df = df.groupby("miner_id", group_keys=False).apply(fill_missing_for_miner)
-    df = df.sort_values(by=["scored_time", "miner_id"])
+    # 6) drop the “fake” rows we only introduced for existing miners
+    is_old = full["miner_min"] == global_min
+    was_missing = (
+        full["prompt_score_v3"].isna() & full["score_details_v3"].isna()
+    )
+    mask_drop = is_old & was_missing
+    out = full.loc[
+        ~mask_drop,
+        ["scored_time", "miner_id", "prompt_score_v3", "score_details_v3"],
+    ]
 
-    return df
+    # 7) clean up types & sort
+    out["miner_id"] = out["miner_id"].astype(int)
+    out = out.sort_values(["scored_time", "miner_id"]).reset_index(drop=True)
+    return out
 
 
 def compute_weighted_averages(

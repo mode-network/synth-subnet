@@ -304,7 +304,7 @@ class MinerDataHandler:
         self,
         scored_time: datetime,
         cutoff_days: int,
-    ):
+    ) -> typing.Optional[list[ValidatorRequest]]:
         """
         Retrieve the list of IDs of the latest validator requests that (start_time + time_length) < scored_time
         and (start_time + time_length) >= scored_time - cutoff_days.
