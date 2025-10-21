@@ -71,7 +71,7 @@ def test_validate_responses_incorrect_type():
         time_increment=time_increment,
     )
     response: dict = {
-        "time": start_time.timestamp(),
+        "time": int(start_time.timestamp()),
         "increment": time_increment,
         "paths": [[123.45] * 11],
     }
@@ -94,7 +94,7 @@ def test_validate_responses_incorrect_number_of_paths():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = [start_time.timestamp(), time_increment]
+    response: list = [int(start_time.timestamp()), time_increment]
     request_time = start_time
     process_time_str = "0"
 
@@ -103,7 +103,7 @@ def test_validate_responses_incorrect_number_of_paths():
     )
     assert result == "Number of paths is incorrect: expected 2, got 0"
 
-    response: list = [start_time.timestamp(), time_increment, [123.45]]
+    response: list = [int(start_time.timestamp()), time_increment, [123.45]]
     request_time = start_time
     process_time_str = "0"
 
@@ -121,7 +121,7 @@ def test_validate_responses_incorrect_path_type():
         time_increment=time_increment,
     )
     response: list = [
-        start_time.timestamp(),
+        int(start_time.timestamp()),
         time_increment,
         {"price": 123.45},
         {"price": 123.45},
@@ -144,7 +144,7 @@ def test_validate_responses_incorrect_number_of_time_points():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = [start_time.timestamp(), time_increment, [123.45]]
+    response: list = [int(start_time.timestamp()), time_increment, [123.45]]
     request_time = start_time
     process_time_str = "0"
 
@@ -171,11 +171,23 @@ def test_validate_responses_incorrect_start_time():
     )
     assert (
         result
-        == "Start time format is incorrect: expected int or float, got <class 'str'>"
+        == "Start time format is incorrect: expected int, got <class 'str'>"
+    )
+
+    response: list = [start_time.timestamp(), time_increment, [123.45] * 11]
+    request_time = start_time
+    process_time_str = "0"
+
+    result = validate_responses(
+        response, simulation_input, request_time, process_time_str
+    )
+    assert (
+        result
+        == "Start time format is incorrect: expected int, got <class 'float'>"
     )
 
     response: list = [
-        start_time.timestamp() + 1,
+        int(start_time.timestamp()) + 1,
         time_increment,
         [123.45] * 11,
     ]
@@ -198,7 +210,7 @@ def test_validate_responses_incorrect_time_increment():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = [start_time.timestamp(), "", [123.45] * 11]
+    response: list = [int(start_time.timestamp()), "", [123.45] * 11]
     request_time = start_time
     process_time_str = "0"
 
@@ -211,7 +223,7 @@ def test_validate_responses_incorrect_time_increment():
     )
 
     response: list = [
-        start_time.timestamp(),
+        int(start_time.timestamp()),
         time_increment + 1,
         [123.45] * 11,
     ]
@@ -231,7 +243,11 @@ def test_validate_responses_incorrect_price_format():
         time_length=10,
         time_increment=time_increment,
     )
-    response: list = [start_time.timestamp(), time_increment, ["123.45"] * 11]
+    response: list = [
+        int(start_time.timestamp()),
+        time_increment,
+        ["123.45"] * 11,
+    ]
     request_time = start_time
     process_time_str = "0"
 
@@ -252,7 +268,7 @@ def test_validate_responses_incorrect_price_digits():
         time_increment=time_increment,
     )
     response: list = [
-        start_time.timestamp(),
+        int(start_time.timestamp()),
         time_increment,
         [123.456789] * 11,
     ]
@@ -272,7 +288,11 @@ def test_validate_responses_correct():
         time_length=3,
         time_increment=time_increment,
     )
-    response: list = [start_time.timestamp(), time_increment, [123.45678] * 4]
+    response: list = [
+        int(start_time.timestamp()),
+        time_increment,
+        [123.45678] * 4,
+    ]
     request_time = start_time
     process_time_str = "0"
 

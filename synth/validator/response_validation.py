@@ -39,8 +39,8 @@ def validate_response_type(response) -> typing.Optional[str]:
     if len(response) == 0:
         return "Response is empty"
 
-    if not isinstance(response[0], (int, float)):
-        return f"Start time format is incorrect: expected int or float, got {type(response[0])}"
+    if not isinstance(response[0], int):
+        return f"Start time format is incorrect: expected int, got {type(response[0])}"
 
     if not isinstance(response[1], int):
         return f"Time increment format is incorrect: expected int, got {type(response[1])}"
@@ -73,7 +73,7 @@ def validate_responses(
         return error_message
 
     # check the start time
-    first_time_timestamp: int = int(response[0])
+    first_time_timestamp: int = response[0]
     expected_first_time_timestamp = int(start_time.timestamp())
     if first_time_timestamp != expected_first_time_timestamp:
         return f"Start time timestamp is incorrect: expected {expected_first_time_timestamp}, got {first_time_timestamp}"

@@ -21,7 +21,7 @@ def convert_prices_to_time_format(
     start_time = datetime.fromisoformat(start_time_str).replace(
         tzinfo=timezone.utc
     )
-    result = [start_time.timestamp(), time_increment]
+    result = [int(start_time.timestamp()), time_increment]
 
     for price_item in prices:
         single_prediction = []
