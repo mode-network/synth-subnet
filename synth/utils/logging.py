@@ -5,7 +5,6 @@ import bittensor as bt
 
 import google.cloud.logging
 import google.auth.exceptions
-from slack_sdk import WebClient
 
 
 EVENTS_LEVEL_NUM = 38
@@ -93,48 +92,6 @@ def setup_gcp_logging(log_id_prefix: str):
             )
         else:
             client.setup_logging(labels={"log_id": log_id})
-
-
-class SlackHandler(logging.Handler):
-    def __init__(self, personal_slack_token, channel_id):
-        super().__init__()
-        self.client = WebClient(token=personal_slack_token)
-        self.channel_id = channel_id
-
-    def emit(self, record):
-        try:
-            log_entry = self.format(record)
-            if record.levelno >= 40:
-                self.client.chat_postMessage(
-                    channel=self.channel_id, text=log_entry
-                )
-        except Exception as err:
-            msg = f"Error occurred while sending alert to slack: ---{str(err)}--- the message: ---{log_entry}---"
-            bt.logging.warning(msg)
-
-
-def setup_slack_alert(log_id_prefix: str):
-    """Miners and validators can use this to send alerts to slack."""
-    personal_slack_token = os.getenv("SLACK_TOKEN")
-    if not personal_slack_token:
-        bt.logging.warning(
-            "SLACK_TOKEN not set. Slack alerts will not be sent."
-        )
-        return None
-    channel_id = os.getenv("SLACK_CHANNEL_ID")
-    if not channel_id:
-        bt.logging.warning(
-            "SLACK_CHANNEL_ID not set. Slack alerts will not be sent."
-        )
-        return None
-    slack_handler = SlackHandler(personal_slack_token, channel_id)
-    slack_handler.setLevel(logging.ERROR)
-    formatter = logging.Formatter(
-        f"{log_id_prefix} %(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    slack_handler.setFormatter(formatter)
-
-    bt.logging._logger.addHandler(slack_handler)
 
 
 class SubstringFilter(logging.Filter):

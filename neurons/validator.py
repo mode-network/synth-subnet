@@ -31,7 +31,7 @@ from synth.utils.helpers import (
     round_time_to_minutes,
     timeout_until,
 )
-from synth.utils.logging import setup_gcp_logging, setup_slack_alert
+from synth.utils.logging import setup_gcp_logging
 from synth.utils.opening_hours import should_skip_xau
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
@@ -60,7 +60,6 @@ class Validator(BaseValidatorNeuron):
         super(Validator, self).__init__(config=config)
 
         setup_gcp_logging(self.config.gcp.log_id_prefix)
-        setup_slack_alert(self.config.gcp.log_id_prefix)
 
         bt.logging.info("load_state()")
         self.load_state()
