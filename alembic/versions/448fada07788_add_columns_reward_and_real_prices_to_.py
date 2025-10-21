@@ -1,4 +1,4 @@
-"""add columns reward and real_prices to miner_predictions table
+"""add columns reward and real_prices to miner_rewards table
 
 Revision ID: 448fada07788
 Revises: 1154ae96bd0a

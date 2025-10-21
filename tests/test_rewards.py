@@ -80,7 +80,7 @@ def test_get_rewards(db_engine):
 
     validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
 
-    prompt_scores, detailed_info = get_rewards(
+    prompt_scores, detailed_info, real_prices = get_rewards(
         handler,
         price_data_provider,
         validator_requests[0],
@@ -106,3 +106,5 @@ def test_get_rewards(db_engine):
 
     assert detailed_info[0]["miner_uid"] == miner_uids[0]
     assert len(detailed_info[0]["crps_data"]) == 350
+    assert real_prices is not None
+    assert len(real_prices) == 289

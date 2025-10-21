@@ -19,4 +19,29 @@ exclude = '''
 '''
 
 [tool.mypy]
-disable_error_code = ["import-untyped", "attr-defined"]
+disable_error_code = ["type-arg"]
+python_version = 3.10
+strict = true
+show_error_codes = true
+warn_unused_ignores = true
+exclude = ["venv", "bt_venv", ".venv"]
+
+[tool.pylint]
+ignore = [".git","__pycache__","old","build","dist","venv"]
+
+[tool.pylint.messages_control]
+max-args = 10
+disable = [
+    "consider-using-generator",
+    "line-too-long",
+    "unnecessary-pass",
+    "fixme",
+    "missing-function-docstring",
+    "broad-exception-caught",
+    "missing-module-docstring"
+]
+
+[tool.flake8]
+extend-ignore = ["E501", "E203"]
+exclude = [".git","__pycache__","old","build","dist","bt_venv","venv", "docs"]
+max-complexity = 10

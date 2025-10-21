@@ -25,6 +25,7 @@ import pandas as pd
 import bittensor as bt
 
 
+from synth.db.models import ValidatorRequest
 from synth.utils.helpers import full_fill_real_prices
 from synth.validator.crps_calculation import calculate_crps_for_miner
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -98,8 +99,8 @@ def reward(
 def get_rewards(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
-    validator_request,
-) -> tuple[typing.Optional[np.ndarray], list]:
+    validator_request: ValidatorRequest,
+) -> tuple[typing.Optional[np.ndarray], list, list[dict]]:
     """
     Returns an array of rewards for the given query and responses.
 
@@ -116,7 +117,7 @@ def get_rewards(
     )
 
     if miner_uids is None:
-        return None, []
+        return None, [], []
 
     try:
         start_time = validator_request.start_time.isoformat()
@@ -127,7 +128,7 @@ def get_rewards(
         bt.logging.warning(
             f"Error fetching data for validator request {validator_request.id}: {e}"
         )
-        return None, []
+        return None, [], []
 
     scores = []
     detailed_crps_data_list = []
@@ -151,7 +152,7 @@ def get_rewards(
     )
 
     if prompt_scores is None:
-        return None, []
+        return None, [], []
 
     # gather all the detailed information
     # for log and debug purposes
@@ -174,7 +175,6 @@ def get_rewards(
             ),
             "total_crps": float(score),
             "crps_data": clean_numpy_in_crps_data(crps_data),
-            "real_prices": real_prices,
         }
         for miner_uid, score, crps_data, prompt_score, miner_prediction in zip(
             miner_uids,
@@ -185,7 +185,7 @@ def get_rewards(
         )
     ]
 
-    return prompt_scores, detailed_info
+    return prompt_scores, detailed_info, real_prices
 
 
 def compute_prompt_scores(score_values: np.ndarray):

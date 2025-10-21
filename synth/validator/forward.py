@@ -135,7 +135,7 @@ def calculate_rewards_and_update_scores(
 
         bt.logging.debug(f"validator_request_id: {validator_request.id}")
 
-        prompt_scores, detailed_info = get_rewards(
+        prompt_scores, detailed_info, real_prices = get_rewards(
             miner_data_handler=miner_data_handler,
             price_data_provider=price_data_provider,
             validator_request=validator_request,
@@ -153,7 +153,7 @@ def calculate_rewards_and_update_scores(
         )
 
         miner_data_handler.set_miner_scores(
-            reward_details=detailed_info, scored_time=miner_score_time
+            real_prices, validator_request.id, detailed_info, miner_score_time
         )
 
     # Success if at least one request succeed
