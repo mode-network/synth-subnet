@@ -9,6 +9,7 @@ import aiohttp
 import bittensor as bt
 from bittensor_wallet import Keypair, Wallet
 import httpx
+import pydantic
 import uvloop
 
 
@@ -111,6 +112,8 @@ def log_exception(exception: Exception):
     """
     error_id = str(uuid.uuid4())
     error_type = exception.__class__.__name__
+    if isinstance(exception, pydantic.ValidationError):
+        return  # Skip logging for validation errors
     if isinstance(
         exception,
         (
