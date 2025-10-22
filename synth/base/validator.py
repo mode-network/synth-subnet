@@ -20,12 +20,10 @@
 
 import copy
 import numpy as np
-import asyncio
 import argparse
-import threading
 import bittensor as bt
 
-from typing import List, Union
+from typing import List
 from traceback import print_exception
 
 from synth.base.dendrite import SynthDendrite
@@ -72,14 +70,6 @@ class BaseValidatorNeuron(BaseNeuron):
         else:
             bt.logging.warning("axon off, not serving ip to chain.")
 
-        # Create asyncio event loop to manage async tasks.
-        self.loop = asyncio.get_event_loop()
-
-        # Instantiate runners
-        self.should_exit = False
-        self.is_running = False
-        self.thread: Union[threading.Thread, None] = None
-
     def serve_axon(self):
         """Serve axon to enable external connections."""
 
@@ -102,10 +92,6 @@ class BaseValidatorNeuron(BaseNeuron):
             bt.logging.error(
                 f"Failed to create Axon initialize with exception: {e}"
             )
-
-    async def concurrent_forward(self):
-        coroutines = await self.forward_validator()
-        await asyncio.gather(*coroutines)
 
     def run(self):
         """
@@ -138,7 +124,7 @@ class BaseValidatorNeuron(BaseNeuron):
                 if self.should_exit:
                     break
 
-                # Sync metagraph and potentially set weights.
+                # Sync metagraph and save state.
                 self.sync()
 
                 self.step += 1
@@ -154,50 +140,6 @@ class BaseValidatorNeuron(BaseNeuron):
         except Exception as err:
             bt.logging.error(f"Error during validation: {str(err)}")
             print_exception(type(err), err, err.__traceback__)
-
-    def run_in_background_thread(self):
-        """
-        Starts the validator's operations in a background thread upon entering the context.
-        This method facilitates the use of the validator in a 'with' statement.
-        """
-        if not self.is_running:
-            bt.logging.debug("Starting validator in background thread.")
-            self.should_exit = False
-            self.thread = threading.Thread(target=self.run, daemon=True)
-            self.thread.start()
-            self.is_running = True
-            bt.logging.debug("Started")
-
-    def stop_run_thread(self):
-        """
-        Stops the validator's operations that are running in the background thread.
-        """
-        if self.is_running:
-            bt.logging.debug("Stopping validator in background thread.")
-            self.should_exit = True
-            if self.thread is not None:
-                self.thread.join(5)
-            self.is_running = False
-            bt.logging.debug("Stopped")
-
-    def __enter__(self):
-        self.run_in_background_thread()
-        return self
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        """
-        Stops the validator's background operations upon exiting the context.
-        This method facilitates the use of the validator in a 'with' statement.
-
-        Args:
-            exc_type: The type of the exception that caused the context to be exited.
-                      None if the context was exited without an exception.
-            exc_value: The instance of the exception that caused the context to be exited.
-                       None if the context was exited without an exception.
-            traceback: A traceback object encoding the stack trace.
-                       None if the context was exited without an exception.
-        """
-        self.stop_run_thread()
 
     def set_weights(self):
         """
