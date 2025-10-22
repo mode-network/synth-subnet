@@ -116,19 +116,8 @@ class BaseValidatorNeuron(BaseNeuron):
 
         # This loop maintains the validator's operations until intentionally stopped.
         try:
-            while True:
-                # Run forwards.
-                self.forward_validator()
-
-                # Check if we should exit.
-                if self.should_exit:
-                    break
-
-                # Sync metagraph and save state.
-                self.sync()
-
-                self.step += 1
-
+            # Run forwards.
+            self.forward_validator()
         # If someone intentionally stops the validator, it'll safely terminate operations.
         except KeyboardInterrupt:
             if not self.config.neuron.axon_off:

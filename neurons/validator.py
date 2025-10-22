@@ -1,6 +1,7 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
+from datetime import timedelta
 import multiprocessing as mp
 import sched
 import time
@@ -149,8 +150,14 @@ class Validator(BaseValidatorNeuron):
         current_time = get_current_time()
 
         for idx, simulation_input in enumerate(self.simulation_input_list):
-            self.scheduler.enterabs(
-                round_time_to_minutes(current_time, IN_15_MINUTES * idx),
+            next_prompt_time = round_time_to_minutes(
+                current_time, IN_15_MINUTES * idx
+            )
+            bt.logging.info(
+                f"scheduling prompt at {next_prompt_time.isoformat()}"
+            )
+            self.scheduler.enter(
+                (next_prompt_time - current_time).total_seconds(),
                 1,
                 self.forward_prompt,
                 (simulation_input, False),
@@ -158,28 +165,41 @@ class Validator(BaseValidatorNeuron):
 
         for simulation_input in self.simulation_input_hft_list:
             # send simultaneously all assets for HFT
-            self.scheduler.enterabs(
-                round_time_to_minutes(current_time, IN_2_MINUTES),
+            next_prompt_time = round_time_to_minutes(
+                current_time, IN_2_MINUTES
+            )
+            bt.logging.info(
+                f"scheduling HFT prompt at {next_prompt_time.isoformat()}"
+            )
+            self.scheduler.enter(
+                (next_prompt_time - current_time).total_seconds(),
                 1,
                 self.forward_prompt,
                 (simulation_input, True),
             )
 
+        bt.logging.info(
+            f"scheduling scoring at {(current_time + timedelta(seconds=IN_15_MINUTES)).isoformat()}"
+        )
         self.scheduler.enter(
             IN_15_MINUTES,
             1,
             self.forward_score,
-            (simulation_input, True),
         )
+        self.scheduler.run()
 
     def forward_prompt(self, simulation_input: SimulationInput, hft: bool):
         request_time = get_current_time()
+        next_prompt_time = round_time_to_minutes(
+            request_time, IN_2_MINUTES - 60 if hft else IN_15_MINUTES - 60
+        )
+        bt.logging.info(
+            f"scheduling {'HFT' if hft else 'regular'} prompt at {next_prompt_time.isoformat()}"
+        )
 
-        self.scheduler.enterabs(
+        self.scheduler.enter(
             # round to the next minute and add 2 of 15 minutes and subtract 60 seconds because round_time_to_minutes rounds to the next minute
-            round_time_to_minutes(
-                request_time, IN_2_MINUTES - 60 if hft else IN_15_MINUTES - 60
-            ),
+            (next_prompt_time - request_time).total_seconds(),
             1,
             self.forward_prompt,
             (simulation_input, hft),
@@ -286,6 +306,12 @@ class Validator(BaseValidatorNeuron):
             moving_averages_data=moving_averages_data,
             miner_data_handler=self.miner_data_handler,
             scored_time=scored_time,
+        )
+
+        self.scheduler.enter(
+            IN_15_MINUTES,
+            1,
+            self.forward_score,
         )
 
     async def forward_miner(self, _: bt.Synapse) -> bt.Synapse:
