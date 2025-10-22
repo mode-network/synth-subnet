@@ -1,9 +1,9 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
-import asyncio
-from datetime import datetime, timedelta
 import multiprocessing as mp
+import sched
+import time
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -29,7 +29,6 @@ from synth.simulation_input import SimulationInput
 from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
-    timeout_until,
 )
 from synth.utils.logging import setup_gcp_logging
 from synth.utils.opening_hours import should_skip_xau
@@ -47,10 +46,13 @@ from synth.validator.price_data_provider import PriceDataProvider
 load_dotenv()
 
 
+# Constants
+IN_15_MINUTES = 60 * 15
+IN_2_MINUTES = 60 * 2
+
+
 class Validator(BaseValidatorNeuron):
     """
-    Your validator neuron class. You should use this class to define your validator's behavior. In particular, you should replace the forward function with your own logic.
-
     This class inherits from the BaseValidatorNeuron class, which in turn inherits from BaseNeuron. The BaseNeuron class takes care of routine tasks such as setting up wallet, subtensor, metagraph, logging directory, parsing config, etc. You can override any of the methods in BaseNeuron if you need to customize the behavior.
 
     This class provides reasonable default behavior for a validator such as keeping a moving average of the scores of the miners and using them to set weights at the end of each epoch. Additionally, the scores are reset for new hotkeys at the end of each epoch.
@@ -66,6 +68,8 @@ class Validator(BaseValidatorNeuron):
 
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
+
+        self.scheduler = sched.scheduler(time.time, time.sleep)
 
         self.simulation_input_list = [
             # input data: give me prediction of BTC price for the next 1 day for every 5 min of time
@@ -121,7 +125,7 @@ class Validator(BaseValidatorNeuron):
                 num_simulations=1000,
             ),
         ]
-        self.timeout_extra_seconds = 120
+        self.timeout_extra_seconds = 0
 
         self.assert_assets_supported()
 
@@ -130,120 +134,111 @@ class Validator(BaseValidatorNeuron):
         for simulation in self.simulation_input_list:
             assert simulation.asset in PriceDataProvider.TOKEN_MAP
 
-    async def forward_validator(self):
+    def forward_validator(self):
         """
         Validator forward pass. Consists of:
         - Generating the query
         - Querying the miners
         - Getting the responses
-        - Rewarding the miners
+        - Calculating scores
         - Updating the scores
+        - Rewarding the miners
         """
         bt.logging.info("calling forward_validator()")
-        return [
-            asyncio.create_task(self.forward_prompt(hft=False)),
-            asyncio.create_task(self.forward_prompt(hft=True)),
-            asyncio.create_task(self.forward_score()),
-        ]
 
-    async def wait_till_next_simulation(
-        self, request_time: datetime, hft: bool
-    ):
-        # wait until the next simulation
-        next_iteration = request_time + timedelta(minutes=2 if hft else 20)
-        wait_time = timeout_until(next_iteration)
-        bt.logging.info(
-            f"Waiting for {wait_time/60} minutes until the next simulation",
-            "forward_prompt",
+        current_time = get_current_time()
+
+        for idx, simulation_input in enumerate(self.simulation_input_list):
+            self.scheduler.enterabs(
+                round_time_to_minutes(current_time, IN_15_MINUTES * idx),
+                1,
+                self.forward_prompt,
+                (simulation_input, False),
+            )
+
+        for simulation_input in self.simulation_input_hft_list:
+            # send simultaneously all assets for HFT
+            self.scheduler.enterabs(
+                round_time_to_minutes(current_time, IN_2_MINUTES),
+                1,
+                self.forward_prompt,
+                (simulation_input, True),
+            )
+
+        self.scheduler.enter(
+            IN_15_MINUTES,
+            1,
+            self.forward_score,
+            (simulation_input, True),
         )
-        await asyncio.sleep(wait_time)
 
-    async def forward_prompt(self, hft: bool):
-        simulations = (
-            self.simulation_input_hft_list
-            if hft
-            else self.simulation_input_list
+    def forward_prompt(self, simulation_input: SimulationInput, hft: bool):
+        request_time = get_current_time()
+
+        self.scheduler.enterabs(
+            # round to the next minute and add 2 of 15 minutes and subtract 60 seconds because round_time_to_minutes rounds to the next minute
+            round_time_to_minutes(
+                request_time, IN_2_MINUTES - 60 if hft else IN_15_MINUTES - 60
+            ),
+            1,
+            self.forward_prompt,
+            (simulation_input, hft),
         )
 
-        for simulation_input in simulations:
-            # ================= Step 1 ================= #
-            # Getting available miners from metagraph and saving information about them
-            # and their properties (rank, incentives, emission) at the current moment in the database
-            # in the metagraph_history table and in the miners table
-            # ========================================== #
+        # ================= Step 1 ================= #
+        # Getting available miners from metagraph and saving information about them
+        # and their properties (rank, incentives, emission) at the current moment in the database
+        # in the metagraph_history table and in the miners table
+        # ========================================== #
 
-            miner_uids = get_available_miners_and_update_metagraph_history(
-                base_neuron=self,
-                miner_data_handler=self.miner_data_handler,
+        miner_uids = get_available_miners_and_update_metagraph_history(
+            base_neuron=self,
+            miner_data_handler=self.miner_data_handler,
+        )
+
+        if len(miner_uids) == 0:
+            bt.logging.error(
+                "No miners available",
+                "forward_prompt",
             )
+            return
 
-            if len(miner_uids) == 0:
-                bt.logging.error(
-                    "No miners available",
-                    "forward_prompt",
-                )
-                await self.wait_till_next_simulation(get_current_time(), hft)
-                continue
+        start_time = round_time_to_minutes(
+            request_time, self.timeout_extra_seconds
+        )
 
-            request_time = get_current_time()
-            start_time = round_time_to_minutes(
-                request_time, 60, self.timeout_extra_seconds
+        if should_skip_xau(start_time) and simulation_input.asset == "XAU":
+            bt.logging.info(
+                "Skipping XAU simulation as market is closed",
+                "forward_prompt",
             )
+            return
 
-            if should_skip_xau(start_time) and simulation_input.asset == "XAU":
-                bt.logging.info(
-                    "Skipping XAU simulation as market is closed",
-                    "forward_prompt",
-                )
-                await self.wait_till_next_simulation(request_time, hft)
-                continue
+        # ================= Step 2 ================= #
+        # Query all the available miners and save all their responses
+        # in the database in miner_predictions table
+        # ========================================== #
 
-            # ================= Step 2 ================= #
-            # Query all the available miners and save all their responses
-            # in the database in miner_predictions table
-            # ========================================== #
+        # add the start time to the simulation input
+        simulation_input.start_time = start_time.isoformat()
 
-            # add the start time to the simulation input
-            simulation_input.start_time = start_time.isoformat()
-
-            await query_available_miners_and_save_responses(
-                base_neuron=self,
-                miner_data_handler=self.miner_data_handler,
-                miner_uids=miner_uids,
-                simulation_input=simulation_input,
-                request_time=request_time,
-            )
-
-            await self.wait_till_next_simulation(request_time, hft)
+        query_available_miners_and_save_responses(
+            base_neuron=self,
+            miner_data_handler=self.miner_data_handler,
+            miner_uids=miner_uids,
+            simulation_input=simulation_input,
+            request_time=request_time,
+        )
 
     async def forward_score(self):
         # getting current time
         current_time = get_current_time()
-
-        next_iteration = current_time + timedelta(hours=1)
-
-        async def wait_till_next_iteration():
-            # wait until the next iteration
-            wait_time = timeout_until(next_iteration)
-            bt.logging.info(
-                f"Waiting for {wait_time/60} minutes until the next iteration",
-                "forward_score",
-            )
-            await asyncio.sleep(wait_time)
 
         # round current time to the closest minute and add extra minutes
         # to be sure we are after the start time of the prompt
         scored_time = round_time_to_minutes(
             current_time, 60, self.timeout_extra_seconds * 2
         )
-
-        # wait until the score_time
-        wait_time = timeout_until(scored_time)
-        bt.logging.info(
-            f"Waiting for {wait_time/60} minutes to start validating",
-            "forward_score",
-        )
-        await asyncio.sleep(wait_time)
 
         # ================= Step 3 ================= #
         # Calculate rewards based on historical predictions data
@@ -262,7 +257,6 @@ class Validator(BaseValidatorNeuron):
         )
 
         if not success:
-            await wait_till_next_iteration()
             return
 
         # ================= Step 4 ================= #
@@ -280,7 +274,6 @@ class Validator(BaseValidatorNeuron):
         )
 
         if len(moving_averages_data) == 0:
-            await wait_till_next_iteration()
             return
 
         # ================= Step 5 ================= #
@@ -294,8 +287,6 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
             scored_time=scored_time,
         )
-
-        await wait_till_next_iteration()
 
     async def forward_miner(self, _: bt.Synapse) -> bt.Synapse:
         pass

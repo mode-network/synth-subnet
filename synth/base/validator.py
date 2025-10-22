@@ -131,8 +131,8 @@ class BaseValidatorNeuron(BaseNeuron):
         # This loop maintains the validator's operations until intentionally stopped.
         try:
             while True:
-                # Run multiple forwards concurrently.
-                self.loop.run_until_complete(self.concurrent_forward())
+                # Run forwards.
+                self.forward_validator()
 
                 # Check if we should exit.
                 if self.should_exit:
