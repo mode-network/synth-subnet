@@ -73,25 +73,52 @@ class Validator(BaseValidatorNeuron):
                 asset="BTC",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
             SimulationInput(
                 asset="ETH",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
             SimulationInput(
                 asset="XAU",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
             SimulationInput(
                 asset="SOL",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
+            ),
+        ]
+        self.simulation_input_hft_list = [
+            # input data: give me prediction of the asset price for the next 1 hour for every 1 min of time
+            SimulationInput(
+                asset="BTC",
+                time_increment=60,
+                time_length=3600,
+                num_simulations=1000,
+            ),
+            SimulationInput(
+                asset="ETH",
+                time_increment=60,
+                time_length=3600,
+                num_simulations=1000,
+            ),
+            SimulationInput(
+                asset="XAU",
+                time_increment=60,
+                time_length=3600,
+                num_simulations=1000,
+            ),
+            SimulationInput(
+                asset="SOL",
+                time_increment=60,
+                time_length=3600,
+                num_simulations=1000,
             ),
         ]
         self.timeout_extra_seconds = 120
@@ -114,17 +141,16 @@ class Validator(BaseValidatorNeuron):
         """
         bt.logging.info("calling forward_validator()")
         return [
-            asyncio.create_task(self.forward_prompt()),
+            asyncio.create_task(self.forward_prompt(hft=False)),
+            asyncio.create_task(self.forward_prompt(hft=True)),
             asyncio.create_task(self.forward_score()),
         ]
 
     async def wait_till_next_simulation(
-        self, request_time: datetime, simulation_input_list: list
+        self, request_time: datetime, hft: bool
     ):
         # wait until the next simulation
-        next_iteration = request_time + timedelta(
-            minutes=60 / len(simulation_input_list)
-        )
+        next_iteration = request_time + timedelta(minutes=2 if hft else 20)
         wait_time = timeout_until(next_iteration)
         bt.logging.info(
             f"Waiting for {wait_time/60} minutes until the next simulation",
@@ -132,8 +158,14 @@ class Validator(BaseValidatorNeuron):
         )
         await asyncio.sleep(wait_time)
 
-    async def forward_prompt(self):
-        for simulation_input in self.simulation_input_list:
+    async def forward_prompt(self, hft: bool):
+        simulations = (
+            self.simulation_input_hft_list
+            if hft
+            else self.simulation_input_list
+        )
+
+        for simulation_input in simulations:
             # ================= Step 1 ================= #
             # Getting available miners from metagraph and saving information about them
             # and their properties (rank, incentives, emission) at the current moment in the database
@@ -150,9 +182,7 @@ class Validator(BaseValidatorNeuron):
                     "No miners available",
                     "forward_prompt",
                 )
-                await self.wait_till_next_simulation(
-                    get_current_time(), self.simulation_input_list
-                )
+                await self.wait_till_next_simulation(get_current_time(), hft)
                 continue
 
             request_time = get_current_time()
@@ -165,9 +195,7 @@ class Validator(BaseValidatorNeuron):
                     "Skipping XAU simulation as market is closed",
                     "forward_prompt",
                 )
-                await self.wait_till_next_simulation(
-                    request_time, self.simulation_input_list
-                )
+                await self.wait_till_next_simulation(request_time, hft)
                 continue
 
             # ================= Step 2 ================= #
@@ -186,9 +214,7 @@ class Validator(BaseValidatorNeuron):
                 request_time=request_time,
             )
 
-            await self.wait_till_next_simulation(
-                request_time, self.simulation_input_list
-            )
+            await self.wait_till_next_simulation(request_time, hft)
 
     async def forward_score(self):
         # getting current time
