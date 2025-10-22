@@ -178,6 +178,10 @@ class MinerDataHandler:
                 with connection.begin():
                     # update validator request with the real paths
                     if real_prices is not None and len(real_prices) > 0:
+                        # replace np.nan with None
+                        for price in real_prices:
+                            if price is not None and pd.isna(price):
+                                price = None
                         update_stmt_validator = (
                             update(ValidatorRequest)
                             .where(
@@ -266,7 +270,9 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return None
 
-    def get_miner_prediction(self, miner_uid: int, validator_request_id: int):
+    def get_miner_prediction(
+        self, miner_uid: int, validator_request_id: int
+    ) -> typing.Optional[MinerPrediction]:
         """Retrieve the record with the longest valid interval for the given miner_id."""
         try:
             with self.engine.connect() as connection:
@@ -290,7 +296,13 @@ class MinerDataHandler:
                     .limit(1)
                 )
 
-                result = connection.execute(query).fetchone()
+                result = MinerPrediction()
+                row = connection.execute(query).fetchone()
+                if row is not None:
+                    result.id = row.id
+                    result.prediction = row.prediction
+                    result.format_validation = row.format_validation
+                    result.process_time = row.process_time
 
             return result
         except Exception as e:

@@ -26,12 +26,12 @@ pyth_base_url = "https://hermes.pyth.network/v2/updates/price/latest"
     wait=wait_random_exponential(multiplier=2),
     reraise=True,
 )
-def get_asset_price(asset="BTC"):
+def get_asset_price(asset="BTC") -> float | None:
     pyth_params = {"ids[]": [TOKEN_MAP[asset]]}
     response = requests.get(pyth_base_url, params=pyth_params)
     if response.status_code != 200:
         print("Error in response of Pyth API")
-        return
+        return None
 
     data = response.json()
     parsed_data = data.get("parsed", [])
@@ -40,14 +40,14 @@ def get_asset_price(asset="BTC"):
     price = int(asset["price"]["price"])
     expo = int(asset["price"]["expo"])
 
-    live_price = price * (10**expo)
+    live_price: float = price * (10**expo)
 
     return live_price
 
 
 def simulate_single_price_path(
-    current_price, time_increment, time_length, sigma
-):
+    current_price: float, time_increment: int, time_length: int, sigma: float
+) -> np.ndarray:
     """
     Simulate a single crypto asset price path.
     """
@@ -59,12 +59,17 @@ def simulate_single_price_path(
     cumulative_returns = np.cumprod(1 + price_change_pcts)
     cumulative_returns = np.insert(cumulative_returns, 0, 1.0)
     price_path = current_price * cumulative_returns
+
     return price_path
 
 
 def simulate_crypto_price_paths(
-    current_price, time_increment, time_length, num_simulations, sigma
-):
+    current_price: float,
+    time_increment: int,
+    time_length: int,
+    num_simulations: int,
+    sigma: float,
+) -> np.ndarray:
     """
     Simulate multiple crypto asset price paths.
     """

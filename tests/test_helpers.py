@@ -1,15 +1,13 @@
-from typing import Any
 import unittest
 from datetime import datetime, timedelta, timezone
-import numpy as np
 
 from synth.utils.helpers import (
     convert_prices_to_time_format,
-    full_fill_real_prices,
     get_intersecting_arrays,
     round_time_to_minutes,
     from_iso_to_unix_time,
     get_current_time,
+    round_to_8_significant_digits,
     timeout_until,
 )
 
@@ -19,9 +17,19 @@ class TestHelpers(unittest.TestCase):
         current_time = get_current_time()
         print("current_time", current_time)
 
+    def test_round_to_8_significant_digits(self):
+        assert (
+            round_to_8_significant_digits(123456.789) == 123456.79
+        )  # Rounds to 8 significant digits
+        assert (
+            round_to_8_significant_digits(123) == 123
+        )  # Stays the same, already 3 significant digits
+        assert round_to_8_significant_digits(0.000123456789) == 0.00012345679
+        assert round_to_8_significant_digits(0.0) == 0.0
+
     def test_convert_prices_to_time_format(self):
         prices = [[45.67, 56.78, 34.89, 62.15]]
-        start_time = "2024-11-20T00:00:00"
+        start_time = "2024-11-19T23:00:00"
         time_increment = 300  # 5 minutes in seconds
 
         formatted_data = convert_prices_to_time_format(
@@ -30,48 +38,7 @@ class TestHelpers(unittest.TestCase):
 
         self.assertEqual(
             formatted_data,
-            [
-                [
-                    {"time": "2024-11-20T00:00:00", "price": 45.67},
-                    {"time": "2024-11-20T00:05:00", "price": 56.78},
-                    {"time": "2024-11-20T00:10:00", "price": 34.89},
-                    {"time": "2024-11-20T00:15:00", "price": 62.15},
-                ]
-            ],
-        )
-
-    def test_full_fill_real_prices(self):
-        prediction = [
-            {"time": "2024-11-20T00:00:00", "price": 45.67},
-            {"time": "2024-11-20T00:05:00", "price": 56.78},
-            {"time": "2024-11-20T00:10:00", "price": 34.89},
-            {"time": "2024-11-20T00:15:00", "price": 75.20},
-            {"time": "2024-11-20T00:20:00", "price": 71.85},
-            {"time": "2024-11-20T00:25:00", "price": 66.50},
-            {"time": "2024-11-20T00:30:00", "price": 82.30},
-        ]
-
-        real_prices: list[dict[str, Any]] = [
-            {"time": "2024-11-20T00:05:00", "price": 56.78},
-            {"time": "2024-11-20T00:10:00", "price": 62.15},
-            {"time": "2024-11-20T00:15:00", "price": np.nan},
-            {"time": "2024-11-20T00:20:00", "price": None},
-            {"time": "2024-11-20T00:30:00", "price": 81.15},
-        ]
-
-        real_prices_filled = full_fill_real_prices(prediction, real_prices)
-
-        self.assertEqual(
-            real_prices_filled,
-            [
-                {"time": "2024-11-20T00:00:00", "price": np.nan},
-                {"time": "2024-11-20T00:05:00", "price": 56.78},
-                {"time": "2024-11-20T00:10:00", "price": 62.15},
-                {"time": "2024-11-20T00:15:00", "price": np.nan},
-                {"time": "2024-11-20T00:20:00", "price": np.nan},
-                {"time": "2024-11-20T00:25:00", "price": np.nan},
-                {"time": "2024-11-20T00:30:00", "price": 81.15},
-            ],
+            (1732057200, 300, [45.67, 56.78, 34.89, 62.15]),
         )
 
     def test_get_intersecting_arrays(self):

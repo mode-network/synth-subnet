@@ -1,6 +1,5 @@
-from typing import Any, Optional
+from typing import Optional
 from datetime import datetime, timedelta, timezone
-import numpy as np
 
 
 def get_current_time() -> datetime:
@@ -8,7 +7,24 @@ def get_current_time() -> datetime:
     return datetime.now(timezone.utc).replace(microsecond=0)
 
 
-def convert_prices_to_time_format(prices, start_time, time_increment):
+def round_to_8_significant_digits(num: float) -> float:
+    """Round a float to 8 significant digits."""
+    if num == 0:
+        return 0.0
+    from math import log10, floor
+
+    digits = 8
+    # calculate the order of magnitude of the number
+    magnitude = floor(log10(abs(num)))
+    # calculate the decimal places to round to
+    decimal_places = digits - magnitude - 1
+
+    return round(num, decimal_places)
+
+
+def convert_prices_to_time_format(
+    prices: list, start_time_str: str, time_increment: int
+):
     """
     Convert an array of float numbers (prices) into an array of dictionaries with 'time' and 'price'.
 
@@ -17,56 +33,40 @@ def convert_prices_to_time_format(prices, start_time, time_increment):
     :param time_increment: Time increment in seconds between consecutive prices.
     :return: List of dictionaries with 'time' and 'price' keys.
     """
-    start_time = datetime.fromisoformat(
-        start_time
-    )  # Convert start_time to a datetime object
-    result = []
+    start_time = datetime.fromisoformat(start_time_str).replace(
+        tzinfo=timezone.utc
+    )
+    result = [int(start_time.timestamp()), time_increment]
 
     for price_item in prices:
         single_prediction = []
-        for i, price in enumerate(price_item):
-            time_point = start_time + timedelta(seconds=i * time_increment)
-            single_prediction.append(
-                {"time": time_point.isoformat(), "price": price}
-            )
+        for price in price_item:
+            single_prediction.append(round_to_8_significant_digits(price))
         result.append(single_prediction)
 
-    return result
+    return tuple(result)
 
 
-def full_fill_real_prices(
-    prediction: list[dict[str, Any]], real_prices: list[dict[str, Any]]
-) -> list[dict[str, Any]]:
-    """
-    Fills missing real prices in the prediction with None.
+def adjust_predictions(predictions: list) -> list:
+    if not isinstance(predictions, list):
+        return None
 
-    :param prediction: List of dictionaries with 'time' and 'price' keys.
-    :param real_prices: List of dictionaries with 'time' and 'price' keys.
-    :return: List of dictionaries with filled prices.
-    """
-    # transform real_prices into a dictionary for fast lookup
-    real_prices_dict = {}
-    for entry in real_prices:
-        real_prices_dict[entry["time"]] = entry["price"]
+    if len(predictions) <= 2:
+        return None
 
-    # fill missing times and prices in the real_prices_dict
-    for entry in prediction:
-        if (
-            entry["time"] not in real_prices_dict
-            or real_prices_dict[entry["time"]] is None
-            or np.isnan(real_prices_dict[entry["time"]])
-            or not np.isfinite(real_prices_dict[entry["time"]])
-        ):
-            real_prices_dict[entry["time"]] = np.nan
+    first_element = predictions[0]
+    if isinstance(first_element, list):
+        first_of_first = first_element[0]
+        if isinstance(first_of_first, dict):
+            print("Adjusting predictions from old format to new format.")
+            # old format, adjust to the new format
+            predictions_path = [
+                [entry["price"] for entry in sublist]
+                for sublist in predictions
+            ]
+            return predictions_path
 
-    real_prices_filled = []
-    # recreate the real_prices list of dict sorted by time
-    for time in sorted(real_prices_dict.keys()):
-        real_prices_filled.append(
-            {"time": time, "price": real_prices_dict[time]}
-        )
-
-    return real_prices_filled
+    return predictions[2:]
 
 
 def get_intersecting_arrays(array1, array2):

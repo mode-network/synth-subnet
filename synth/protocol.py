@@ -17,7 +17,7 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
-import typing
+from typing import Optional
 
 import bittensor as bt
 
@@ -44,11 +44,9 @@ class Simulation(bt.Synapse):
     simulation_input: SimulationInput
 
     # Optional request output, filled by receiving axon.
-    simulation_output: typing.Optional[
-        typing.List[typing.List[typing.Dict[str, typing.Union[str, float]]]]
-    ] = None
+    simulation_output: tuple[int | list[int | float], ...] | None = None
 
-    def deserialize(self) -> typing.Optional[list]:
+    def deserialize(self) -> Optional[list]:
         """
         Deserialize simulation output. This method retrieves the response from
         the miner in the form of simulation_output, deserializes it and returns it
