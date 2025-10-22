@@ -304,7 +304,7 @@ def sync_forward_multiprocess(
     axons: list[bt.AxonInfo],
     synapse: Simulation,
     timeout: float,
-    nprocs: int = 8,
+    nprocs: int = 2,
 ) -> list[Simulation]:
     bt.logging.debug(
         f"Starting multiprocess forward with {nprocs} processes.", "dendrite"
