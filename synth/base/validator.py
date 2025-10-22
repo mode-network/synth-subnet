@@ -21,10 +21,13 @@
 import copy
 import numpy as np
 import argparse
+from typing import List
+import traceback
+import sys
+
+
 import bittensor as bt
 
-from typing import List
-from traceback import print_exception
 
 from synth.base.dendrite import SynthDendrite
 from synth.base.neuron import BaseNeuron
@@ -128,7 +131,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # In case of unforeseen errors, the validator will log the error and continue operations.
         except Exception as err:
             bt.logging.error(f"Error during validation: {str(err)}")
-            print_exception(type(err), err, err.__traceback__)
+            traceback.print_exc(file=sys.stderr)
 
     def set_weights(self):
         """
