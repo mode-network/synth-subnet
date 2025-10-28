@@ -160,7 +160,7 @@ def calculate_rewards_and_update_scores(
     return fail_count != len(validator_requests)
 
 
-async def query_available_miners_and_save_responses(
+def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
     miner_uids: list,
@@ -188,22 +188,15 @@ async def query_available_miners_and_save_responses(
 
     start_time = time.time()
 
-    if base_neuron.config.neuron.use_multiprocess == 1:
-        synapses = sync_forward_multiprocess(
-            base_neuron.dendrite.keypair,
-            base_neuron.dendrite.uuid,
-            base_neuron.dendrite.external_ip,
-            axons,
-            synapse,
-            timeout,
-            base_neuron.config.neuron.nprocs,
-        )
-    else:
-        synapses = await base_neuron.dendrite.forward(
-            axons=axons,
-            synapse=synapse,
-            timeout=timeout,
-        )
+    synapses = sync_forward_multiprocess(
+        base_neuron.dendrite.keypair,
+        base_neuron.dendrite.uuid,
+        base_neuron.dendrite.external_ip,
+        axons,
+        synapse,
+        timeout,
+        base_neuron.config.neuron.nprocs,
+    )
 
     total_process_time = str(time.time() - start_time)
     bt.logging.debug(f"Forwarding took {total_process_time} seconds")

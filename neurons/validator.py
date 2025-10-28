@@ -1,9 +1,10 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
-import asyncio
-from datetime import datetime, timedelta
+from datetime import timedelta
 import multiprocessing as mp
+import sched
+import time
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -29,7 +30,6 @@ from synth.simulation_input import SimulationInput
 from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
-    timeout_until,
 )
 from synth.utils.logging import setup_gcp_logging
 from synth.utils.opening_hours import should_skip_xau
@@ -47,10 +47,13 @@ from synth.validator.price_data_provider import PriceDataProvider
 load_dotenv()
 
 
+# Constants
+IN_15_MINUTES = 60 * 15
+IN_2_MINUTES = 60 * 2
+
+
 class Validator(BaseValidatorNeuron):
     """
-    Your validator neuron class. You should use this class to define your validator's behavior. In particular, you should replace the forward function with your own logic.
-
     This class inherits from the BaseValidatorNeuron class, which in turn inherits from BaseNeuron. The BaseNeuron class takes care of routine tasks such as setting up wallet, subtensor, metagraph, logging directory, parsing config, etc. You can override any of the methods in BaseNeuron if you need to customize the behavior.
 
     This class provides reasonable default behavior for a validator such as keeping a moving average of the scores of the miners and using them to set weights at the end of each epoch. Additionally, the scores are reset for new hotkeys at the end of each epoch.
@@ -67,34 +70,63 @@ class Validator(BaseValidatorNeuron):
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
 
+        self.scheduler = sched.scheduler(time.time, time.sleep)
+
         self.simulation_input_list = [
             # input data: give me prediction of BTC price for the next 1 day for every 5 min of time
             SimulationInput(
                 asset="BTC",
                 time_increment=300,
-                time_length=900,
-                num_simulations=10,
+                time_length=86400,
+                num_simulations=1000,
             ),
-            # SimulationInput(
-            #     asset="ETH",
-            #     time_increment=300,
-            #     time_length=86400,
-            #     num_simulations=100,
-            # ),
-            # SimulationInput(
-            #     asset="XAU",
-            #     time_increment=300,
-            #     time_length=86400,
-            #     num_simulations=100,
-            # ),
-            # SimulationInput(
-            #     asset="SOL",
-            #     time_increment=300,
-            #     time_length=86400,
-            #     num_simulations=100,
-            # ),
+            SimulationInput(
+                asset="ETH",
+                time_increment=300,
+                time_length=86400,
+                num_simulations=1000,
+            ),
+            SimulationInput(
+                asset="XAU",
+                time_increment=300,
+                time_length=86400,
+                num_simulations=1000,
+            ),
+            SimulationInput(
+                asset="SOL",
+                time_increment=300,
+                time_length=86400,
+                num_simulations=1000,
+            ),
         ]
-        self.timeout_extra_seconds = 120
+        self.simulation_input_hft_list = [
+            # input data: give me prediction of the asset price for the next 1 hour for every 1 min of time
+            SimulationInput(
+                asset="BTC",
+                time_increment=60,
+                time_length=3600,
+                num_simulations=1000,
+            ),
+            SimulationInput(
+                asset="ETH",
+                time_increment=60,
+                time_length=3600,
+                num_simulations=1000,
+            ),
+            SimulationInput(
+                asset="XAU",
+                time_increment=60,
+                time_length=3600,
+                num_simulations=1000,
+            ),
+            SimulationInput(
+                asset="SOL",
+                time_increment=60,
+                time_length=3600,
+                num_simulations=1000,
+            ),
+        ]
+        self.timeout_extra_seconds = 0
 
         self.assert_assets_supported()
 
@@ -103,121 +135,130 @@ class Validator(BaseValidatorNeuron):
         for simulation in self.simulation_input_list:
             assert simulation.asset in PriceDataProvider.TOKEN_MAP
 
-    async def forward_validator(self):
+    def forward_validator(self):
         """
         Validator forward pass. Consists of:
         - Generating the query
         - Querying the miners
         - Getting the responses
-        - Rewarding the miners
+        - Calculating scores
         - Updating the scores
+        - Rewarding the miners
         """
         bt.logging.info("calling forward_validator()")
-        return [
-            asyncio.create_task(self.forward_prompt()),
-            asyncio.create_task(self.forward_score()),
-        ]
 
-    async def wait_till_next_simulation(
-        self, request_time: datetime, simulation_input_list: list
-    ):
-        # wait until the next simulation
-        next_iteration = request_time + timedelta(
-            minutes=60 / len(simulation_input_list)
-        )
-        wait_time = timeout_until(next_iteration)
+        current_time = get_current_time()
+
+        for idx, simulation_input in enumerate(self.simulation_input_list):
+            next_prompt_time = round_time_to_minutes(
+                current_time, IN_15_MINUTES * idx
+            )
+            bt.logging.info(
+                f"scheduling prompt at {next_prompt_time.isoformat()}"
+            )
+            self.scheduler.enter(
+                (next_prompt_time - current_time).total_seconds(),
+                1,
+                self.forward_prompt,
+                (simulation_input, False),
+            )
+
+        for simulation_input in self.simulation_input_hft_list:
+            # send simultaneously all assets for HFT
+            next_prompt_time = round_time_to_minutes(
+                current_time, IN_2_MINUTES
+            )
+            bt.logging.info(
+                f"scheduling HFT prompt at {next_prompt_time.isoformat()}"
+            )
+            self.scheduler.enter(
+                (next_prompt_time - current_time).total_seconds(),
+                1,
+                self.forward_prompt,
+                (simulation_input, True),
+            )
+
         bt.logging.info(
-            f"Waiting for {wait_time/60} minutes until the next simulation",
-            "forward_prompt",
+            f"scheduling scoring at {(current_time + timedelta(seconds=IN_15_MINUTES)).isoformat()}"
         )
-        await asyncio.sleep(wait_time)
+        self.scheduler.enter(
+            IN_15_MINUTES,
+            1,
+            self.forward_score,
+        )
+        self.scheduler.run()
 
-    async def forward_prompt(self):
-        for simulation_input in self.simulation_input_list:
-            # ================= Step 1 ================= #
-            # Getting available miners from metagraph and saving information about them
-            # and their properties (rank, incentives, emission) at the current moment in the database
-            # in the metagraph_history table and in the miners table
-            # ========================================== #
+    def forward_prompt(self, simulation_input: SimulationInput, hft: bool):
+        request_time = get_current_time()
+        next_prompt_time = round_time_to_minutes(
+            request_time, IN_2_MINUTES - 60 if hft else IN_15_MINUTES - 60
+        )
+        bt.logging.info(
+            f"scheduling {'HFT' if hft else 'regular'} prompt at {next_prompt_time.isoformat()}"
+        )
 
-            miner_uids = get_available_miners_and_update_metagraph_history(
-                base_neuron=self,
-                miner_data_handler=self.miner_data_handler,
+        self.scheduler.enter(
+            # round to the next minute and add 2 of 15 minutes and subtract 60 seconds because round_time_to_minutes rounds to the next minute
+            (next_prompt_time - request_time).total_seconds(),
+            1,
+            self.forward_prompt,
+            (simulation_input, hft),
+        )
+
+        # ================= Step 1 ================= #
+        # Getting available miners from metagraph and saving information about them
+        # and their properties (rank, incentives, emission) at the current moment in the database
+        # in the metagraph_history table and in the miners table
+        # ========================================== #
+
+        miner_uids = get_available_miners_and_update_metagraph_history(
+            base_neuron=self,
+            miner_data_handler=self.miner_data_handler,
+        )
+
+        if len(miner_uids) == 0:
+            bt.logging.error(
+                "No miners available",
+                "forward_prompt",
             )
+            return
 
-            if len(miner_uids) == 0:
-                bt.logging.error(
-                    "No miners available",
-                    "forward_prompt",
-                )
-                await self.wait_till_next_simulation(
-                    get_current_time(), self.simulation_input_list
-                )
-                continue
+        start_time = round_time_to_minutes(
+            request_time, self.timeout_extra_seconds
+        )
 
-            request_time = get_current_time()
-            start_time = round_time_to_minutes(
-                request_time, 60, self.timeout_extra_seconds
+        if should_skip_xau(start_time) and simulation_input.asset == "XAU":
+            bt.logging.info(
+                "Skipping XAU simulation as market is closed",
+                "forward_prompt",
             )
+            return
 
-            if should_skip_xau(start_time) and simulation_input.asset == "XAU":
-                bt.logging.info(
-                    "Skipping XAU simulation as market is closed",
-                    "forward_prompt",
-                )
-                await self.wait_till_next_simulation(
-                    request_time, self.simulation_input_list
-                )
-                continue
+        # ================= Step 2 ================= #
+        # Query all the available miners and save all their responses
+        # in the database in miner_predictions table
+        # ========================================== #
 
-            # ================= Step 2 ================= #
-            # Query all the available miners and save all their responses
-            # in the database in miner_predictions table
-            # ========================================== #
+        # add the start time to the simulation input
+        simulation_input.start_time = start_time.isoformat()
 
-            # add the start time to the simulation input
-            simulation_input.start_time = start_time.isoformat()
-
-            await query_available_miners_and_save_responses(
-                base_neuron=self,
-                miner_data_handler=self.miner_data_handler,
-                miner_uids=miner_uids,
-                simulation_input=simulation_input,
-                request_time=request_time,
-            )
-
-            await self.wait_till_next_simulation(
-                request_time, self.simulation_input_list
-            )
+        query_available_miners_and_save_responses(
+            base_neuron=self,
+            miner_data_handler=self.miner_data_handler,
+            miner_uids=miner_uids,
+            simulation_input=simulation_input,
+            request_time=request_time,
+        )
 
     async def forward_score(self):
         # getting current time
         current_time = get_current_time()
-
-        next_iteration = current_time + timedelta(minutes=15)
-
-        async def wait_till_next_iteration():
-            # wait until the next iteration
-            wait_time = timeout_until(next_iteration)
-            bt.logging.info(
-                f"Waiting for {wait_time/60} minutes until the next iteration",
-                "forward_score",
-            )
-            await asyncio.sleep(wait_time)
 
         # round current time to the closest minute and add extra minutes
         # to be sure we are after the start time of the prompt
         scored_time = round_time_to_minutes(
             current_time, 60, self.timeout_extra_seconds * 2
         )
-
-        # wait until the score_time
-        wait_time = timeout_until(scored_time)
-        bt.logging.info(
-            f"Waiting for {wait_time/60} minutes to start validating",
-            "forward_score",
-        )
-        await asyncio.sleep(wait_time)
 
         # ================= Step 3 ================= #
         # Calculate rewards based on historical predictions data
@@ -236,7 +277,6 @@ class Validator(BaseValidatorNeuron):
         )
 
         if not success:
-            await wait_till_next_iteration()
             return
 
         # ================= Step 4 ================= #
@@ -254,31 +294,12 @@ class Validator(BaseValidatorNeuron):
         )
 
         if len(moving_averages_data) == 0:
-            await wait_till_next_iteration()
             return
 
         # ================= Step 5 ================= #
         # Send rewards calculated in the previous step
         # into bittensor consensus calculation
         # ========================================== #
-
-        moving_averages_data.append(
-            {
-                "miner_id": 0,
-                "miner_uid": (
-                    23 if self.config.subtensor.network == "test" else 248
-                ),
-                "smoothed_score": 0,
-                "reward_weight": sum(
-                    [r["reward_weight"] for r in moving_averages_data]
-                ),
-                "updated_at": scored_time.isoformat(),
-            }
-        )
-
-        bt.logging.info(
-            f"Moving averages data for owner: {moving_averages_data[-1]}"
-        )
 
         send_weights_to_bittensor_and_update_weights_history(
             base_neuron=self,
@@ -287,7 +308,11 @@ class Validator(BaseValidatorNeuron):
             scored_time=scored_time,
         )
 
-        await wait_till_next_iteration()
+        self.scheduler.enter(
+            IN_15_MINUTES,
+            1,
+            self.forward_score,
+        )
 
     async def forward_miner(self, _: bt.Synapse) -> bt.Synapse:
         pass
