@@ -19,6 +19,7 @@
 from datetime import datetime, timedelta
 import random
 import time
+import typing
 
 
 import bittensor as bt
@@ -33,6 +34,7 @@ from synth.utils.helpers import (
     get_current_time,
     timeout_from_start_time,
     convert_list_elements_to_str,
+    more_paths_launch_time,
 )
 from synth.utils.uids import check_uid_availability
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -42,8 +44,43 @@ from synth.validator.moving_average import (
     print_rewards_df,
 )
 from synth.validator.price_data_provider import PriceDataProvider
-from synth.validator.response_validation import validate_responses
+from synth.validator.response_validation_v1 import (
+    validate_responses as validate_responses_v1,
+)
+from synth.validator.response_validation_v2 import (
+    validate_responses as validate_responses_v2,
+)
 from synth.validator.reward import get_rewards, print_scores_df
+
+
+# TEMP
+def validate_responses(
+    response,
+    simulation_input: SimulationInput,
+    request_time: datetime,
+    process_time_str: typing.Optional[str],
+) -> str:
+    if not isinstance(response, list):
+        return "Not a list"
+
+    if len(response) == 0:
+        return "Empty list"
+
+    first_element = response[0]
+    if isinstance(first_element, list):
+        if request_time >= more_paths_launch_time:
+            return "detected new format"
+
+        return validate_responses_v1(
+            response, simulation_input, request_time, process_time_str
+        )
+    else:
+        return validate_responses_v2(
+            response, simulation_input, request_time, process_time_str
+        )
+
+
+# END TEMP
 
 
 def send_weights_to_bittensor_and_update_weights_history(
