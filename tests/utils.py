@@ -6,7 +6,7 @@ from sqlalchemy import Engine, insert
 
 from synth.miner.simulations import generate_simulations
 from synth.simulation_input import SimulationInput
-from synth.validator import response_validation
+from synth.validator import response_validation_v2
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.db.models import Miner
 
@@ -44,17 +44,17 @@ def prepare_random_predictions(db_engine: Engine, start_time: str):
     simulation_data = {
         miner_uids[0]: (
             generate_simulations(start_time=start_time),
-            response_validation.CORRECT,
+            response_validation_v2.CORRECT,
             "1.2",
         ),
         miner_uids[1]: (
             generate_simulations(start_time=start_time),
-            response_validation.CORRECT,
+            response_validation_v2.CORRECT,
             "3",
         ),
         miner_uids[2]: (
             generate_simulations(start_time=start_time),
-            response_validation.CORRECT,
+            response_validation_v2.CORRECT,
             "15",
         ),
         miner_uids[3]: (

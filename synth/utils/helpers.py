@@ -58,7 +58,6 @@ def adjust_predictions(predictions: list) -> list:
     if isinstance(first_element, list):
         first_of_first = first_element[0]
         if isinstance(first_of_first, dict):
-            print("Adjusting predictions from old format to new format.")
             # old format, adjust to the new format
             predictions_path = [
                 [entry["price"] for entry in sublist]

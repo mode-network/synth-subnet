@@ -40,7 +40,7 @@ from synth.db.models import (
     WeightsUpdateHistory,
 )
 from synth.simulation_input import SimulationInput
-from synth.validator import response_validation
+from synth.validator import response_validation_v2
 
 
 class MinerDataHandler:
@@ -140,7 +140,7 @@ class MinerDataHandler:
                                 "prediction": (
                                     prediction
                                     if format_validation
-                                    == response_validation.CORRECT
+                                    == response_validation_v2.CORRECT
                                     else []
                                 ),
                                 "format_validation": format_validation,
