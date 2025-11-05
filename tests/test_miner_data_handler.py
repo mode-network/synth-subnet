@@ -50,7 +50,9 @@ def test_get_values_within_range(db_engine: Engine):
     )
 
     values = generate_values(datetime.fromisoformat(start_time))
-    simulation_data = {miner_uid: (values, response_validation_v2.CORRECT, "12")}
+    simulation_data = {
+        miner_uid: (values, response_validation_v2.CORRECT, "12")
+    }
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
@@ -102,7 +104,9 @@ def test_get_values_ongoing_range(db_engine: Engine):
     )
 
     values = generate_values(datetime.fromisoformat(start_time))
-    simulation_data = {miner_uid: (values, response_validation_v2.CORRECT, "12")}
+    simulation_data = {
+        miner_uid: (values, response_validation_v2.CORRECT, "12")
+    }
     handler = MinerDataHandler(db_engine)
     handler.save_responses(simulation_data, simulation_input, datetime.now())
 
