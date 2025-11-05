@@ -39,7 +39,7 @@ from synth.utils.helpers import (
 from synth.utils.uids import check_uid_availability
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.moving_average import (
-    compute_weighted_averages,
+    compute_smoothed_score,
     prepare_df_for_moving_average,
     print_rewards_df,
 )
@@ -121,7 +121,7 @@ def calculate_moving_average_and_update_rewards(
     miner_data_handler: MinerDataHandler,
     scored_time: datetime,
     cutoff_days: int,
-    half_life_days: float,
+    window_days: float,
     softmax_beta: float,
 ) -> list[dict]:
     # apply custom moving average rewards
@@ -132,10 +132,10 @@ def calculate_moving_average_and_update_rewards(
 
     df = prepare_df_for_moving_average(miner_scores_df)
 
-    moving_averages_data = compute_weighted_averages(
+    moving_averages_data = compute_smoothed_score(
         miner_data_handler=miner_data_handler,
         input_df=df,
-        half_life_days=half_life_days,
+        window_days=window_days,
         scored_time=scored_time,
         softmax_beta=softmax_beta,
     )

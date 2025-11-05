@@ -68,7 +68,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
         miner_data_handler=handler,
         scored_time=scored_time,
         cutoff_days=4,
-        half_life_days=2,
+        window_days=2,
         softmax_beta=-0.003,
     )
 
@@ -170,7 +170,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             miner_data_handler=handler,
             scored_time=scored_time,
             cutoff_days=4,
-            half_life_days=2,
+            window_days=2,
             softmax_beta=-0.003,
         )
 
@@ -297,7 +297,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             miner_data_handler=handler,
             scored_time=scored_time,
             cutoff_days=4,
-            half_life_days=2,
+            window_days=2,
             softmax_beta=-0.003,
         )
 
@@ -417,7 +417,7 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
             miner_data_handler=handler,
             scored_time=scored_time,
             cutoff_days=4,
-            half_life_days=2,
+            window_days=2,
             softmax_beta=-0.003,
         )
 

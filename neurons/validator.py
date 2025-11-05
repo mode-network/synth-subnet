@@ -255,7 +255,7 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
             scored_time=scored_time,
             cutoff_days=self.config.ewma.cutoff_days,
-            half_life_days=self.config.ewma.half_life_days,
+            window_days=self.config.ewma.window_days,
             softmax_beta=self.config.softmax.beta,
         )
 
