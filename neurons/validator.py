@@ -95,7 +95,7 @@ class Validator(BaseValidatorNeuron):
                 num_simulations=100,
             ),
         ]
-        self.timeout_extra_seconds = 120
+        self.timeout_extra_seconds = 60
 
         self.assert_assets_supported()
 
