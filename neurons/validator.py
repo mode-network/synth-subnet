@@ -79,13 +79,13 @@ class Validator(BaseValidatorNeuron):
             SimulationInput(
                 asset="ETH",
                 time_increment=300,
-                time_length=86400,
+                time_length=7200,
                 num_simulations=100,
             ),
             SimulationInput(
                 asset="XAU",
                 time_increment=300,
-                time_length=86400,
+                time_length=18000,
                 num_simulations=100,
             ),
             SimulationInput(
@@ -213,17 +213,16 @@ class Validator(BaseValidatorNeuron):
 
         # round current time to the closest minute and add extra minutes
         # to be sure we are after the start time of the prompt
-        scored_time = round_time_to_minutes(
-            current_time, 60, self.timeout_extra_seconds * 2
-        )
+        scored_time = current_time
+        # scored_time = round_time_to_minutes(current_time, 60)
 
-        # wait until the score_time
-        wait_time = timeout_until(scored_time)
-        bt.logging.info(
-            f"Waiting for {wait_time/60} minutes to start validating",
-            "forward_score",
-        )
-        await asyncio.sleep(wait_time)
+        # # wait until the score_time
+        # wait_time = timeout_until(scored_time)
+        # bt.logging.info(
+        #     f"Waiting for {wait_time/60} minutes to start validating",
+        #     "forward_score",
+        # )
+        # await asyncio.sleep(wait_time)
 
         # ================= Step 3 ================= #
         # Calculate rewards based on historical predictions data
