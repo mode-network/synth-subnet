@@ -116,7 +116,7 @@ def compute_smoothed_score(
         valid_scores = window_df["prompt_score_v3"].dropna()
 
         if not valid_scores.empty:
-            rolling_avg = valid_scores.mean()
+            rolling_avg = float(valid_scores.mean())
         else:
             rolling_avg = float("inf")
 

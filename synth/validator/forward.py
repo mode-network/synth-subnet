@@ -60,8 +60,8 @@ def validate_responses(
     request_time: datetime,
     process_time_str: typing.Optional[str],
 ) -> str:
-    if not isinstance(response, list):
-        return "Not a list"
+    if not isinstance(response, (list, tuple)):
+        return "Not a list nor tuple: " + str(type(response))
 
     if len(response) == 0:
         return "Empty list"
