@@ -10,6 +10,7 @@ import aiohttp
 import bittensor as bt
 from bittensor_wallet import Keypair, Wallet
 import httpx
+from pydantic import ValidationError
 import uvloop
 
 
@@ -260,6 +261,7 @@ def log_exception(exception: Exception):
             httpx.HTTPStatusError,
             httpx.ReadTimeout,
             httpx.ConnectTimeout,
+            ValidationError,
         ),
     ):
         bt.logging.debug(f"{error_type}#{error_id}: {exception}")
