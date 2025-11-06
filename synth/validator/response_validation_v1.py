@@ -32,7 +32,7 @@ def validate_datetime(
     return datetime.fromisoformat(dt_str), None
 
 
-def validate_responses(
+def validate_responses(  # noqa: C901
     response,
     simulation_input: SimulationInput,
     request_time: datetime,
