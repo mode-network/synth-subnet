@@ -9,7 +9,7 @@ vpermit_tao_limit=999999
 validator_coldkey_name=validator
 validator_hotkey_name=default
 
-ewma_half_life_days=5
+ewma_window_days=10
 ewma_cutoff_days=10
 softmax_beta=-0.1
 
@@ -22,7 +22,7 @@ python3.10 ./neurons/validator.py \
 		--netuid $netuid \
 		--logging.debug \
 		--neuron.axon_off true \
-		--ewma.half_life_days $ewma_half_life_days \
+		--ewma.window_days $ewma_window_days \
 		--ewma.cutoff_days $ewma_cutoff_days \
 		--softmax.beta $softmax_beta \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \

@@ -2,6 +2,9 @@ from typing import Optional
 from datetime import datetime, timedelta, timezone
 
 
+more_paths_launch_time = datetime(2025, 11, 12, 14, 0, 0, 0, timezone.utc)
+
+
 def get_current_time() -> datetime:
     # Get current date and time
     return datetime.now(timezone.utc).replace(microsecond=0)
@@ -58,7 +61,6 @@ def adjust_predictions(predictions: list) -> list:
     if isinstance(first_element, list):
         first_of_first = first_element[0]
         if isinstance(first_of_first, dict):
-            print("Adjusting predictions from old format to new format.")
             # old format, adjust to the new format
             predictions_path = [
                 [entry["price"] for entry in sublist]

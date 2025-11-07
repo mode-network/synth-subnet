@@ -5,7 +5,7 @@ import pandas as pd
 from sqlalchemy import Engine
 
 from synth.validator.miner_data_handler import MinerDataHandler
-from synth.validator.moving_average import compute_weighted_averages
+from synth.validator.moving_average import compute_smoothed_score
 
 
 def read_csv(file_name):
@@ -18,15 +18,15 @@ def test_moving_average_1(db_engine: Engine):
     handler = MinerDataHandler(db_engine)
 
     scored_time = datetime.fromisoformat("2025-02-21T17:23:00+00:00")
-    half_life_days = 2
+    window_days = 2
 
     df = read_csv("cutoff_data_4_days.csv")
     df["scored_time"] = pd.to_datetime(df["scored_time"])
 
-    moving_averages_data = compute_weighted_averages(
+    moving_averages_data = compute_smoothed_score(
         handler,
         input_df=df,
-        half_life_days=half_life_days,
+        window_days=window_days,
         scored_time=scored_time,
         softmax_beta=-0.003,
     )
@@ -54,15 +54,15 @@ def test_moving_average_2(db_engine: Engine):
     handler = MinerDataHandler(db_engine)
 
     scored_time = datetime.fromisoformat("2025-02-21T17:23:00+00:00")
-    half_life_days = 1
+    window_days = 1
 
     df = read_csv("cutoff_data_2_days.csv")
     df["scored_time"] = pd.to_datetime(df["scored_time"])
 
-    moving_averages_data = compute_weighted_averages(
+    moving_averages_data = compute_smoothed_score(
         handler,
         input_df=df,
-        half_life_days=half_life_days,
+        window_days=window_days,
         scored_time=scored_time,
         softmax_beta=-0.003,
     )

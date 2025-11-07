@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from synth.simulation_input import SimulationInput
-from synth.validator.response_validation import validate_responses, CORRECT
+from synth.validator.response_validation_v2 import validate_responses, CORRECT
 
 
 start_time = datetime.fromisoformat("2023-01-01T00:00:00").replace(

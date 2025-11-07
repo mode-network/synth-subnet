@@ -30,7 +30,7 @@ from synth.utils.helpers import adjust_predictions
 from synth.validator.crps_calculation import calculate_crps_for_miner
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
-from synth.validator import response_validation
+from synth.validator import response_validation_v2
 
 
 def reward(
@@ -55,7 +55,7 @@ def reward(
     if miner_prediction is None:
         return -1, [], None
 
-    if miner_prediction.format_validation != response_validation.CORRECT:
+    if miner_prediction.format_validation != response_validation_v2.CORRECT:
         # represents no prediction data from the miner
         return -1, [], miner_prediction
 

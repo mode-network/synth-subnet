@@ -9,7 +9,7 @@ import bittensor as bt
 from sqlalchemy import Engine, insert, select
 from synth.miner.simulations import generate_simulations
 from synth.simulation_input import SimulationInput
-from synth.validator import response_validation
+from synth.validator import response_validation_v2
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_rewards_and_update_scores,
@@ -68,7 +68,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
         miner_data_handler=handler,
         scored_time=scored_time,
         cutoff_days=4,
-        half_life_days=2,
+        window_days=2,
         softmax_beta=-0.003,
     )
 
@@ -106,17 +106,17 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
         simulation_data = {
             miner_uids[0]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "1.2",
             ),
             miner_uids[1]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "3",
             ),
             miner_uids[2]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "15",
             ),
             miner_uids[3]: (
@@ -126,12 +126,12 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             ),
             miner_uids[4]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "1.5",
             ),
             miner_uids[5]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "5",
             ),
         }
@@ -170,7 +170,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             miner_data_handler=handler,
             scored_time=scored_time,
             cutoff_days=4,
-            half_life_days=2,
+            window_days=2,
             softmax_beta=-0.003,
         )
 
@@ -218,17 +218,17 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         simulation_data = {
             miner_uids[0]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "1.2",
             ),
             miner_uids[1]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "3",
             ),
             miner_uids[2]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "15",
             ),
             miner_uids[3]: (
@@ -238,12 +238,12 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             ),
             miner_uids[4]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "1.5",
             ),
             miner_uids[5]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "5",
             ),
         }
@@ -297,7 +297,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             miner_data_handler=handler,
             scored_time=scored_time,
             cutoff_days=4,
-            half_life_days=2,
+            window_days=2,
             softmax_beta=-0.003,
         )
 
@@ -383,7 +383,7 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
             ),
             miner_uids[2]: (
                 generate_simulations(start_time=start_time_str),
-                response_validation.CORRECT,
+                response_validation_v2.CORRECT,
                 "15",
             ),
         }
@@ -417,7 +417,7 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
             miner_data_handler=handler,
             scored_time=scored_time,
             cutoff_days=4,
-            half_life_days=2,
+            window_days=2,
             softmax_beta=-0.003,
         )
 

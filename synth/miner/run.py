@@ -2,7 +2,7 @@ from datetime import datetime
 from synth.miner.simulations import generate_simulations
 from synth.simulation_input import SimulationInput
 from synth.utils.helpers import get_current_time, round_time_to_minutes
-from synth.validator.response_validation import validate_responses
+from synth.validator.response_validation_v2 import validate_responses
 
 
 # python synth/miner/run.py

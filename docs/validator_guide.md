@@ -10,7 +10,7 @@
   - [5.1. Common Options](#51-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
     - [`--ewma.cutoff_days INTEGER`](#--ewmacutoff_days-integer)
-    - [`--ewma.half_life_days FLOAT`](#--ewmahalf_life_days-float)
+    - [`--ewma.window_days INTEGER`](#--ewmawindow_days-float)
     - [`--logging.debug`](#--loggingdebug)
     - [`--logging.info`](#--logginginfo)
     - [`--logging.trace`](#--loggingtrace)
@@ -307,11 +307,11 @@ pm2 start validator.test.config.js -- --ewma.cutoff_days 1
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-#### `--ewma.half_life_days FLOAT`
+#### `--ewma.window_days INTEGER`
 
-The half-life in days for the exponential decay, (e.g. 2.0).
+The window in days for the rolling average, (e.g. 10).
 
-Default: `1.0`
+Default: `10`
 
 Example:
 
@@ -323,7 +323,7 @@ module.exports = {
       name: 'validator',
       interpreter: 'python3',
       script: './neurons/validator.py',
-      args: '--ewma.half_life_days 2.0',
+      args: '--ewma.window_days 10',
       env: {
         PYTHONPATH: '.'
       },
@@ -334,7 +334,7 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start validator.config.js -- --ewma.half_life_days 2.0
+pm2 start validator.config.js -- --ewma.window_days 10
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

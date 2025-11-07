@@ -2,7 +2,7 @@
 
 ### Table of contents
 
-* [1. Options](#1-options)
+- [1. Options](#1-options)
   - [1.1. Common Options](#11-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
     - [`--blacklist.allow_non_registered BOOLEAN`](#--blacklistallow_non_registered-boolean)
@@ -25,7 +25,7 @@
     - [`--wandb.enabled BOOLEAN`](#--wandbenabled-boolean)
     - [`--wandb.entity TEXT`](#--wandbentity-text)
     - [`--wandb.project_name TEXT`](#--wandbenabled-boolean)
-* [2. Appendix](#2-appendix)
+- [2. Appendix](#2-appendix)
   - [2.1. FAQs](#21-faqs)
   - [2.2. Useful Commands](#22-useful-commands)
   - [2.3. Troubleshooting](#23-troubleshooting)
@@ -45,12 +45,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--axon.port 8091',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--axon.port 8091",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -58,6 +58,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --axon.port 8091
 ```
@@ -79,12 +80,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--blacklist.allow_non_registered true',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--blacklist.allow_non_registered true",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -92,6 +93,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --blacklist.allow_non_registered true
 ```
@@ -111,12 +113,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--blacklist.force_validator_permit true',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--blacklist.force_validator_permit true",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -124,6 +126,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --blacklist.force_validator_permit true
 ```
@@ -143,12 +146,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--blacklist.validator_min_stake 1000',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--blacklist.validator_min_stake 1000",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -156,6 +159,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --blacklist.validator_min_stake 1000
 ```
@@ -175,12 +179,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--blacklist.validator_exceptions 0 1 8 17 34 49 53 38',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--blacklist.validator_exceptions 0 1 8 17 34 49 53 38",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -188,6 +192,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --blacklist.validator_exceptions 0 1 8 17 34 49 53 38
 ```
@@ -205,12 +210,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--logging.debug',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--logging.debug",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -218,6 +223,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --logging.debug
 ```
@@ -235,12 +241,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--logging.info',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--logging.info",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -248,6 +254,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --logging.info
 ```
@@ -265,12 +272,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--logging.trace',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--logging.trace",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -278,6 +285,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --logging.trace
 ```
@@ -295,12 +303,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--netuid 247',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--netuid 247",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -308,6 +316,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --netuid 247
 ```
@@ -325,12 +334,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--neuron.device cuda',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--neuron.device cuda",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -338,6 +347,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --neuron.device cuda
 ```
@@ -357,12 +367,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--neuron.dont_save_events true',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--neuron.dont_save_events true",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -370,6 +380,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --neuron.dont_save_events true
 ```
@@ -387,12 +398,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--neuron.epoch_length 100',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--neuron.epoch_length 100",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -400,6 +411,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --neuron.epoch_length 100
 ```
@@ -419,12 +431,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--neuron.events_retention_size 2147483648',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--neuron.events_retention_size 2147483648",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -432,6 +444,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --neuron.events_retention_size 2147483648
 ```
@@ -451,12 +464,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--neuron.name miner',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--neuron.name miner",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -464,6 +477,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --neuron.name miner
 ```
@@ -483,12 +497,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--neuron.timeout 120',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--neuron.timeout 120",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -496,6 +510,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --neuron.timeout 120
 ```
@@ -515,12 +530,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--neuron.vpermit_tao_limit 1000',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--neuron.vpermit_tao_limit 1000",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -528,6 +543,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --neuron.vpermit_tao_limit 1000
 ```
@@ -545,12 +561,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--wallet.hotkey default',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--wallet.hotkey default",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -558,6 +574,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --wallet.hotkey default
 ```
@@ -575,12 +592,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--wallet.name miner',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--wallet.name miner",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -588,6 +605,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --wallet.name miner
 ```
@@ -609,12 +627,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--wandb.enabled true',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--wandb.enabled true",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -622,6 +640,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --wandb.enabled true
 ```
@@ -641,12 +660,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--wandb.entity opentensor-dev',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--wandb.entity opentensor-dev",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -654,6 +673,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --wandb.entity opentensor-dev
 ```
@@ -673,12 +693,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--wandb.project_name template-miners',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--wandb.project_name template-miners",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -686,6 +706,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start miner.config.js -- --wandb.project_name template-miners
 ```
@@ -698,7 +719,7 @@ pm2 start miner.config.js -- --wandb.project_name template-miners
 
 #### 1. What is the best way for me to track my miner’s performance?
 
-Visit the Synth Miner Dashboard: [https://miners.synthdata.co/](https://miners.synthdata.co/).
+Visit the Synth Miner Dashboard: [https://miners.synthdata.co](https://miners.synthdata.co).
 
 #### 2. How long do I have to wait for my new miner to get the first CRPS score?
 
@@ -715,20 +736,37 @@ Your miner will receive a CRPS score of -1 if the prediction is not in the corre
 #### 5. What is the correct format for subnet-prompted predictions?
 
 A prediction is considered valid if it meets all the following conditions:
-* Submitted before the timeout specified by the validator.
-* Contains the required number of simulation paths (num_simulations in the prompt).
-* Each path has the correct number of time points:
+
+- Submitted before the timeout specified by the validator.
+- Contains the required number of simulation paths (num_simulations in the prompt).
+- Each path has the correct number of time points:
+
 ```python
 expected_time_points = (time_length / time_increment) + 1
 ```
-* The first point of all paths matches the prompt’s start_time.
-* All timestamps are in ISO format, e.g., 2025-07-15T20:59:00+00:00.
-* Time intervals between points match time_increment exactly (in seconds).
-* All price values are of type int or float.
+
+- The first point of all paths matches the prompt’s start_time.
+- All timestamps are in ISO format, e.g., 2025-07-15T20:59:00+00:00.
+- Time intervals between points match time_increment exactly (in seconds).
+- All price values are of type int or float.
+
+The expected format is as follows:
+```json
+[
+  1760084861, 300,
+  [217, 218, 219, ...], [217, 218, 219, 123.45678, ...],
+  ...
+]
+```
+
+where
+- the first element is the timestamp of the start time of the prompt,
+- second is the time increment of the prompt,
+- then arrays of prices with no more than 8 digits per point
 
 You can find the validation function here:
 
-[response_validation.py#L35](https://github.com/mode-network/synth-subnet/blob/d694aa0bff3742498296809699c86e45b037289c/synth/validator/response_validation.py#L35)
+[response_validation_v2.py#L49](https://github.com/mode-network/synth-subnet/blob/schedule-new-format/synth/validator/response_validation_v2.py#L49)
 
 And an example of the prompt parameters here:
 
@@ -750,7 +788,7 @@ Explore them here: [https://mirror.xyz/synthdata.eth](https://mirror.xyz/synthda
 
 #### 9. Do I need to run multiple miners?
 
-If you're using the same model per asset, no—rewards will be the same. If you're using different models, then yes, it's encouraged to experiment and find what works best.
+If you're using the same model per asset, no — rewards will be the same. If you're using different models, then yes, it's encouraged to experiment and find what works best.
 
 #### 10. Is there a penalty for turning off my miner for a period of time?
 
@@ -784,13 +822,12 @@ Modify this function:
 
 Take into account all prompt parameters except sigma, which you may ignore.
 
-
 <sup>[Back to top ^][table-of-contents]</sup>
 
 ### 2.2. Useful Commands
 
 | Command                      | Description                 |
-|------------------------------|-----------------------------|
+| ---------------------------- | --------------------------- |
 | `pm2 stop miner`             | Stops the miner.            |
 | `pm2 logs miner --lines 100` | View the logs of the miner. |
 
@@ -803,17 +840,18 @@ Take into account all prompt parameters except sigma, which you may ignore.
 This error is due to Python unable to locate the local Python modules. To avoid this error, ensure you have created and activate the Python virtual environment from the project root and ensure the `PYTHONPATH` is present in the `<miner|validator>.config.js` file and is pointing to the project root.
 
 An example of a config file should be:
+
 ```js
 // miner.config.js
 module.exports = {
   apps: [
     {
-      name: 'miner',
-      interpreter: 'python3',
-      script: './neurons/miner.py',
-      args: '--netuid 247 --logging.debug --logging.trace --subtensor.network test --wallet.name miner --wallet.hotkey default --axon.port 8091',
+      name: "miner",
+      interpreter: "python3",
+      script: "./neurons/miner.py",
+      args: "--netuid 247 --logging.debug --logging.trace --subtensor.network test --wallet.name miner --wallet.hotkey default --axon.port 8091",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -825,4 +863,5 @@ As you can see, we are setting the `PYTHONPATH` environment variable that will b
 <sup>[Back to top ^][table-of-contents]</sup>
 
 <!-- links -->
+
 [table-of-contents]: #table-of-contents

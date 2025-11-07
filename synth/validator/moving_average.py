@@ -84,54 +84,49 @@ def prepare_df_for_moving_average(df):
     return out
 
 
-def compute_weighted_averages(
+def compute_smoothed_score(
     miner_data_handler: MinerDataHandler,
     input_df: DataFrame,
-    half_life_days: float,
+    window_days: int,
     scored_time: datetime,
     softmax_beta: float,
 ) -> typing.Optional[list[dict]]:
-    """
-    Computes an exponentially weighted
-    moving average (EWMA) with a user-specified half-life, then outputs:
-      1) The EWMA of each miner's reward
-      2) Softmax of the EWMA to get the reward scores
-
-    :param input_df: Dataframe of miner rewards.
-    :param half_life_days: The half-life in days for the exponential decay.
-    :param scored_time_str: The current time when validator does the scoring.
-    """
     if input_df.empty:
         return None
 
     # Group by miner_id
     grouped = input_df.groupby("miner_id")
 
-    results = []  # will hold dict with miner_id and ewma
+    rolling_avg_data = []  # will hold dict with miner_id and rolling average
 
     for miner_id, group_df in grouped:
-        total_weight = 0.0
-        weighted_reward_sum = 0.0
+        # Ensure scored_time is datetime and sort
+        group_df = group_df.copy()
+        group_df["scored_time"] = pd.to_datetime(group_df["scored_time"])
+        group_df = group_df.sort_values("scored_time")
 
-        for _, row in group_df.iterrows():
-            prompt_score = row["prompt_score_v3"]
-            if prompt_score is None or np.isnan(prompt_score):
-                continue
-
-            w = compute_weight(row["scored_time"], scored_time, half_life_days)
-            total_weight += w
-            weighted_reward_sum += w * prompt_score
-
-        ewma = (
-            weighted_reward_sum / total_weight
-            if total_weight > 0
-            else float("inf")
+        # Only consider rows within the last 10 days from scored_time
+        min_time = scored_time - pd.Timedelta(days=window_days)
+        mask = (group_df["scored_time"] > min_time) & (
+            group_df["scored_time"] <= scored_time
         )
-        results.append({"miner_id": miner_id, "ewma": ewma})
+        window_df = group_df.loc[mask]
+
+        # Drop NaN prompt_score_v3
+        valid_scores = window_df["prompt_score_v3"].dropna()
+
+        if not valid_scores.empty:
+            rolling_avg = float(valid_scores.mean())
+        else:
+            rolling_avg = float("inf")
+
+        rolling_avg_data.append(
+            {"miner_id": miner_id, "rolling_avg": rolling_avg}
+        )
 
     # Add the miner UID to the results
     moving_averages_data = miner_data_handler.populate_miner_uid_in_miner_data(
-        results
+        rolling_avg_data
     )
 
     # Filter out None UID
@@ -141,8 +136,12 @@ def compute_weighted_averages(
             filtered_moving_averages_data.append(item)
 
     # Now compute soft max to get the reward_scores
-    ewma_list = [r["ewma"] for r in filtered_moving_averages_data]
-    reward_weight_list = compute_softmax(np.array(ewma_list), softmax_beta)
+    rolling_avg_list = [
+        r["rolling_avg"] for r in filtered_moving_averages_data
+    ]
+    reward_weight_list = compute_softmax(
+        np.array(rolling_avg_list), softmax_beta
+    )
 
     rewards = []
     for item, reward_weight in zip(
@@ -154,27 +153,13 @@ def compute_weighted_averages(
                 {
                     "miner_id": item["miner_id"],
                     "miner_uid": item["miner_uid"],
-                    "smoothed_score": item["ewma"],
+                    "smoothed_score": item["rolling_avg"],
                     "reward_weight": float(reward_weight),
                     "updated_at": scored_time.isoformat(),
                 }
             )
 
     return rewards
-
-
-def compute_weight(
-    scored_dt: datetime, validation_time: datetime, half_life_days: float
-) -> float:
-    """
-    For a row with timestamp scored_dt, the age in days is delta_days.
-    weight = 0.5^(delta_days / half_life_days), meaning that
-    after 'half_life_days' days, the weight decays to 0.5.
-    """
-    delta_days = (validation_time - scored_dt).total_seconds() / (
-        24.0 * 3600.0
-    )
-    return 0.5 ** (delta_days / half_life_days)
 
 
 def print_rewards_df(moving_averages_data):
