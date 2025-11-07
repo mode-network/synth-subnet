@@ -208,8 +208,6 @@ async def query_available_miners_and_save_responses(
         base_neuron.config.neuron.timeout, simulation_input.start_time
     )
 
-    # miner_uids = [170, 171, 60, 1]  # TEMP
-
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
     # prices for a chosen asset)
