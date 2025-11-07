@@ -73,7 +73,7 @@ class Validator(BaseValidatorNeuron):
             SimulationInput(
                 asset="BTC",
                 time_increment=300,
-                time_length=900,
+                time_length=86400,
                 num_simulations=100,
             ),
             SimulationInput(
@@ -197,7 +197,6 @@ class Validator(BaseValidatorNeuron):
             )
 
     async def forward_score(self):
-        # getting current time
         current_time = get_current_time()
 
         next_iteration = current_time + timedelta(minutes=15)
