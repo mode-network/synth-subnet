@@ -452,11 +452,17 @@ class MinerDataHandler:
                         MinerScore.prompt_score_v3,
                         MinerScore.scored_time,
                         MinerScore.score_details_v3,
+                        ValidatorRequest.asset,
                     )
                     .select_from(MinerScore)
                     .join(
                         MinerPrediction,
                         MinerPrediction.id == MinerScore.miner_predictions_id,
+                    )
+                    .join(
+                        ValidatorRequest,
+                        ValidatorRequest.id
+                        == MinerPrediction.validator_requests_id,
                     )
                     .where(MinerScore.scored_time > min_scored_time)
                 )

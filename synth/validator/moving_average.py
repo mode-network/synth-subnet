@@ -75,13 +75,41 @@ def prepare_df_for_moving_average(df):
     mask_drop = is_old & was_missing
     out = full.loc[
         ~mask_drop,
-        ["scored_time", "miner_id", "prompt_score_v3", "score_details_v3"],
+        [
+            "scored_time",
+            "miner_id",
+            "prompt_score_v3",
+            "score_details_v3",
+            "asset",
+        ],
     ]
 
     # 7) clean up types & sort
     out["miner_id"] = out["miner_id"].astype(int)
     out = out.sort_values(["scored_time", "miner_id"]).reset_index(drop=True)
     return out
+
+
+def apply_per_asset_coefficients(
+    df: DataFrame,
+) -> DataFrame:
+    # Define coefficients for each asset
+    asset_coefficients = {
+        "BTC": 1.0,
+        "ETH": 0.6210893136676585,
+        "XAU": 1.4550630831254674,
+        "SOL": 0.5021491038021751,
+    }
+
+    sum_coefficients = 0.0
+
+    for asset, coef in asset_coefficients.items():
+        df.loc[df["asset"] == asset, "prompt_score_v3"] *= coef
+        sum_coefficients += coef * len(df.loc[df["asset"] == asset])
+
+    df["prompt_score_v3"] /= sum_coefficients
+
+    return df["prompt_score_v3"]
 
 
 def compute_smoothed_score(
@@ -113,10 +141,13 @@ def compute_smoothed_score(
         window_df = group_df.loc[mask]
 
         # Drop NaN prompt_score_v3
-        valid_scores = window_df["prompt_score_v3"].dropna()
+        valid_scores = window_df[["prompt_score_v3", "asset"]].dropna()
 
-        if not valid_scores.empty:
-            rolling_avg = float(valid_scores.mean())
+        # Apply per-asset coefficients
+        window_df = apply_per_asset_coefficients(valid_scores)
+
+        if not window_df.empty:
+            rolling_avg = float(window_df.sum())
         else:
             rolling_avg = float("inf")
 
