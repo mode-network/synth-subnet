@@ -2,11 +2,11 @@
 
 ### Table Of Contents
 
-* [1. Requirements](#1-requirements)
-* [2. Setup](#2-setup)
-* [3. Create a Wallet](#3-create-a-wallet)
-* [4. Run the Validator](#4-run-the-validator)
-* [5. Options](#5-options)
+- [1. Requirements](#1-requirements)
+- [2. Setup](#2-setup)
+- [3. Create a Wallet](#3-create-a-wallet)
+- [4. Run the Validator](#4-run-the-validator)
+- [5. Options](#5-options)
   - [5.1. Common Options](#51-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
     - [`--ewma.cutoff_days INTEGER`](#--ewmacutoff_days-integer)
@@ -31,13 +31,13 @@
     - [`--wallet.name TEXT`](#--walletname-text)
   - [5.2. Logging Options](#52-logging-options)
     - [`--gcp.log_id_prefix TEXT`](#--gcplog_id_prefix-text)
-* [6. Appendix](#4-appendix)
+- [6. Appendix](#4-appendix)
   - [6.1. Useful Commands](#41-useful-commands)
 
 ### 1. Requirements
 
-* [Git](https://github.com/git-guides/install-git)
-* [Ubuntu v20.04+](https://ubuntu.com/download)
+- [Git](https://github.com/git-guides/install-git)
+- [Ubuntu v20.04+](https://ubuntu.com/download)
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
@@ -105,6 +105,7 @@ This should activate the `bt_venv` environment and you should see the command li
 **Step 10: Install local Python dependencies**
 
 With the Python virtual environment active, install the Python dependencies:
+
 ```shell
 pip install -r requirements.txt
 ```
@@ -116,6 +117,7 @@ pip install -r requirements.txt
 **Step 1: Activate the Python virtual environment**
 
 If you haven't already, ensure you are running from the Python virtual environment:
+
 ```shell
 source bt_venv/bin/activate
 ```
@@ -133,6 +135,7 @@ btcli wallet create \
 **Step 3: Register wallet**
 
 Acquire a slot on the Bittensor subnet by registering the wallet:
+
 ```shell
 btcli subnet register \
   --wallet.name validator \
@@ -141,6 +144,7 @@ btcli subnet register \
 ```
 
 if you want to try it on testnet first, run the following command:
+
 ```shell
 btcli subnet register \
   --wallet.name validator \
@@ -154,6 +158,7 @@ btcli root register --wallet.name validator --wallet.hotkey default
 ```
 
 4. Stake:
+
 ```shell
 btcli stake add \
   --wallet.name validator \
@@ -162,6 +167,7 @@ btcli stake add \
 ```
 
 for testnet:
+
 ```shell
 btcli stake add \
   --wallet.name validator \
@@ -173,6 +179,7 @@ btcli stake add \
 **Step 4: Verify wallet registration (optional)**
 
 Check the wallet has been registered:
+
 ```shell
 btcli wallet overview \
   --wallet.name validator \
@@ -180,12 +187,14 @@ btcli wallet overview \
 ```
 
 You can also check the network metagraph:
+
 ```shell
 btcli subnet metagraph \
   --netuid 50
 ```
 
 for testnet it's:
+
 ```shell
 btcli subnet metagraph \
   --network test \
@@ -197,6 +206,7 @@ btcli subnet metagraph \
 ## 4. Run the Validator
 
 **Step 1: Database setup**
+
 - Create a postgres database with the name "synth"
 - Rename the ".env.example" in the root of the repo to ".env"
 - Update the `.env` file with your database credentials.
@@ -208,6 +218,7 @@ source bt_venv/bin/activate
 ```
 
 **Step 3: Run database migrations**
+
 ```shell
 alembic upgrade head
 ```
@@ -219,6 +230,7 @@ pm2 start validator.config.js
 ```
 
 for testnet use:
+
 ```shell
 pm2 start validator.test.config.js
 ```
@@ -246,12 +258,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--axon.port 8091',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--axon.port 8091",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -259,11 +271,13 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --axon.port 8091
 ```
 
 for testnet it's:
+
 ```shell
 pm2 start validator.test.config.js -- --axon.port 8091
 ```
@@ -283,12 +297,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--ewma.cutoff_days 1',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--ewma.cutoff_days 10",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -296,13 +310,15 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
-pm2 start validator.config.js -- --ewma.cutoff_days 1
+pm2 start validator.config.js -- --ewma.cutoff_days 10
 ```
 
 for testnet it's:
+
 ```shell
-pm2 start validator.test.config.js -- --ewma.cutoff_days 1
+pm2 start validator.test.config.js -- --ewma.cutoff_days 10
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -320,12 +336,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--ewma.window_days 10',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--ewma.window_days 10",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -333,6 +349,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --ewma.window_days 10
 ```
@@ -352,12 +369,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--softmax.beta -0.003',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--softmax.beta -0.003",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -365,6 +382,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --softmax.beta -0.003
 ```
@@ -382,12 +400,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--logging.debug',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--logging.debug",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -395,6 +413,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --logging.debug
 ```
@@ -412,12 +431,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--logging.info',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--logging.info",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -425,6 +444,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --logging.info
 ```
@@ -442,12 +462,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--logging.trace',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--logging.trace",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -455,6 +475,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --logging.trace
 ```
@@ -472,12 +493,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--netuid 247',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--netuid 247",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -485,6 +506,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --netuid 247
 ```
@@ -504,12 +526,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.axon_off true',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.axon_off true",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -517,6 +539,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.axon_off true
 ```
@@ -534,12 +557,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.device cuda',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.device cuda",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -547,6 +570,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.device cuda
 ```
@@ -566,12 +590,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.dont_save_events true',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.dont_save_events true",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -579,6 +603,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.dont_save_events true
 ```
@@ -598,12 +623,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.disable_set_weights true',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.disable_set_weights true",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -611,6 +636,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.disable_set_weights true
 ```
@@ -628,12 +654,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.epoch_length 100',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.epoch_length 100",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -641,6 +667,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.epoch_length 100
 ```
@@ -660,12 +687,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.events_retention_size 2147483648',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.events_retention_size 2147483648",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -673,6 +700,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.events_retention_size 2147483648
 ```
@@ -692,12 +720,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.name validator',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.name validator",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -705,6 +733,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.name validator
 ```
@@ -724,12 +753,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.sample_size 50',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.sample_size 50",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -737,6 +766,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.sample_size 50
 ```
@@ -756,12 +786,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.timeout 120',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.timeout 120",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -769,6 +799,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.timeout 120
 ```
@@ -788,12 +819,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.nprocs 8',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.nprocs 8",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -801,6 +832,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.nprocs 8
 ```
@@ -820,12 +852,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.vpermit_tao_limit 1000',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.vpermit_tao_limit 1000",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -833,6 +865,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --neuron.vpermit_tao_limit 1000
 ```
@@ -883,12 +916,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--wallet.hotkey default',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--wallet.hotkey default",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -896,6 +929,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --wallet.hotkey default
 ```
@@ -913,12 +947,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--wallet.name validator',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--wallet.name validator",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -926,6 +960,7 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --wallet.name validator
 ```
@@ -945,12 +980,12 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--gcp.log_id_prefix my_validator_name',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--gcp.log_id_prefix my_validator_name",
       env: {
-        PYTHONPATH: '.'
+        PYTHONPATH: ".",
       },
     },
   ],
@@ -958,11 +993,13 @@ module.exports = {
 ```
 
 Alternatively, you can add the args directly to the command:
+
 ```shell
 pm2 start validator.config.js -- --gcp.log_id_prefix my_validator_name
 ```
 
 for testnet it's:
+
 ```shell
 pm2 start validator.test.config.js -- --gcp.log_id_prefix my_validator_name
 ```
@@ -974,13 +1011,14 @@ pm2 start validator.test.config.js -- --gcp.log_id_prefix my_validator_name
 ### 6.1. Useful Commands
 
 | Command                          | Description                     |
-|----------------------------------|---------------------------------|
+| -------------------------------- | ------------------------------- |
 | `pm2 stop validator`             | Stops the validator.            |
 | `pm2 logs validator --lines 100` | View the logs of the validator. |
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
 <!-- links -->
+
 [table-of-contents]: #table-of-contents
 
 ## Run the validator with Docker
@@ -1021,6 +1059,7 @@ newgrp docker
 
 - Check the validator requests: `select * from validator_requests order by start_time desc limit 500;`
 - Check the miner predictions:
+
 ```
 select mp.format_validation, vr.start_time, miners.miner_uid, process_time
 from miner_predictions mp
@@ -1029,7 +1068,9 @@ join miners on miners.id = mp.miner_id
 order by start_time desc
 limit 500;
 ```
+
 - Check the miner scores:
+
 ```
 SELECT
 	MS.ID,
@@ -1051,11 +1092,13 @@ WHERE
 ORDER BY
 	MS.ID DESC;
 ```
+
 - Check the predictions table size: `SELECT pg_size_pretty(pg_total_relation_size('miner_predictions')) as size;`
 - /!\ Delete old predictions
+
 ```
 delete from miner_predictions
-using validator_requests 
+using validator_requests
 where miner_predictions.validator_requests_id = validator_requests.id
 and validator_requests.start_time < now()::DATE - 20;
 ```

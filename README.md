@@ -206,20 +206,20 @@ After calculating the sum of the CRPS values, the validator transforms the resul
 
 #### Rolling Average (Leaderboard Score)
 
-The validator is required to store the historic request scores (as calculated in the previous step) for each miner. After each new request is scored, the validator recalculates the ‘leaderboard score’ for each miner, using an rolling average over their past **per request** scores, up to a threshold of 10 days in the past.
+The validator is required to store the historic request scores (as calculated in the previous step) for each miner. After each new request is scored, the validator recalculates the ‘leaderboard score’ for each miner, using an rolling average over their past **per request** scores, up to a threshold of 10 days in the past, and weighted by asset-specific weights.
 
 This approach emphasizes recent performance while still accounting for historical scores.
 The leaderboard score for miner $i$ at time $t$ is calculated as:
 
 $$
-L_i(t) = \frac{1}{N_i} \sum_{j} S_{i,j}
+L_i(t) = \frac{\sum_{j} S_{i,j} w_{k,j}}{\sum_{j} w_{k,j}}
 $$
 
 where:
 
 - $S_{i,j}$ is the score of miner $i$ at request $j$.
+- $w_{k,j}$ is the weight given to asset $k$ scored at request $j$.
 - The sum runs over all requests $j$ such that $t - t_j \leq T$, where $T = 10$ days is the rolling window size.
-- $N_i$ is the number of requests for miner $i$ within the last $T$ days (i.e., the number of $j$ such that $t - t_j \leq T$).
 
 Thus, highest-ranking miners are those with the lowest calculated scores.
 
