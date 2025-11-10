@@ -149,6 +149,9 @@ def compute_smoothed_score(
         if not window_df.empty:
             rolling_avg = float(window_df.sum())
         else:
+            bt.logging.warning(
+                f"Miner ID {miner_id} has no valid scores in the window. Assigning infinite rolling average."
+            )
             rolling_avg = float("inf")
 
         rolling_avg_data.append(
