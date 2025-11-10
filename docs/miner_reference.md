@@ -745,8 +745,6 @@ A prediction is considered valid if it meets all the following conditions:
 expected_time_points = (time_length / time_increment) + 1
 ```
 
-- The prompt’s start_time is in ISO format, e.g., 2025-07-15T20:59:00+00:00.
-
 The expected format is as follows:
 
 ```json
@@ -762,7 +760,7 @@ An example of a valid response would be:
 ```json
 [
   1760084861, 300,
-  [217, 218, 219, ...], [217, 218, 219, 123.45678, ...],
+  [104856.23, 104972.01, 105354.9, ...], [104856.23, 104724.54, 104886, ...], [104856.23, 104900.12, 104950.45, ...]
   ...
 ]
 ```
