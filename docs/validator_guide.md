@@ -286,7 +286,7 @@ module.exports = {
       name: 'validator',
       interpreter: 'python3',
       script: './neurons/validator.py',
-      args: '--ewma.cutoff_days 1',
+      args: '--ewma.cutoff_days 10',
       env: {
         PYTHONPATH: '.'
       },
@@ -297,12 +297,12 @@ module.exports = {
 
 Alternatively, you can add the args directly to the command:
 ```shell
-pm2 start validator.config.js -- --ewma.cutoff_days 1
+pm2 start validator.config.js -- --ewma.cutoff_days 10
 ```
 
 for testnet it's:
 ```shell
-pm2 start validator.test.config.js -- --ewma.cutoff_days 1
+pm2 start validator.test.config.js -- --ewma.cutoff_days 10
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
