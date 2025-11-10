@@ -220,7 +220,6 @@ where:
 - $S_{i,j}$ is the score of miner $i$ at request $j$.
 - $w_{k,j}$ is the weight given to asset $k$ scored at request $j$.
 - The sum runs over all requests $j$ such that $t - t_j \leq T$, where $T = 10$ days is the rolling window size.
-- $N_i$ is the number of requests for miner $i$ within the last $T$ days (i.e., the number of $j$ such that $t - t_j \leq T$).
 
 Thus, highest-ranking miners are those with the lowest calculated scores.
 

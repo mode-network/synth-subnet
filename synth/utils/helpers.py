@@ -29,12 +29,12 @@ def convert_prices_to_time_format(
     prices: list, start_time_str: str, time_increment: int
 ):
     """
-    Convert an array of float numbers (prices) into an array of dictionaries with 'time' and 'price'.
+    Convert an array of float numbers (prices) into the expected predictions format.
 
     :param prices: List of float numbers representing prices.
     :param start_time: ISO 8601 string representing the start time.
     :param time_increment: Time increment in seconds between consecutive prices.
-    :return: List of dictionaries with 'time' and 'price' keys.
+    :return: Tuple containing start time (as Unix timestamp), time increment, and lists of prices.
     """
     start_time = datetime.fromisoformat(start_time_str).replace(
         tzinfo=timezone.utc

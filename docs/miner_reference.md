@@ -745,12 +745,20 @@ A prediction is considered valid if it meets all the following conditions:
 expected_time_points = (time_length / time_increment) + 1
 ```
 
-- The first point of all paths matches the prompt’s start_time.
-- All timestamps are in ISO format, e.g., 2025-07-15T20:59:00+00:00.
-- Time intervals between points match time_increment exactly (in seconds).
-- All price values are of type int or float.
+- The prompt’s start_time is in ISO format, e.g., 2025-07-15T20:59:00+00:00.
 
 The expected format is as follows:
+
+```json
+[
+  start_timestamp, time_interval,
+  [path1_price_t0, path1_price_t1, path1_price_t2, ...], [path2_price_t0, path2_price_t1, path2_price_t2, ...],
+  ...
+]
+```
+
+An example of a valid response would be:
+
 ```json
 [
   1760084861, 300,
@@ -760,9 +768,11 @@ The expected format is as follows:
 ```
 
 where
+
 - the first element is the timestamp of the start time of the prompt,
 - second is the time increment of the prompt,
-- then arrays of prices with no more than 8 digits per point
+- then arrays of prices with no more than 8 digits per point. Otherwise, the validator will reject the submission.
+  - validation error message: `Price format is incorrect: too many digits`
 
 You can find the validation function here:
 
@@ -771,6 +781,19 @@ You can find the validation function here:
 And an example of the prompt parameters here:
 
 [validator.py#L71](https://github.com/mode-network/synth-subnet/blob/44921d343e6f8ba770558018a28508796ce2a3ce/neurons/validator.py#L71)
+
+You can test your prediction format using this miner script:
+
+```shell
+python synth/miner/run.py
+```
+
+Expected output:
+
+```
+start_time 2025-11-10T13:29:00+00:00
+CORRECT
+```
 
 #### 6. Synth is predicting multiple assets. How does each asset prediction contribute to the smoothed score?
 
