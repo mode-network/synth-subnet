@@ -1,5 +1,8 @@
-from typing import Optional
+from typing import Optional, Any
 from datetime import datetime, timedelta, timezone
+
+
+import numpy as np
 
 
 more_paths_launch_time = datetime(2025, 11, 12, 14, 0, 0, 0, timezone.utc)
@@ -69,6 +72,39 @@ def adjust_predictions(predictions: list) -> list:
             return predictions_path
 
     return predictions[2:]
+
+
+def full_fill_real_prices(
+    prediction: list[dict[str, Any]], real_prices: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """
+    Fills missing real prices in the prediction with None.
+
+    :param prediction: List of dictionaries with 'time' and 'price' keys.
+    :param real_prices: List of dictionaries with 'time' and 'price' keys.
+    :return: List of dictionaries with filled prices.
+    """
+    # transform real_prices into a dictionary for fast lookup
+    real_prices_dict = {}
+    for idx, entry in enumerate(real_prices):
+        real_prices_dict[idx] = entry
+
+    # fill missing times and prices in the real_prices_dict
+    for idx, entry in enumerate(prediction):
+        if (
+            idx not in real_prices_dict
+            or real_prices_dict[idx] is None
+            or np.isnan(real_prices_dict[idx])
+            or not np.isfinite(real_prices_dict[idx])
+        ):
+            real_prices_dict[idx] = np.nan
+
+    real_prices_filled = []
+    # recreate the real_prices list of dict sorted by time
+    for time in sorted(real_prices_dict.keys()):
+        real_prices_filled.append(real_prices_dict[time])
+
+    return real_prices_filled
 
 
 def get_intersecting_arrays(array1, array2):
