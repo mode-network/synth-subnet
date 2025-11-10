@@ -23,6 +23,7 @@ def prepare_df_for_moving_average(df):
     # build your global‐worst‐score mappings exactly as you had them
     global_worst_score_mapping = {}
     global_score_details_mapping = {}
+    global_score_asset_mapping = {}
     for t in all_times:
         sample = df.loc[df["scored_time"] == t].iloc[0]
         details = sample["score_details_v3"]
@@ -32,6 +33,7 @@ def prepare_df_for_moving_average(df):
             details["percentile90"] - details["lowest_score"]
         )
         global_score_details_mapping[t] = details
+        global_score_asset_mapping[t] = sample["asset"]
 
     # 2) find, for each miner, when they first appear
     miner_first = (
@@ -65,6 +67,11 @@ def prepare_df_for_moving_average(df):
     # overwrite score_details_v3 for new miners
     full.loc[is_new, "score_details_v3"] = full.loc[is_new, "scored_time"].map(
         global_score_details_mapping
+    )
+
+    # overwrite asset for new miners
+    full.loc[is_new, "asset"] = full.loc[is_new, "scored_time"].map(
+        global_score_asset_mapping
     )
 
     # 6) drop the “fake” rows we only introduced for existing miners

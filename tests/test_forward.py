@@ -208,7 +208,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         ) + timedelta(hours=i)
         start_time_str = start_time.isoformat()
         simulation_input = SimulationInput(
-            asset="BTC",
+            asset="BTC" if i % 2 == 0 else "ETH",
             start_time=start_time_str,
             time_increment=300,
             time_length=86400,
