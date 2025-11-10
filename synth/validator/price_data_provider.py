@@ -1,6 +1,5 @@
 import logging
 import requests
-import numpy as np
 
 
 from tenacity import (
@@ -83,14 +82,12 @@ class PriceDataProvider:
         if len(timestamps) == 0:
             return []
 
-        i = start_time_int
-        while i <= timestamps[-1]:
-            if i not in timestamps:
-                transformed_data.append(np.nan)
-            else:
-                index = timestamps.index(i)
-                transformed_data.append(float(close_prices[index]))
-            i += time_increment
+        for t, c in zip(timestamps, close_prices):
+            if (
+                t >= start_time_int
+                and (t - start_time_int) % time_increment == 0
+            ):
+                transformed_data.append(float(c))
 
         return transformed_data
 
