@@ -14,9 +14,8 @@ logging_level = debug
 validator_coldkey_name = validator-base
 validator_hotkey_name = default
 
-ewma_alpha = 2.0
-ewma_window_days = 1.0
-ewma_cutoff_days = 2
+ewma_window_days = 10
+ewma_cutoff_days = 10
 
 # Python virtual environment
 venv_python=bt_venv/bin/python3
