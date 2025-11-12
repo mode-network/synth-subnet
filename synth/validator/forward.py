@@ -20,7 +20,8 @@ from datetime import datetime, timedelta
 import random
 import time
 import typing
-
+import sys
+import traceback
 
 import bittensor as bt
 import numpy as np
@@ -249,9 +250,13 @@ async def query_available_miners_and_save_responses(
     for i, synapse in enumerate(synapses):
         response = synapse.deserialize()
         process_time = synapse.dendrite.process_time
-        format_validation = validate_responses(
-            response, simulation_input, request_time, process_time
-        )
+        try:
+            format_validation = validate_responses(
+                response, simulation_input, request_time, process_time
+            )
+        except Exception:
+            format_validation = "error during validation"
+            traceback.print_exc(file=sys.stderr)
         miner_id = miner_uids[i]
         miner_predictions[miner_id] = (
             response,

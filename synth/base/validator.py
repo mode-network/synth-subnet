@@ -18,6 +18,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 
+import sys
 import copy
 import numpy as np
 import asyncio
@@ -26,7 +27,7 @@ import threading
 import bittensor as bt
 
 from typing import List, Union
-from traceback import print_exception
+import traceback
 
 from synth.base.dendrite import SynthDendrite
 from synth.base.neuron import BaseNeuron
@@ -153,7 +154,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # In case of unforeseen errors, the validator will log the error and continue operations.
         except Exception as err:
             bt.logging.error(f"Error during validation: {str(err)}")
-            print_exception(type(err), err, err.__traceback__)
+            traceback.print_exc(file=sys.stderr)
 
     def run_in_background_thread(self):
         """
