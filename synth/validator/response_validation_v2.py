@@ -33,8 +33,8 @@ def validate_response_type(response) -> typing.Optional[str]:
     if response is None:
         return "Response is empty"
 
-    if not isinstance(response, tuple):
-        return f"Response format is incorrect: expected tuple, got {type(response)}"
+    if not isinstance(response, (tuple, list)):
+        return f"Response format is incorrect: expected tuple or list, got {type(response)}"
 
     if len(response) == 0:
         return "Response is empty"

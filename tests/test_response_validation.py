@@ -83,7 +83,7 @@ def test_validate_responses_incorrect_type():
     )
     assert (
         result
-        == "Response format is incorrect: expected tuple, got <class 'dict'>"
+        == "Response format is incorrect: expected tuple or list, got <class 'dict'>"
     )
 
 
@@ -293,6 +293,27 @@ def test_validate_responses_correct():
         time_increment,
         [123.45678] * 4,
     )
+    request_time = start_time
+    process_time_str = "0"
+
+    result = validate_responses(
+        response, simulation_input, request_time, process_time_str
+    )
+    assert result == CORRECT
+
+
+def test_validate_responses_correct_2():
+    simulation_input = SimulationInput(
+        start_time=start_time.isoformat(),
+        num_simulations=1,
+        time_length=3,
+        time_increment=time_increment,
+    )
+    response: list = [
+        int(start_time.timestamp()),
+        time_increment,
+        [123.45678] * 4,
+    ]
     request_time = start_time
     process_time_str = "0"
 
