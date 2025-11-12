@@ -261,6 +261,7 @@ def log_exception(exception: Exception):
             httpx.HTTPStatusError,
             httpx.ReadTimeout,
             httpx.ConnectTimeout,
+            httpx.RemoteProtocolError,
             ValidationError,
         ),
     ):
