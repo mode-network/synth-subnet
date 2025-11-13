@@ -167,7 +167,7 @@ class Validator(BaseValidatorNeuron):
                 )
                 await self.forward_score()
                 await self.wait_till_next_simulation(
-                    get_current_time(), self.simulation_input_list
+                    request_time, self.simulation_input_list
                 )
                 continue
 
@@ -189,7 +189,7 @@ class Validator(BaseValidatorNeuron):
 
             await self.forward_score()
             await self.wait_till_next_simulation(
-                get_current_time(), self.simulation_input_list
+                request_time, self.simulation_input_list
             )
 
     async def forward_score(self):
