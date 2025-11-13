@@ -121,7 +121,7 @@ class TestCalculateCrps(unittest.TestCase):
             time_increment,
         )
 
-        self.assertEqual(sum_all_scores, 13413.59914105867)
+        self.assertEqual(sum_all_scores, 13413.599141058676)
 
     def test_calculate_crps_for_miner_5(self):
         """
