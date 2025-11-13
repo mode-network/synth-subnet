@@ -1,7 +1,7 @@
 import sys
 import traceback
-from typing import List, Optional, Tuple, Type, Union
 import time
+from typing import List, Optional, Tuple, Type, Union
 import asyncio
 import uuid
 import aiohttp
@@ -10,11 +10,12 @@ import aiohttp
 import bittensor as bt
 from bittensor_wallet import Keypair, Wallet
 import httpx
-from pydantic import ValidationError
 import uvloop
 
 
 from synth.protocol import Simulation
+from synth.simulation_input import SimulationInput
+from synth.utils.helpers import timeout_from_start_time
 
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
@@ -97,65 +98,51 @@ class SynthDendrite(bt.Dendrite):
     def __init__(self, wallet: Optional[Union[Wallet, Keypair]] = None):
         super().__init__(wallet=wallet)
 
-    async def forward(
+    async def forward_hft(
         self,
         axons: Union[
             list[Union[bt.AxonInfo, bt.Axon]], Union[bt.AxonInfo, bt.Axon]
         ],
-        synapse: Simulation,
-        timeout: float = 12,
-        run_async: bool = True,
-    ) -> list[Simulation]:
-        is_list = True
-        # If a single axon is provided, wrap it in a list for uniform processing
-        if not isinstance(axons, list):
-            is_list = False
-            axons = [axons]
-
-        async def query_all_axons():
-            async def single_axon_response(
-                target_axon: Union[bt.AxonInfo, bt.Axon],
-            ) -> Simulation:
-                async with httpx.AsyncClient(
-                    http2=True,
-                    limits=httpx.Limits(
-                        max_connections=None, max_keepalive_connections=25
-                    ),
-                    timeout=timeout,
-                ) as client:
-                    return await self.call_http2(
-                        client=client,
-                        target_axon=target_axon,
-                        synapse=synapse.model_copy(),  # type: ignore
-                        timeout=timeout,
+        simulation_input_list: list[SimulationInput],
+    ) -> list[tuple[Simulation, int]]:
+        # Get responses for all axons.
+        async with httpx.AsyncClient(
+            http2=True,
+            limits=httpx.Limits(
+                max_connections=None, max_keepalive_connections=1000
+            ),
+        ) as client:
+            tasks = []
+            for simulation_idx, simulation_input in enumerate(
+                simulation_input_list
+            ):
+                synapse = Simulation(simulation_input=simulation_input)
+                for axon_idx, target_axon in enumerate(axons):
+                    # forward the index along with the synapse to identify miner later
+                    tasks.append(
+                        self.call_http2(
+                            client=client,
+                            axon_idx=axon_idx,
+                            simulation_idx=simulation_idx,
+                            target_axon=target_axon,
+                            synapse=synapse.model_copy(),
+                            start_time=simulation_input.start_time,
+                        )
                     )
 
-            # If run_async flag is False, get responses one by one.
-            # If run_async flag is True, get responses concurrently using asyncio.gather().
-            if not run_async:
-                return [
-                    await single_axon_response(target_axon)
-                    for target_axon in axons
-                ]  # type: ignore
-
-            return await asyncio.gather(
-                *(single_axon_response(target_axon) for target_axon in axons)
-            )  # type: ignore
-
-        # Get responses for all axons.
-        responses = await query_all_axons()
-        # Return the single response if only one axon was targeted, else return all responses
-        return responses[0] if len(responses) == 1 and not is_list else responses  # type: ignore
+            return await asyncio.gather(*tasks)
 
     async def call_http2(
         self,
         client: httpx.AsyncClient,
+        axon_idx: int,
         target_axon: Union[bt.AxonInfo, bt.Axon],
         synapse: Simulation,
-        timeout: float = 12.0,
-    ) -> Simulation:
+        start_time: str,
+    ) -> tuple[Simulation, int]:
+        timeout = timeout_from_start_time(None, start_time)
+
         # Record start time
-        start_time = time.time()
         target_axon = (
             target_axon.info()
             if isinstance(target_axon, bt.Axon)
@@ -176,6 +163,7 @@ class SynthDendrite(bt.Dendrite):
             self._log_outgoing_request(synapse)
 
             # Make the HTTP POST request
+            start_time = time.time()
             response = await client.post(
                 url=url,
                 headers=synapse.to_headers(),
@@ -191,9 +179,7 @@ class SynthDendrite(bt.Dendrite):
             self.process_server_response(
                 status, headers, json_response, synapse
             )
-
-            # Set process time and log the response
-            synapse.dendrite.process_time = str(time.time() - start_time)  # type: ignore
+            synapse.dendrite.process_time = str(time.time() - start_time)
 
         except Exception as e:
             synapse = self.process_error_message(synapse, request_name, e)
@@ -202,7 +188,7 @@ class SynthDendrite(bt.Dendrite):
             self._log_incoming_response(synapse)
 
             # Return the updated synapse object after deserializing if requested
-            return synapse
+            return synapse, axon_idx
 
     def process_server_response(
         self, status, _, json_response: dict, local_synapse: Simulation
@@ -229,8 +215,10 @@ class SynthDendrite(bt.Dendrite):
             local_synapse.axon.status_message = json_response.get("message")
 
         # Update the status code and status message of the dendrite to match the axon
-        local_synapse.dendrite.status_code = local_synapse.axon.status_code  # type: ignore
-        local_synapse.dendrite.status_message = local_synapse.axon.status_message  # type: ignore
+        local_synapse.dendrite.status_code = local_synapse.axon.status_code
+        local_synapse.dendrite.status_message = (
+            local_synapse.axon.status_message
+        )
 
     def log_exception(self, exception: Exception):
         log_exception(exception)
@@ -262,7 +250,6 @@ def log_exception(exception: Exception):
             httpx.ReadTimeout,
             httpx.ConnectTimeout,
             httpx.RemoteProtocolError,
-            ValidationError,
         ),
     ):
         bt.logging.trace(f"{error_type}#{error_id}: {exception}")

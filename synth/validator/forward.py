@@ -22,6 +22,8 @@ import time
 import typing
 import sys
 import traceback
+import asyncio
+
 
 import bittensor as bt
 import numpy as np
@@ -198,13 +200,20 @@ def calculate_rewards_and_update_scores(
     return fail_count != len(validator_requests)
 
 
-async def query_available_miners_and_save_responses(
+def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
     miner_uids: list,
     simulation_input: SimulationInput,
     request_time: datetime,
 ):
+    if len(miner_uids) == 0:
+        bt.logging.error(
+            "No miners available",
+            "query_available_miners_and_save_responses",
+        )
+        return
+
     timeout = timeout_from_start_time(
         base_neuron.config.neuron.timeout, simulation_input.start_time
     )
@@ -266,6 +275,65 @@ async def query_available_miners_and_save_responses(
         )
     else:
         bt.logging.info("skip saving because no prediction")
+
+
+def query_available_miners_and_save_responses_hft(
+    base_neuron: BaseValidatorNeuron,
+    miner_data_handler: MinerDataHandler,
+    miner_uids: list,
+    simulation_input_list: list[SimulationInput],
+    request_time: datetime,
+):
+    if len(miner_uids) == 0:
+        bt.logging.error(
+            "No miners available",
+            "query_available_miners_and_save_responses_hft",
+        )
+        return
+
+    axons = [base_neuron.metagraph.axons[uid] for uid in miner_uids]
+
+    start_time = time.time()
+
+    synapses = asyncio.run(
+        base_neuron.dendrite.forward_hft(
+            axons=axons,
+            simulation_input_list=simulation_input_list,
+        )
+    )
+
+    total_process_time = str(time.time() - start_time)
+    bt.logging.debug(
+        f"Forwarding took {total_process_time} seconds", "forward_hft"
+    )
+
+    miner_predictions = {}
+    for simulation_input in simulation_input_list:
+        miner_predictions[simulation_input.asset] = {}
+
+    for synapse, idx in synapses:
+        response = synapse.deserialize()
+        process_time = synapse.dendrite.process_time
+        format_validation = validate_responses(
+            response, simulation_input_list[0], request_time, process_time
+        )
+        # use index of synapse to get miner id
+        miner_id = miner_uids[idx]
+        miner_predictions[synapse.simulation_input.asset][miner_id] = (
+            response,
+            format_validation,
+            process_time,
+        )
+
+    for simulation_input in simulation_input_list:
+        if len(miner_predictions[simulation_input.asset]) > 0:
+            miner_data_handler.save_responses(
+                miner_predictions[simulation_input.asset],
+                simulation_input,
+                request_time,
+            )
+        else:
+            bt.logging.info("skip saving because no prediction")
 
 
 def get_available_miners_and_update_metagraph_history(
