@@ -173,7 +173,7 @@ class Miner(BaseMinerNeuron):
     def set_weights(self):
         pass
 
-    def forward_validator(self):
+    async def forward_validator(self):
         pass
 
     def print_info(self):

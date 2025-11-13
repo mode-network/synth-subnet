@@ -20,21 +20,13 @@ import asyncio
 import threading
 import argparse
 import traceback
-from typing import Union
-
 
 import bittensor as bt
-from bittensor.core.axon import V_7_2_0
-from bittensor.core.errors import SynapseDendriteNoneException
-from bittensor_wallet import Keypair
-from bittensor.utils.axon_utils import (
-    allowed_nonce_window_ns,
-    calculate_diff_seconds,
-)
-
 
 from synth.base.neuron import BaseNeuron
 from synth.utils.config import add_miner_args
+
+from typing import Union
 
 
 class BaseMinerNeuron(BaseNeuron):
@@ -73,7 +65,6 @@ class BaseMinerNeuron(BaseNeuron):
             forward_fn=self.forward_miner,
             blacklist_fn=self.blacklist,
             priority_fn=self.priority,
-            verify_fn=self.verify,
         )
         bt.logging.info(f"Axon created: {self.axon}")
 
@@ -82,132 +73,6 @@ class BaseMinerNeuron(BaseNeuron):
         self.is_running = False
         self.thread: Union[threading.Thread, None] = None
         self.lock = asyncio.Lock()
-
-    async def verify(self, synapse: bt.Synapse):
-        """
-        This method is used to verify the authenticity of a received message using a digital signature.
-
-        It ensures that the message was not tampered with and was sent by the expected sender.
-
-        The :func:`default_verify` method in the Bittensor framework is a critical security function within the
-        Axon server. It is designed to authenticate incoming messages by verifying their digital
-        signatures. This verification ensures the integrity of the message and confirms that it was
-        indeed sent by the claimed sender. The method plays a pivotal role in maintaining the trustworthiness
-        and reliability of the communication within the Bittensor network.
-
-        Key Features
-            Security Assurance
-                The default_verify method is crucial for ensuring the security of the Bittensor network. By verifying
-                digital signatures, it guards against unauthorized access and data manipulation.
-
-            Preventing Replay Attacks
-                The method checks for increasing nonce values, which is a vital
-                step in preventing replay attacks. A replay attack involves an adversary reusing or
-                delaying the transmission of a valid data transmission to deceive the receiver.
-                The first time a nonce is seen, it is checked for freshness by ensuring it is
-                within an acceptable delta time range.
-
-            Authenticity and Integrity Checks
-                By verifying that the message's digital signature matches
-                its content, the method ensures the message's authenticity (it comes from the claimed
-                sender) and integrity (it hasn't been altered during transmission).
-
-            Trust in Communication
-                This method fosters trust in the network communication. Neurons
-                (nodes in the Bittensor network) can confidently interact, knowing that the messages they
-                receive are genuine and have not been tampered with.
-
-            Cryptographic Techniques
-                The method's reliance on asymmetric encryption techniques is a
-                cornerstone of modern cryptographic security, ensuring that only entities with the correct
-                cryptographic keys can participate in secure communication.
-
-        Args:
-            synapse(bittensor.core.synapse.Synapse): bittensor request synapse.
-
-        Raises:
-            Exception: If the ``receiver_hotkey`` doesn't match with ``self.receiver_hotkey``.
-            Exception: If the nonce is not larger than the previous nonce for the same endpoint key.
-            Exception: If the signature verification fails.
-
-        After successful verification, the nonce for the given endpoint key is updated.
-
-        Note:
-            The verification process assumes the use of an asymmetric encryption algorithm,
-            where the sender signs the message with their private key and the receiver verifies the
-            signature using the sender's public key.
-        """
-        # Build the keypair from the dendrite_hotkey
-        if synapse.dendrite is not None:
-            keypair = Keypair(ss58_address=synapse.dendrite.hotkey)
-
-            # Build the signature messages.
-            message = f"{synapse.dendrite.nonce}.{synapse.dendrite.hotkey}.{self.wallet.hotkey.ss58_address}.{synapse.dendrite.uuid}.{synapse.computed_body_hash}"
-
-            # Build the unique endpoint key.
-            endpoint_key = f"{synapse.dendrite.hotkey}:{synapse.dendrite.uuid}"
-
-            # Requests must have nonces to be safe from replays
-            if synapse.dendrite.nonce is None:
-                raise Exception("Missing Nonce")
-
-            # Newer nonce structure post v7.2
-            if (
-                synapse.dendrite.version is not None
-                and synapse.dendrite.version >= V_7_2_0
-            ):
-                # If we don't have a nonce stored, ensure that the nonce falls within
-                # a reasonable delta.
-                current_time_ns = time.time_ns()
-                allowed_window_ns = allowed_nonce_window_ns(
-                    current_time_ns, synapse.timeout
-                )
-
-                if (
-                    self.nonces.get(endpoint_key) is None
-                    and synapse.dendrite.nonce <= allowed_window_ns
-                ):
-                    diff_seconds, allowed_delta_seconds = (
-                        calculate_diff_seconds(
-                            current_time_ns,
-                            synapse.timeout,
-                            synapse.dendrite.nonce,
-                        )
-                    )
-                    raise Exception(
-                        f"Nonce is too old: acceptable delta is {allowed_delta_seconds:.2f} seconds but request was {diff_seconds:.2f} seconds old"
-                    )
-
-                # If a nonce is stored, ensure the new nonce
-                # is greater or equal to than the previous nonce
-                if (
-                    self.nonces.get(endpoint_key) is not None
-                    and synapse.dendrite.nonce < self.nonces[endpoint_key]
-                ):
-                    raise Exception(
-                        "Nonce is too old, a newer one was last processed"
-                    )
-            # Older nonce structure pre v7.2
-            else:
-                if (
-                    self.nonces.get(endpoint_key) is not None
-                    and synapse.dendrite.nonce < self.nonces[endpoint_key]
-                ):
-                    raise Exception(
-                        "Nonce is too old, a newer one was last processed"
-                    )
-
-            if synapse.dendrite.signature and not keypair.verify(
-                message, synapse.dendrite.signature
-            ):
-                raise Exception(
-                    f"Signature mismatch with {message} and {synapse.dendrite.signature}"
-                )
-
-            # Success
-            self.nonces[endpoint_key] = synapse.dendrite.nonce  # type: ignore
-        else:
-            raise SynapseDendriteNoneException(synapse=synapse)
 
     def run(self):
         """
