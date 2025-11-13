@@ -191,14 +191,7 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
         "--neuron.nprocs",
         type=int,
         help="The number of processes to run for the validator dendrite.",
-        default=8,
-    )
-
-    parser.add_argument(
-        "--neuron.use_multiprocess",
-        type=int,
-        help="The number of processes to run for the validator dendrite.",
-        default=1,
+        default=2,
     )
 
     parser.add_argument(
