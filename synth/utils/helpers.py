@@ -5,9 +5,6 @@ from datetime import datetime, timedelta, timezone
 import numpy as np
 
 
-more_paths_launch_time = datetime(2025, 11, 12, 14, 0, 0, 0, timezone.utc)
-
-
 def get_current_time() -> datetime:
     # Get current date and time
     return datetime.now(timezone.utc).replace(microsecond=0)
