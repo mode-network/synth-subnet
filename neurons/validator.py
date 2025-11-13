@@ -30,7 +30,6 @@ from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
     timeout_until,
-    more_paths_launch_time,
 )
 from synth.utils.logging import setup_gcp_logging
 from synth.utils.opening_hours import should_skip_xau
@@ -74,25 +73,25 @@ class Validator(BaseValidatorNeuron):
                 asset="BTC",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
             SimulationInput(
                 asset="ETH",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
             SimulationInput(
                 asset="XAU",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
             SimulationInput(
                 asset="SOL",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
         ]
         self.timeout_extra_seconds = 60
@@ -116,7 +115,6 @@ class Validator(BaseValidatorNeuron):
         bt.logging.info("calling forward_validator()")
         return [
             asyncio.create_task(self.forward_prompt()),
-            asyncio.create_task(self.forward_score()),
         ]
 
     async def wait_till_next_simulation(
@@ -151,6 +149,7 @@ class Validator(BaseValidatorNeuron):
                     "No miners available",
                     "forward_prompt",
                 )
+                await self.forward_score()
                 await self.wait_till_next_simulation(
                     get_current_time(), self.simulation_input_list
                 )
@@ -166,6 +165,7 @@ class Validator(BaseValidatorNeuron):
                     "Skipping XAU simulation as market is closed",
                     "forward_prompt",
                 )
+                await self.forward_score()
                 await self.wait_till_next_simulation(
                     request_time, self.simulation_input_list
                 )
@@ -179,11 +179,6 @@ class Validator(BaseValidatorNeuron):
             # add the start time to the simulation input
             simulation_input.start_time = start_time.isoformat()
 
-            # TEMP
-            if request_time >= more_paths_launch_time:
-                simulation_input.num_simulations = 1000
-            # END TEMP
-
             await query_available_miners_and_save_responses(
                 base_neuron=self,
                 miner_data_handler=self.miner_data_handler,
@@ -192,6 +187,7 @@ class Validator(BaseValidatorNeuron):
                 request_time=request_time,
             )
 
+            await self.forward_score()
             await self.wait_till_next_simulation(
                 request_time, self.simulation_input_list
             )
@@ -199,30 +195,11 @@ class Validator(BaseValidatorNeuron):
     async def forward_score(self):
         current_time = get_current_time()
 
-        next_iteration = current_time + timedelta(minutes=15)
-
-        async def wait_till_next_iteration():
-            # wait until the next iteration
-            wait_time = timeout_until(next_iteration)
-            bt.logging.info(
-                f"Waiting for {wait_time/60} minutes until the next iteration",
-                "forward_score",
-            )
-            await asyncio.sleep(wait_time)
-
         # round current time to the closest minute and add extra minutes
         # to be sure we are after the start time of the prompt
         scored_time = round_time_to_minutes(
             current_time, 60, self.timeout_extra_seconds * 2
         )
-
-        # wait until the score_time
-        wait_time = timeout_until(scored_time)
-        bt.logging.info(
-            f"Waiting for {wait_time/60} minutes to start validating",
-            "forward_score",
-        )
-        await asyncio.sleep(wait_time)
 
         # ================= Step 3 ================= #
         # Calculate rewards based on historical predictions data
@@ -241,7 +218,6 @@ class Validator(BaseValidatorNeuron):
         )
 
         if not success:
-            await wait_till_next_iteration()
             return
 
         # ================= Step 4 ================= #
@@ -259,7 +235,6 @@ class Validator(BaseValidatorNeuron):
         )
 
         if len(moving_averages_data) == 0:
-            await wait_till_next_iteration()
             return
 
         # ================= Step 5 ================= #
@@ -291,8 +266,6 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
             scored_time=scored_time,
         )
-
-        await wait_till_next_iteration()
 
     async def forward_miner(self, _: bt.Synapse) -> bt.Synapse:
         pass
