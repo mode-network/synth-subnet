@@ -265,7 +265,7 @@ def log_exception(exception: Exception):
             ValidationError,
         ),
     ):
-        bt.logging.debug(f"{error_type}#{error_id}: {exception}")
+        bt.logging.trace(f"{error_type}#{error_id}: {exception}")
     else:
         bt.logging.error(f"{error_type}#{error_id}: {exception}")
         traceback.print_exc(file=sys.stderr)
