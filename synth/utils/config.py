@@ -142,14 +142,6 @@ def add_miner_args(_, parser):
     )
 
     parser.add_argument(
-        "--blacklist.validator_exceptions",
-        type=int,
-        nargs="+",
-        default=[],
-        help="List of validator exceptions (e.g., --blacklist.validator_exceptions 1 3 10)",
-    )
-
-    parser.add_argument(
         "--wandb.enabled",
         type=bool,
         help="Boolean toggle for wandb integration",
