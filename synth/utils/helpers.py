@@ -134,40 +134,19 @@ def get_intersecting_arrays(array1, array2):
     return filtered_array1, filtered_array2
 
 
-def round_time_to_minutes(
-    dt: datetime, in_seconds: int, extra_seconds=0
-) -> datetime:
-    """round validation time to the closest minute and add extra minutes
+def round_time_to_minutes(dt: datetime, extra_seconds=0) -> datetime:
+    """round validation time to the closest minute and add extra seconds
 
     Args:
         dt (datetime): request_time
-        in_seconds (int): 60
         extra_seconds (int, optional): self.timeout_extra_seconds: 120. Defaults to 0.
 
     Returns:
         datetime: rounded-up datetime
     """
-    # Define the rounding interval
-    rounding_interval = timedelta(seconds=in_seconds)
-
-    # Calculate the number of seconds since the start of the day
-    seconds = (
-        dt - dt.replace(hour=0, minute=0, second=0, microsecond=0)
-    ).total_seconds()
-
-    # Calculate the next multiple of time_increment in seconds
-    next_interval_seconds = (
-        (seconds // rounding_interval.total_seconds()) + 1
-    ) * rounding_interval.total_seconds()
-
-    # Get the rounded-up datetime
-    rounded_time = (
-        dt.replace(hour=0, minute=0, second=0, microsecond=0)
-        + timedelta(seconds=next_interval_seconds)
-        + timedelta(seconds=extra_seconds)
-    )
-
-    return rounded_time
+    return (dt + timedelta(minutes=1)).replace(
+        second=0, microsecond=0
+    ) + timedelta(seconds=extra_seconds)
 
 
 def from_iso_to_unix_time(iso_time: str):
