@@ -30,7 +30,6 @@ from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
     timeout_until,
-    more_paths_launch_time,
 )
 from synth.utils.logging import setup_gcp_logging
 from synth.utils.opening_hours import should_skip_xau
@@ -74,25 +73,25 @@ class Validator(BaseValidatorNeuron):
                 asset="BTC",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
             SimulationInput(
                 asset="ETH",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
             SimulationInput(
                 asset="XAU",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
             SimulationInput(
                 asset="SOL",
                 time_increment=300,
                 time_length=86400,
-                num_simulations=100,
+                num_simulations=1000,
             ),
         ]
         self.timeout_extra_seconds = 60
@@ -178,11 +177,6 @@ class Validator(BaseValidatorNeuron):
 
             # add the start time to the simulation input
             simulation_input.start_time = start_time.isoformat()
-
-            # TEMP
-            if request_time >= more_paths_launch_time:
-                simulation_input.num_simulations = 1000
-            # END TEMP
 
             await query_available_miners_and_save_responses(
                 base_neuron=self,
