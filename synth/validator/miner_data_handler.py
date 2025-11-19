@@ -3,6 +3,7 @@ import traceback
 import sys
 import typing
 import logging
+import math
 
 
 import bittensor as bt
@@ -178,10 +179,14 @@ class MinerDataHandler:
                 with connection.begin():
                     # update validator request with the real paths
                     if real_prices is not None and len(real_prices) > 0:
-                        # replace np.nan with None
-                        for price in real_prices:
-                            if price is not None and pd.isna(price):
-                                price = None
+                        real_prices = [
+                            (
+                                None
+                                if (isinstance(x, float) and math.isnan(x))
+                                else x
+                            )
+                            for x in real_prices
+                        ]
                         update_stmt_validator = (
                             update(ValidatorRequest)
                             .where(
