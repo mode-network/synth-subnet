@@ -8,6 +8,7 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
+import numpy as np
 import bittensor as bt
 
 
@@ -82,12 +83,14 @@ class PriceDataProvider:
         if len(timestamps) == 0:
             return []
 
-        for t, c in zip(timestamps, close_prices):
-            if (
-                t >= start_time_int
-                and (t - start_time_int) % time_increment == 0
-            ):
-                transformed_data.append(float(c))
+        i = start_time_int
+        while i <= timestamps[-1]:
+            if i not in timestamps:
+                transformed_data.append(np.nan)
+            else:
+                index = timestamps.index(i)
+                transformed_data.append(float(close_prices[index]))
+            i += time_increment
 
         return transformed_data
 
