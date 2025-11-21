@@ -26,7 +26,7 @@ import bittensor as bt
 
 
 from synth.db.models import ValidatorRequest
-from synth.utils.helpers import adjust_predictions, full_fill_real_prices
+from synth.utils.helpers import adjust_predictions
 from synth.validator.crps_calculation import calculate_crps_for_miner
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
@@ -64,14 +64,11 @@ def reward(
 
     predictions_path = adjust_predictions(miner_prediction.prediction)
     simulation_runs = np.array(predictions_path).astype(float)
-    full_filled_real_prices = full_fill_real_prices(
-        miner_prediction.prediction[2], real_prices
-    )
 
     try:
         score, detailed_crps_data = calculate_crps_for_miner(
             simulation_runs,
-            np.array(full_filled_real_prices),
+            np.array(real_prices),
             time_increment,
         )
     except Exception as e:

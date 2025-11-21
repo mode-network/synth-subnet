@@ -8,6 +8,7 @@ from tenacity import (
     stop_after_attempt,
     wait_random_exponential,
 )
+import numpy as np
 import bittensor as bt
 
 
@@ -62,32 +63,45 @@ class PriceDataProvider:
         data = response.json()
 
         transformed_data = self._transform_data(
-            data, start_time_int, validator_request.time_increment
+            data,
+            start_time_int,
+            validator_request.time_increment,
+            validator_request.time_length,
         )
 
         return transformed_data
 
     @staticmethod
     def _transform_data(
-        data, start_time_int: int, time_increment: int
+        data, start_time_int: int, time_increment: int, time_length: int
     ) -> list:
-        if data is None or len(data) == 0:
+        if data is None or len(data) == 0 or len(data["t"]) == 0:
             return []
 
-        timestamps = data["t"]
-        close_prices = data["c"]
+        time_end_int = start_time_int + time_length
+        timestamps = [
+            t
+            for t in range(
+                start_time_int, time_end_int + time_increment, time_increment
+            )
+        ]
 
-        transformed_data = []
+        if len(timestamps) != int(time_length / time_increment) + 1:
+            # Note: this part of code should never be activated; just included for precaution
+            if len(timestamps) == int(time_length / time_increment) + 2:
+                if data["t"][-1] < timestamps[1]:
+                    timestamps = timestamps[:-1]
+                elif data["t"][0] > timestamps[0]:
+                    timestamps = timestamps[1:]
+            else:
+                return []
 
-        if len(timestamps) == 0:
-            return []
+        close_prices_dict = {t: c for t, c in zip(data["t"], data["c"])}
+        transformed_data = [np.nan for _ in range(len(timestamps))]
 
-        for t, c in zip(timestamps, close_prices):
-            if (
-                t >= start_time_int
-                and (t - start_time_int) % time_increment == 0
-            ):
-                transformed_data.append(float(c))
+        for idx, t in enumerate(timestamps):
+            if t in close_prices_dict:
+                transformed_data[idx] = close_prices_dict[t]
 
         return transformed_data
 
