@@ -87,7 +87,7 @@ def calculate_moving_average_and_update_rewards(
     miner_data_handler: MinerDataHandler,
     scored_time: datetime,
     cutoff_days: int,
-    window_days: float,
+    window_days: int,
     softmax_beta: float,
 ) -> list[dict]:
     # apply custom moving average rewards
@@ -123,7 +123,7 @@ def calculate_rewards_and_update_scores(
     cutoff_days: int,
 ) -> bool:
     # get latest prediction request from validator
-    validator_requests = miner_data_handler.get_latest_prediction_requests(
+    validator_requests = miner_data_handler.get_validator_requests_to_score(
         scored_time, cutoff_days
     )
 

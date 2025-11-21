@@ -340,7 +340,7 @@ class MinerDataHandler:
             traceback.print_exc(file=sys.stderr)
             return None
 
-    def get_latest_prediction_requests(
+    def get_validator_requests_to_score(
         self,
         scored_time: datetime,
         cutoff_days: int,

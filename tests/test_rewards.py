@@ -78,7 +78,9 @@ def test_get_rewards(db_engine):
 
     price_data_provider = PriceDataProvider()
 
-    validator_requests = handler.get_latest_prediction_requests(scored_time, 7)
+    validator_requests = handler.get_validator_requests_to_score(
+        scored_time, 7
+    )
 
     prompt_scores, detailed_info, real_prices = get_rewards(
         handler,
