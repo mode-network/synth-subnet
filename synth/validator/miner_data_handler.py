@@ -470,19 +470,7 @@ class MinerDataHandler:
                         ValidatorRequest.id
                         == MinerPrediction.validator_requests_id,
                     )
-                    .where(
-                        and_(
-                            MinerScore.scored_time > min_scored_time,
-                            ValidatorRequest.start_time
-                            < datetime.fromisoformat(
-                                "2025-11-18 11:53:00+00:00"
-                            ),
-                            ValidatorRequest.start_time
-                            > datetime.fromisoformat(
-                                "2025-11-18 14:08:00+00:00"
-                            ),
-                        )
-                    )
+                    .where(MinerScore.scored_time > min_scored_time)
                 )
 
                 result = connection.execute(query)
