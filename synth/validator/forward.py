@@ -87,7 +87,7 @@ def calculate_moving_average_and_update_rewards(
     miner_data_handler: MinerDataHandler,
     scored_time: datetime,
     cutoff_days: int,
-    window_days: float,
+    window_days: int,
     softmax_beta: float,
 ) -> list[dict]:
     # apply custom moving average rewards
@@ -123,7 +123,7 @@ def calculate_rewards_and_update_scores(
     cutoff_days: int,
 ) -> bool:
     # get latest prediction request from validator
-    validator_requests = miner_data_handler.get_latest_prediction_requests(
+    validator_requests = miner_data_handler.get_validator_requests_to_score(
         scored_time, cutoff_days
     )
 
@@ -163,7 +163,7 @@ def calculate_rewards_and_update_scores(
     return fail_count != len(validator_requests)
 
 
-async def query_available_miners_and_save_responses(
+def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
     miner_uids: list,
@@ -191,25 +191,21 @@ async def query_available_miners_and_save_responses(
 
     start_time = time.time()
 
-    if base_neuron.config.neuron.use_multiprocess == 1:
-        synapses = sync_forward_multiprocess(
-            base_neuron.dendrite.keypair,
-            base_neuron.dendrite.uuid,
-            base_neuron.dendrite.external_ip,
-            axons,
-            synapse,
-            timeout,
-            base_neuron.config.neuron.nprocs,
-        )
-    else:
-        synapses = await base_neuron.dendrite.forward(
-            axons=axons,
-            synapse=synapse,
-            timeout=timeout,
-        )
+    synapses = sync_forward_multiprocess(
+        base_neuron.dendrite.keypair,
+        base_neuron.dendrite.uuid,
+        base_neuron.dendrite.external_ip,
+        axons,
+        synapse,
+        timeout,
+        base_neuron.config.neuron.nprocs,
+    )
 
     total_process_time = str(time.time() - start_time)
-    bt.logging.debug(f"Forwarding took {total_process_time} seconds")
+    bt.logging.debug(
+        f"Forwarding took {total_process_time} seconds",
+        "sync_forward_multiprocess",
+    )
 
     miner_predictions = {}
     for i, synapse in enumerate(synapses):
