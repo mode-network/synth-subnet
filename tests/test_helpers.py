@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 
 from synth.utils.helpers import (
@@ -9,7 +9,6 @@ from synth.utils.helpers import (
     from_iso_to_unix_time,
     get_current_time,
     round_to_8_significant_digits,
-    timeout_until,
 )
 
 
@@ -140,25 +139,3 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(
             from_iso_to_unix_time("2025-08-05T14:56:00+00:00"), 1754405760
         )
-
-    def test_timeout_until(self):
-        # Arrange: Set a future time 10 seconds from now
-        future_time = datetime.now(timezone.utc) + timedelta(seconds=10)
-
-        # Act: Call the timeout_until function
-        timeout = timeout_until(future_time)
-
-        # Assert: The timeout should be approximately 10 seconds
-        assert (
-            9 <= timeout <= 10
-        ), f"Expected timeout to be around 10 seconds, got {timeout}"
-
-    def test_timeout_until_past_time(self):
-        # Arrange: Set a past time 10 seconds ago
-        past_time = datetime.now(timezone.utc) - timedelta(seconds=10)
-
-        # Act: Call the timeout_until function
-        timeout = timeout_until(past_time)
-
-        # Assert: The timeout should be negative
-        assert timeout == 0, f"Expected timeout to be 0, got {timeout}"

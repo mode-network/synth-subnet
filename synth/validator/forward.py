@@ -163,7 +163,7 @@ def calculate_rewards_and_update_scores(
     return fail_count != len(validator_requests)
 
 
-async def query_available_miners_and_save_responses(
+def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
     miner_uids: list,

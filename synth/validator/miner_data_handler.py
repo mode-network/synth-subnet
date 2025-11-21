@@ -84,6 +84,29 @@ class MinerDataHandler:
 
         return miner_Uid_map
 
+    def get_latest_asset(self, time_length: int) -> str | None:
+        try:
+            with self.engine.connect() as connection:
+                query = (
+                    select(
+                        ValidatorRequest.asset,
+                    )
+                    .where(ValidatorRequest.time_length == time_length)
+                    .limit(1)
+                    .order_by(ValidatorRequest.start_time.desc())
+                )
+
+                result = connection.execute(query).fetchall()
+                if len(result) == 0:
+                    return None
+
+                # Return the asset with the least count
+                return result[0].asset
+        except Exception as e:
+            bt.logging.error(f"in get_next_asset (got an exception): {e}")
+            traceback.print_exc(file=sys.stderr)
+            return None
+
     @retry(
         stop=stop_after_attempt(5),
         wait=wait_random_exponential(multiplier=7),

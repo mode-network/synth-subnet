@@ -140,21 +140,5 @@ def timeout_from_start_time(
     return (start_time - current_time).total_seconds()
 
 
-def timeout_until(until_time: datetime):
-    """
-    Calculate the timeout duration from the current time to the until_time.
-
-    :param until_time: datetime object representing the end time.
-    :return: Timeout duration in seconds.
-    """
-    # Get current date and time
-    current_time = datetime.now(timezone.utc)
-
-    # Calculate the timeout duration
-    wait_time = (until_time - current_time).total_seconds()
-
-    return wait_time if wait_time > 0 else 0
-
-
 def convert_list_elements_to_str(items: list[int]) -> list[str]:
     return [str(x) for x in items]
