@@ -17,7 +17,7 @@
         <b>Whitepaper</b>
     </a>
 ·
-    <a href="https://discord.gg/3sqFJFsz" target="_blank">
+    <a href="https://discord.gg/gnt8sFMdg6" target="_blank">
         <b>Discord</b>
     </a>
 ·
@@ -100,7 +100,7 @@ sequenceDiagram
     end
 ```
 
-Miners are tasked with providing probabilistic forecasts of a cryptocurrency's future price movements. Specifically, each miner is required to generate multiple simulated price paths for an asset, from the current time over specified time increments and time horizon. Initially all checking prompts will be to produce 100 simulated paths for the future price of bitcoin at 5-minute time increments for the next 24 hours.
+Miners are tasked with providing probabilistic forecasts of a cryptocurrency's future price movements. Specifically, each miner is required to generate multiple simulated price paths for an asset, from the current time over specified time increments and time horizon. Initially all checking prompts will be to produce 100 simulated paths for the future price of bitcoin at 5-minute time increments for the next 24 hours. As of November 13, 2025, the network has been upgraded to request that miners produce 1000 simulated paths for the future price of BTC, ETH, SOL, and XAU for the next 24 hours. This upgrade reflects Synth’s commitment to developing high frequency trading capabilities.
 
 Whereas other subnets ask miners to predict single values for future prices, we’re interested in the miners correctly quantifying uncertainty. We want their price paths to represent their view of the probability distribution of the future price, and we want their paths to encapsulate realistic price dynamics, such as volatility clustering and skewed fat tailed price change distributions. Subsequently we’ll expand to requesting forecasts for multiple assets, where modelling the correlations between the asset prices will be essential.
 
@@ -115,7 +115,7 @@ Initially prompt parameters will always have the following values:
 - **Asset**: BTC, ETH, XAU, SOL (note that CRPS for each asset contributes equally to final miner weights).
 - **Time Increment ($\Delta t$)**: 5 minutes.
 - **Time Horizon ($T$)**: 24 hours.
-- **Number of Simulations ($N_{\text{sim}}$)**: 100.
+- **Number of Simulations ($N_{\text{sim}}$)**: 1000.
 
 Validators will alternate between sending out requests for BTC and ETH predictions, at 30min intervals. The miner has until the start time to return ($N_{\text{sim}}$) paths, each containing price predictions at times given by:
 
