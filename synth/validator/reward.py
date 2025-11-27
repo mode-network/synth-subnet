@@ -64,9 +64,12 @@ def reward(
     predictions_path = adjust_predictions(miner_prediction.prediction)
     simulation_runs = np.array(predictions_path).astype(float)
 
-    scoring_intervals = prompt_config.LOW_FREQUENCY.scoring_intervals
-    if validator_request.time_length == prompt_config.HIGH_FREQUENCY.time_length:
-        scoring_intervals = prompt_config.HIGH_FREQUENCY.scoring_intervals
+    scoring_intervals = (
+        prompt_config.HIGH_FREQUENCY.scoring_intervals
+        if validator_request.time_length
+        == prompt_config.HIGH_FREQUENCY.time_length
+        else prompt_config.LOW_FREQUENCY.scoring_intervals
+    )
 
     try:
         score, detailed_crps_data = calculate_crps_for_miner(

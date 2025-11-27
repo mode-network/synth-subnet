@@ -6,6 +6,7 @@ from sqlalchemy import Engine
 
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.moving_average import compute_smoothed_score
+from synth.validator.prompt_config import LOW_FREQUENCY
 
 
 def read_csv(file_name):
@@ -18,7 +19,6 @@ def test_moving_average_1(db_engine: Engine):
     handler = MinerDataHandler(db_engine)
 
     scored_time = datetime.fromisoformat("2025-02-21T17:23:00+00:00")
-    window_days = 2
 
     df = read_csv("cutoff_data_4_days.csv")
     df["scored_time"] = pd.to_datetime(df["scored_time"])
@@ -26,9 +26,8 @@ def test_moving_average_1(db_engine: Engine):
     moving_averages_data = compute_smoothed_score(
         handler,
         input_df=df,
-        window_days=window_days,
         scored_time=scored_time,
-        softmax_beta=-0.003,
+        prompt_config=LOW_FREQUENCY,
     )
 
     # The miner id you want to search for
@@ -54,7 +53,6 @@ def test_moving_average_2(db_engine: Engine):
     handler = MinerDataHandler(db_engine)
 
     scored_time = datetime.fromisoformat("2025-02-21T17:23:00+00:00")
-    window_days = 1
 
     df = read_csv("cutoff_data_2_days.csv")
     df["scored_time"] = pd.to_datetime(df["scored_time"])
@@ -62,9 +60,8 @@ def test_moving_average_2(db_engine: Engine):
     moving_averages_data = compute_smoothed_score(
         handler,
         input_df=df,
-        window_days=window_days,
         scored_time=scored_time,
-        softmax_beta=-0.003,
+        prompt_config=LOW_FREQUENCY,
     )
 
     # The miner id you want to search for

@@ -35,7 +35,7 @@ from synth.utils.logging import setup_gcp_logging
 from synth.utils.opening_hours import should_skip_xau
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
-    calculate_rewards_and_update_scores,
+    calculate_scores,
     get_available_miners_and_update_metagraph_history,
     query_available_miners_and_save_responses,
     send_weights_to_bittensor_and_update_weights_history,
@@ -143,6 +143,7 @@ class Validator(BaseValidatorNeuron):
         cycle_start_time = get_current_time()
 
         self.sync()
+        # update the miners, also for the high frequency prompt that will use the same list
         self.miner_uids = get_available_miners_and_update_metagraph_history(
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
@@ -158,11 +159,11 @@ class Validator(BaseValidatorNeuron):
 
         current_time = get_current_time()
         scored_time: datetime = round_time_to_minutes(current_time)
-        calculate_rewards_and_update_scores(
-            miner_data_handler=self.miner_data_handler,
-            price_data_provider=self.price_data_provider,
-            scored_time=scored_time,
-            cutoff_days=self.config.ewma.cutoff_days,
+        calculate_scores(
+            self.miner_data_handler,
+            self.price_data_provider,
+            scored_time,
+            HIGH_FREQUENCY,
         )
         self.schedule_cycle(cycle_start_time, HIGH_FREQUENCY)
 
@@ -215,11 +216,11 @@ class Validator(BaseValidatorNeuron):
         # we store the rewards in the miner_scores table
         # ========================================== #
 
-        success = calculate_rewards_and_update_scores(
-            miner_data_handler=self.miner_data_handler,
-            price_data_provider=self.price_data_provider,
-            scored_time=scored_time,
-            cutoff_days=self.config.ewma.cutoff_days,
+        success = calculate_scores(
+            self.miner_data_handler,
+            self.price_data_provider,
+            scored_time,
+            LOW_FREQUENCY,
         )
 
         if not success:
@@ -234,9 +235,6 @@ class Validator(BaseValidatorNeuron):
         moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=self.miner_data_handler,
             scored_time=scored_time,
-            cutoff_days=self.config.ewma.cutoff_days,
-            window_days=self.config.ewma.window_days,
-            softmax_beta=self.config.softmax.beta,
         )
 
         if len(moving_averages_data) == 0:

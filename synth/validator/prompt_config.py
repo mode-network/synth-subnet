@@ -10,6 +10,8 @@ class PromptConfig:
     total_cycle_minutes: int
     timeout_extra_seconds: int
     scoring_intervals: dict[str, int]  # Define scoring intervals in seconds.
+    window_days: int
+    softmax_beta: float
 
 
 LOW_FREQUENCY = PromptConfig(
@@ -25,6 +27,8 @@ LOW_FREQUENCY = PromptConfig(
         "3hour": 10800,  # 3 hours
         "24hour_abs": 86400,  # 24 hours
     },
+    window_days=10,
+    softmax_beta=-0.1,
 )
 
 HIGH_FREQUENCY = PromptConfig(
@@ -46,12 +50,14 @@ HIGH_FREQUENCY = PromptConfig(
         "0_15min_gaps": 900,
         "0_20min_gaps": 1200,
         "0_25min_gaps": 1500,
-        "0_30min_gaps": 300,
-        "0_35min_gaps": 300,
-        "0_40min_gaps": 300,
-        "0_45min_gaps": 300,
-        "0_50min_gaps": 300,
-        "0_55min_gaps": 300,
-        "0_60min_gaps": 300,
+        "0_30min_gaps": 1800,
+        "0_35min_gaps": 2100,
+        "0_40min_gaps": 2400,
+        "0_45min_gaps": 2700,
+        "0_50min_gaps": 3000,
+        "0_55min_gaps": 3300,
+        "0_60min_gaps": 3600,
     },
+    window_days=10,
+    softmax_beta=-0.1,
 )

@@ -9,6 +9,7 @@ import bittensor as bt
 
 
 from synth.validator.miner_data_handler import MinerDataHandler
+from synth.validator.prompt_config import PromptConfig
 from synth.validator.reward import compute_softmax
 
 
@@ -52,6 +53,7 @@ def prepare_df_for_moving_average(df):
     )
 
     # 4) left‐merge the real data onto that grid
+    full["scored_time"] = pd.to_datetime(full["scored_time"])
     full = full.merge(df, on=["miner_id", "scored_time"], how="left").merge(
         miner_first, on="miner_id", how="left"
     )
@@ -122,9 +124,8 @@ def apply_per_asset_coefficients(
 def compute_smoothed_score(
     miner_data_handler: MinerDataHandler,
     input_df: DataFrame,
-    window_days: int,
     scored_time: datetime,
-    softmax_beta: float,
+    prompt_config: PromptConfig,
 ) -> typing.Optional[list[dict]]:
     if input_df.empty:
         return None
@@ -140,11 +141,7 @@ def compute_smoothed_score(
         group_df["scored_time"] = pd.to_datetime(group_df["scored_time"])
         group_df = group_df.sort_values("scored_time")
 
-        # Only consider rows within the last 10 days from scored_time
-        min_time = scored_time - pd.Timedelta(days=window_days)
-        mask = (group_df["scored_time"] > min_time) & (
-            group_df["scored_time"] <= scored_time
-        )
+        mask = group_df["scored_time"] <= scored_time
         window_df = group_df.loc[mask]
 
         # Drop NaN prompt_score_v3
@@ -181,7 +178,7 @@ def compute_smoothed_score(
         r["rolling_avg"] for r in filtered_moving_averages_data
     ]
     reward_weight_list = compute_softmax(
-        np.array(rolling_avg_list), softmax_beta
+        np.array(rolling_avg_list), prompt_config.softmax_beta
     )
 
     rewards = []
@@ -197,13 +194,14 @@ def compute_smoothed_score(
                     "smoothed_score": item["rolling_avg"],
                     "reward_weight": float(reward_weight),
                     "updated_at": scored_time.isoformat(),
+                    "prompt_name": prompt_config.__name__,
                 }
             )
 
     return rewards
 
 
-def print_rewards_df(moving_averages_data):
-    bt.logging.info("Scored responses moving averages:")
+def print_rewards_df(moving_averages_data: list[dict], label: str = ""):
+    bt.logging.info(f"Scored responses moving averages {label}")
     df = pd.DataFrame.from_dict(moving_averages_data)
     bt.logging.info(df.to_string())

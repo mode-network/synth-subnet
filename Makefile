@@ -34,4 +34,3 @@ validator:
 		--logging.$(logging_level) \
 		--neuron.axon_off true \
 		--ewma.window_days $(ewma_window_days) \
-		--ewma.cutoff_days $(ewma_cutoff_days)

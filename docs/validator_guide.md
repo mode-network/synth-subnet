@@ -9,7 +9,6 @@
 - [5. Options](#5-options)
   - [5.1. Common Options](#51-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
-    - [`--ewma.cutoff_days INTEGER`](#--ewmacutoff_days-integer)
     - [`--ewma.window_days INTEGER`](#--ewmawindow_days-float)
     - [`--logging.debug`](#--loggingdebug)
     - [`--logging.info`](#--logginginfo)
@@ -279,45 +278,6 @@ for testnet it's:
 
 ```shell
 pm2 start validator.test.config.js -- --axon.port 8091
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-#### `--ewma.cutoff_days INTEGER`
-
-The number of days against which to run the moving average, (e.g. 1).
-
-Default: `2`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: "validator",
-      interpreter: "python3",
-      script: "./neurons/validator.py",
-      args: "--ewma.cutoff_days 10",
-      env: {
-        PYTHONPATH: ".",
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-
-```shell
-pm2 start validator.config.js -- --ewma.cutoff_days 10
-```
-
-for testnet it's:
-
-```shell
-pm2 start validator.test.config.js -- --ewma.cutoff_days 10
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

@@ -239,13 +239,6 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
-        "--ewma.cutoff_days",
-        type=int,
-        help="The number of days against which to run the moving average",
-        default=10,
-    )
-
-    parser.add_argument(
         "--softmax.beta",
         type=float,
         help="Negative beta to give higher weight to lower scores.",

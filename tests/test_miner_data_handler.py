@@ -372,7 +372,7 @@ def test_set_get_scores(db_engine: Engine):
 
     miner_scores_df = handler.get_miner_scores(
         scored_time=scored_time,
-        cutoff_days=4,
+        window_days=4,
     )
 
     print("miner_scores_df", miner_scores_df)

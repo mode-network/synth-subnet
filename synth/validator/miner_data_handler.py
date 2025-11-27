@@ -41,7 +41,7 @@ from synth.db.models import (
     WeightsUpdateHistory,
 )
 from synth.simulation_input import SimulationInput
-from synth.validator import response_validation_v2
+from synth.validator import prompt_config, response_validation_v2
 
 
 class MinerDataHandler:
@@ -343,14 +343,18 @@ class MinerDataHandler:
     def get_validator_requests_to_score(
         self,
         scored_time: datetime,
-        cutoff_days: int,
+        window_days: int,
+        time_length: int | None = None,
     ) -> typing.Optional[list[ValidatorRequest]]:
         """
         Retrieve the list of IDs of the latest validator requests that (start_time + time_length) < scored_time
-        and (start_time + time_length) >= scored_time - cutoff_days.
-        This is to ensure that we only get requests that are within the cutoff_days.
+        and (start_time + time_length) >= scored_time - window_days.
+        This is to ensure that we only get requests that are within the window_days.
         and exclude records that are already scored
         """
+        if time_length is None:
+            time_length = prompt_config.LOW_FREQUENCY.time_length
+
         try:
             with self.engine.connect() as connection:
                 subq = (
@@ -390,13 +394,14 @@ class MinerDataHandler:
                         and_(
                             # Compare start_time plus an interval (in seconds) to the scored_time.
                             window_start < scored_time,
-                            # Compare start_time plus an interval (in seconds) to the cutoff_days.
-                            # This is to ensure that we only get requests that are within the cutoff_days.
-                            # Because we want to include in the moving average only the requests that are within the cutoff_days.
+                            # Compare start_time plus an interval (in seconds) to the window_days.
+                            # This is to ensure that we only get requests that are within the window_days.
+                            # Because we want to include in the moving average only the requests that are within the window_days.
                             window_start
-                            >= scored_time - timedelta(days=cutoff_days),
+                            >= scored_time - timedelta(days=window_days),
                             # Exclude records that have a matching miner_prediction via the NOT EXISTS clause.
                             not_(exists(subq)),
+                            ValidatorRequest.time_length == time_length,
                         )
                     )
                     .order_by(ValidatorRequest.start_time.asc())
@@ -469,8 +474,15 @@ class MinerDataHandler:
             )
             traceback.print_exc(file=sys.stderr)
 
-    def get_miner_scores(self, scored_time: datetime, cutoff_days: int):
-        min_scored_time = scored_time - timedelta(days=cutoff_days)
+    def get_miner_scores(
+        self,
+        scored_time: datetime,
+        window_days: int,
+        time_length: int | None = None,
+    ):
+        min_scored_time = scored_time - timedelta(days=window_days)
+        if time_length is None:
+            time_length = prompt_config.LOW_FREQUENCY.time_length
 
         try:
             with self.engine.connect() as connection:
@@ -492,7 +504,12 @@ class MinerDataHandler:
                         ValidatorRequest.id
                         == MinerPrediction.validator_requests_id,
                     )
-                    .where(MinerScore.scored_time > min_scored_time)
+                    .where(
+                        and_(
+                            MinerScore.scored_time > min_scored_time,
+                            ValidatorRequest.time_length == time_length,
+                        )
+                    )
                 )
 
                 result = connection.execute(query)

@@ -36,6 +36,7 @@ from synth.utils.helpers import (
     convert_list_elements_to_str,
 )
 from synth.utils.uids import check_uid_availability
+from synth.validator import prompt_config
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.moving_average import (
     compute_smoothed_score,
@@ -86,45 +87,48 @@ def send_weights_to_bittensor_and_update_weights_history(
 def calculate_moving_average_and_update_rewards(
     miner_data_handler: MinerDataHandler,
     scored_time: datetime,
-    cutoff_days: int,
-    window_days: int,
-    softmax_beta: float,
 ) -> list[dict]:
-    # apply custom moving average rewards
-    miner_scores_df = miner_data_handler.get_miner_scores(
-        scored_time=scored_time,
-        cutoff_days=cutoff_days,
-    )
+    prompts = [prompt_config.LOW_FREQUENCY, prompt_config.HIGH_FREQUENCY]
 
-    df = prepare_df_for_moving_average(miner_scores_df)
+    moving_averages_data: dict[str, list[dict]] = {}
+    for prompt in prompts:
+        miner_scores_df = miner_data_handler.get_miner_scores(
+            scored_time,
+            prompt.window_days,
+            prompt.time_length,
+        )
 
-    moving_averages_data = compute_smoothed_score(
-        miner_data_handler=miner_data_handler,
-        input_df=df,
-        window_days=window_days,
-        scored_time=scored_time,
-        softmax_beta=softmax_beta,
-    )
+        df = prepare_df_for_moving_average(miner_scores_df)
 
-    if moving_averages_data is None:
-        return []
+        moving_averages = compute_smoothed_score(
+            miner_data_handler,
+            df,
+            scored_time,
+            prompt,
+        )
 
-    print_rewards_df(moving_averages_data)
+        if moving_averages is None:
+            continue
 
-    miner_data_handler.update_miner_rewards(moving_averages_data)
+        print_rewards_df(moving_averages, prompt.label)
 
-    return moving_averages_data
+        miner_data_handler.update_miner_rewards(moving_averages)
+        moving_averages_data[prompt.label] = moving_averages
+
+    # TODO: combine the 2 smoothed scores
+
+    return moving_averages
 
 
-def calculate_rewards_and_update_scores(
+def calculate_scores(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
     scored_time: datetime,
-    cutoff_days: int,
+    prompt: prompt_config.PromptConfig,
 ) -> bool:
     # get latest prediction request from validator
     validator_requests = miner_data_handler.get_validator_requests_to_score(
-        scored_time, cutoff_days
+        scored_time, prompt.window_days, prompt.time_length
     )
 
     if validator_requests is None or len(validator_requests) == 0:
@@ -135,7 +139,6 @@ def calculate_rewards_and_update_scores(
 
     fail_count = 0
     for validator_request in validator_requests:
-
         bt.logging.debug(f"validator_request_id: {validator_request.id}")
 
         prompt_scores, detailed_info, real_prices = get_rewards(

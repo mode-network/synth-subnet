@@ -23,7 +23,6 @@ python3.10 ./neurons/validator.py \
 		--logging.debug \
 		--neuron.axon_off true \
 		--ewma.window_days $ewma_window_days \
-		--ewma.cutoff_days $ewma_cutoff_days \
 		--softmax.beta $softmax_beta \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
 		--gcp.log_id_prefix $log_id_prefix \
