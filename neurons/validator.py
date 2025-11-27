@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import multiprocessing as mp
 import sched
 import time
-from dataclasses import dataclass
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -43,38 +42,14 @@ from synth.validator.forward import (
 )
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
+from synth.validator.prompt_config import (
+    PromptConfig,
+    LOW_FREQUENCY,
+    HIGH_FREQUENCY,
+)
 
 
 load_dotenv()
-
-
-@dataclass
-class PromptConfig:
-    label: str
-    time_length: int
-    time_increment: int
-    initial_delay: int
-    total_cycle_minutes: int
-    timeout_extra_seconds: int
-
-
-LOW_FREQUENCY = PromptConfig(
-    label="low",
-    time_length=86400,
-    time_increment=300,
-    initial_delay=60,  # avoid 2 prompts to start simultaneously
-    total_cycle_minutes=60,
-    timeout_extra_seconds=60,
-)
-
-HIGH_FREQUENCY = PromptConfig(
-    label="high",
-    time_length=3600,
-    time_increment=60,
-    initial_delay=0,
-    total_cycle_minutes=12,
-    timeout_extra_seconds=60,
-)
 
 
 class Validator(BaseValidatorNeuron):
