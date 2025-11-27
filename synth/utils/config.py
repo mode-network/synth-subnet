@@ -146,7 +146,7 @@ def add_miner_args(_, parser):
         type=int,
         nargs="+",
         default=[],
-        help="List of validator exceptions (e.g., --blacklist.validator_exceptions 1 3 10)",
+        help="List of validator exceptions (e.g., --blacklist.validator_exceptions 0 1 128 162 34 49 38)",
     )
 
     parser.add_argument(
