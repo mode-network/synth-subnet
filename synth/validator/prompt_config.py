@@ -12,6 +12,7 @@ class PromptConfig:
     scoring_intervals: dict[str, int]  # Define scoring intervals in seconds.
     window_days: int
     softmax_beta: float
+    smoothed_score_coefficient: float
 
 
 LOW_FREQUENCY = PromptConfig(
@@ -29,6 +30,7 @@ LOW_FREQUENCY = PromptConfig(
     },
     window_days=10,
     softmax_beta=-0.1,
+    smoothed_score_coefficient=0.5,
 )
 
 HIGH_FREQUENCY = PromptConfig(
@@ -58,6 +60,7 @@ HIGH_FREQUENCY = PromptConfig(
         "0_55min_gaps": 3300,
         "0_60min_gaps": 3600,
     },
-    window_days=10,
+    window_days=1,
     softmax_beta=-0.1,
+    smoothed_score_coefficient=0.5,
 )

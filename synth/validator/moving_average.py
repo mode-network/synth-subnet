@@ -201,7 +201,7 @@ def compute_smoothed_score(
                     "miner_id": item["miner_id"],
                     "miner_uid": item["miner_uid"],
                     "smoothed_score": item["rolling_avg"],
-                    "reward_weight": float(reward_weight),
+                    "reward_weight": float(reward_weight) * prompt_config.smoothed_score_coefficient,
                     "updated_at": scored_time.isoformat(),
                     "prompt_name": prompt_config.label,
                 }
