@@ -17,7 +17,7 @@ if __name__ == "__main__":
     )
 
     current_time = get_current_time()
-    start_time = round_time_to_minutes(current_time, 60, 120)
+    start_time = round_time_to_minutes(current_time, 120)
     simulation_input.start_time = start_time.isoformat()
 
     print("start_time", simulation_input.start_time)

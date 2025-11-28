@@ -1,5 +1,6 @@
 import unittest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
+
 
 from synth.utils.helpers import (
     convert_prices_to_time_format,
@@ -8,7 +9,6 @@ from synth.utils.helpers import (
     from_iso_to_unix_time,
     get_current_time,
     round_to_8_significant_digits,
-    timeout_until,
 )
 
 
@@ -75,7 +75,7 @@ class TestHelpers(unittest.TestCase):
         )
 
     def test_round_time_to_minutes(self):
-        time_increment = 60
+        time_increment = 0
 
         self.assertEqual(
             round_time_to_minutes(
@@ -92,50 +92,41 @@ class TestHelpers(unittest.TestCase):
             "2024-11-25T19:04:00",
         )
 
-    def test_round_time_to_five_minutes(self):
-        time_increment = 300
-
+    def test_round_time_add_extra(self):
+        # add three extra minutes
         dt_str_1 = "2024-11-25T19:01:59.940515"
-        dt_str_2 = "2024-11-25T19:03:59.940515"
-
         result_1 = round_time_to_minutes(
-            datetime.fromisoformat(dt_str_1), time_increment
+            datetime.fromisoformat(dt_str_1), 60 * 3
         )
-        result_2 = round_time_to_minutes(
-            datetime.fromisoformat(dt_str_2), time_increment
-        )
-
         self.assertEqual(result_1.isoformat(), "2024-11-25T19:05:00")
+
+        # add one extra minute
+        dt_str_2 = "2024-11-25T19:03:59.940515"
+        result_2 = round_time_to_minutes(datetime.fromisoformat(dt_str_2), 60)
         self.assertEqual(result_2.isoformat(), "2024-11-25T19:05:00")
 
-    def test_round_time_to_minutes_plus_two_extra(self):
-        dt_str_1 = "2024-11-25T19:01:59.940515"
-        result_1 = round_time_to_minutes(
-            datetime.fromisoformat(dt_str_1), 60, 120
-        )
-        self.assertEqual(result_1.isoformat(), "2024-11-25T19:04:00")
+    def test_round_time_add_extra_seconds(self):
+        dt_str_1 = "2024-11-25T19:11:46.940515"
+        result_1 = round_time_to_minutes(datetime.fromisoformat(dt_str_1), 10)
+        self.assertEqual(result_1.isoformat(), "2024-11-25T19:12:10")
 
         dt_str_2 = "2024-11-25T19:03:09.659353"
-        result_2 = round_time_to_minutes(
-            datetime.fromisoformat(dt_str_2), 60, 120
-        )
+        result_2 = round_time_to_minutes(datetime.fromisoformat(dt_str_2), 120)
         self.assertEqual(result_2.isoformat(), "2024-11-25T19:06:00")
 
     def test_round_time_to_two_minutes(self):
-        time_increment = 120
         extra_seconds = 60
 
         dt_str_1 = "2024-11-25T19:01:59.940515"
-        dt_str_2 = "2024-11-25T19:03:59.940515"
-
         result_1 = round_time_to_minutes(
-            datetime.fromisoformat(dt_str_1), time_increment, extra_seconds
+            datetime.fromisoformat(dt_str_1), extra_seconds
         )
-        result_2 = round_time_to_minutes(
-            datetime.fromisoformat(dt_str_2), time_increment, extra_seconds
-        )
-
         self.assertEqual(result_1.isoformat(), "2024-11-25T19:03:00")
+
+        dt_str_2 = "2024-11-25T19:03:59.940515"
+        result_2 = round_time_to_minutes(
+            datetime.fromisoformat(dt_str_2), extra_seconds
+        )
         self.assertEqual(result_2.isoformat(), "2024-11-25T19:05:00")
 
     def test_from_iso_to_unix_time(self):
@@ -148,25 +139,3 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(
             from_iso_to_unix_time("2025-08-05T14:56:00+00:00"), 1754405760
         )
-
-    def test_timeout_until(self):
-        # Arrange: Set a future time 10 seconds from now
-        future_time = datetime.now(timezone.utc) + timedelta(seconds=10)
-
-        # Act: Call the timeout_until function
-        timeout = timeout_until(future_time)
-
-        # Assert: The timeout should be approximately 10 seconds
-        assert (
-            9 <= timeout <= 10
-        ), f"Expected timeout to be around 10 seconds, got {timeout}"
-
-    def test_timeout_until_past_time(self):
-        # Arrange: Set a past time 10 seconds ago
-        past_time = datetime.now(timezone.utc) - timedelta(seconds=10)
-
-        # Act: Call the timeout_until function
-        timeout = timeout_until(past_time)
-
-        # Assert: The timeout should be negative
-        assert timeout == 0, f"Expected timeout to be 0, got {timeout}"

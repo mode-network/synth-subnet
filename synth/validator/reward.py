@@ -31,13 +31,13 @@ from synth.validator.crps_calculation import calculate_crps_for_miner
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator import response_validation_v2
+from synth.validator import prompt_config
 
 
 def reward(
     miner_data_handler: MinerDataHandler,
     miner_uid: int,
-    time_increment: int,
-    validator_request_id: int,
+    validator_request: ValidatorRequest,
     real_prices: list[float],
 ):
     """
@@ -47,9 +47,8 @@ def reward(
     Returns:
     - float: The reward value for the miner.
     """
-
     miner_prediction = miner_data_handler.get_miner_prediction(
-        miner_uid, validator_request_id
+        miner_uid, int(validator_request.id)
     )
 
     if miner_prediction is None:
@@ -62,14 +61,22 @@ def reward(
     if len(real_prices) == 0:
         return -1, [], miner_prediction
 
-    predictions_path = adjust_predictions(miner_prediction.prediction)
+    predictions_path = adjust_predictions(list(miner_prediction.prediction))
     simulation_runs = np.array(predictions_path).astype(float)
+
+    scoring_intervals = (
+        prompt_config.HIGH_FREQUENCY.scoring_intervals
+        if validator_request.time_length
+        == prompt_config.HIGH_FREQUENCY.time_length
+        else prompt_config.LOW_FREQUENCY.scoring_intervals
+    )
 
     try:
         score, detailed_crps_data = calculate_crps_for_miner(
             simulation_runs,
             np.array(real_prices),
-            time_increment,
+            int(validator_request.time_increment),
+            scoring_intervals,
         )
     except Exception as e:
         bt.logging.error(
@@ -105,7 +112,7 @@ def get_rewards(
     """
 
     miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
-        validator_request.id
+        int(validator_request.id)
     )
 
     if miner_uids is None:
@@ -127,8 +134,7 @@ def get_rewards(
         score, detailed_crps_data, miner_prediction = reward(
             miner_data_handler,
             miner_uid,
-            validator_request.time_increment,
-            validator_request.id,
+            validator_request,
             real_prices,
         )
         scores.append(score)
@@ -192,10 +198,8 @@ def compute_softmax(score_values: np.ndarray, beta: float) -> np.ndarray:
     bt.logging.info(f"Going to use the following value of beta: {beta}")
 
     exp_scores = np.exp(beta * score_values)
-    softmax_scores_valid = exp_scores / np.sum(exp_scores)
-    softmax_scores = softmax_scores_valid
-
-    return softmax_scores
+    softmax_scores_valid: np.ndarray = exp_scores / np.sum(exp_scores)
+    return softmax_scores_valid
 
 
 def clean_numpy_in_crps_data(crps_data: list) -> list:

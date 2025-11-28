@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 
+from synth.validator import prompt_config
 from synth.validator.crps_calculation import (
     calculate_crps_for_miner,
     label_observed_blocks,
@@ -19,6 +20,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array(predictions_path),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
         self.assertEqual(sum_all_scores, 284.1200564488584)
 
@@ -31,6 +33,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array(predictions_path),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
         self.assertEqual(sum_all_scores, 284.1200564488584)
 
@@ -43,6 +46,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array(predictions_path),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
         self.assertEqual(sum_all_scores, 0)
 
@@ -55,6 +59,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, 479.6904902048716)
@@ -68,6 +73,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, 4737.272133130346)
@@ -119,6 +125,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array(predictions_path),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, 13413.599141058676)
@@ -135,6 +142,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, 0.0)
@@ -151,6 +159,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, 0.0)
@@ -167,6 +176,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, 0.0)
@@ -193,6 +203,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, 0.0)
@@ -211,12 +222,14 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         sum_all_scores_2, _ = calculate_crps_for_miner(
             np.array([predictions_path]),
             np.array(real_price_path_full),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         with self.subTest("Check sum_all_scores equals expected"):
@@ -236,6 +249,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(np.isnan(sum_all_scores), True)
@@ -249,6 +263,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, 1061.3650577065207)
@@ -272,6 +287,7 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]).astype(float),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, 12697.728694070156)
@@ -295,6 +311,31 @@ class TestCalculateCrps(unittest.TestCase):
             np.array([predictions_path]).astype(float),
             np.array(real_price_path),
             time_increment,
+            prompt_config.LOW_FREQUENCY.scoring_intervals,
+        )
+
+        self.assertEqual(sum_all_scores, -1)
+
+    def test_calculate_crps_for_miner_gap_1(self):
+        time_increment = 300  # 300 seconds = 5 minutes
+        real_price_path = [50, 60, 65, 80, 90, 94, 101, 120, 130]
+        predictions_path = [
+            0.00011997788254371478,
+            0,
+            70,
+            82.5,
+            89.2,
+            100,
+            110,
+            123,
+            131,
+        ]
+
+        sum_all_scores, _ = calculate_crps_for_miner(
+            np.array([predictions_path]).astype(float),
+            np.array(real_price_path),
+            time_increment,
+            prompt_config.HIGH_FREQUENCY.scoring_intervals,
         )
 
         self.assertEqual(sum_all_scores, -1)
