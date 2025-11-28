@@ -17,6 +17,15 @@ def prepare_df_for_moving_average(df):
     df = df.copy()
     df["scored_time"] = pd.to_datetime(df["scored_time"])
 
+    # 0) Temporary exclude a period
+    df["start_time"] = pd.to_datetime(df["start_time"])
+    exclude_start = datetime.fromisoformat("2025-11-18 11:53:00+00:00")
+    exclude_end = datetime.fromisoformat("2025-11-18 14:08:00+00:00")
+    mask_exclude = (df["start_time"] >= exclude_start) & (
+        df["start_time"] <= exclude_end
+    )
+    df = df.loc[~mask_exclude]
+
     # 1) compute globals
     global_min = df["scored_time"].min()
     all_times = sorted(df["scored_time"].unique())
