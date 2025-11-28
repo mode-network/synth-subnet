@@ -37,7 +37,7 @@ class PriceDataProvider:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
-    def fetch_data(self, validator_request: ValidatorRequest) -> list[dict]:
+    def fetch_data(self, validator_request: ValidatorRequest) -> list:
         """
         Fetch real prices data from an external REST service.
         Returns an array of time points with prices.
@@ -51,7 +51,7 @@ class PriceDataProvider:
         end_time_int = start_time_int + validator_request.time_length
 
         params = {
-            "symbol": self._get_token_mapping(validator_request.asset),
+            "symbol": self._get_token_mapping(str(validator_request.asset)),
             "resolution": 1,
             "from": start_time_int,
             "to": end_time_int,
@@ -65,8 +65,8 @@ class PriceDataProvider:
         transformed_data = self._transform_data(
             data,
             start_time_int,
-            validator_request.time_increment,
-            validator_request.time_length,
+            int(validator_request.time_increment),
+            int(validator_request.time_length),
         )
 
         return transformed_data

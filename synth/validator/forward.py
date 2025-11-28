@@ -154,11 +154,14 @@ def calculate_scores(
             continue
 
         miner_score_time = validator_request.start_time + timedelta(
-            seconds=validator_request.time_length
+            seconds=int(validator_request.time_length)
         )
 
         miner_data_handler.set_miner_scores(
-            real_prices, validator_request.id, detailed_info, miner_score_time
+            real_prices,
+            int(validator_request.id),
+            detailed_info,
+            miner_score_time,
         )
 
     # Success if at least one request succeed

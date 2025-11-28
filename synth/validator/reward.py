@@ -48,7 +48,7 @@ def reward(
     - float: The reward value for the miner.
     """
     miner_prediction = miner_data_handler.get_miner_prediction(
-        miner_uid, validator_request.id
+        miner_uid, int(validator_request.id)
     )
 
     if miner_prediction is None:
@@ -61,7 +61,7 @@ def reward(
     if len(real_prices) == 0:
         return -1, [], miner_prediction
 
-    predictions_path = adjust_predictions(miner_prediction.prediction)
+    predictions_path = adjust_predictions(list(miner_prediction.prediction))
     simulation_runs = np.array(predictions_path).astype(float)
 
     scoring_intervals = (
@@ -75,7 +75,7 @@ def reward(
         score, detailed_crps_data = calculate_crps_for_miner(
             simulation_runs,
             np.array(real_prices),
-            validator_request.time_increment,
+            int(validator_request.time_increment),
             scoring_intervals,
         )
     except Exception as e:
@@ -112,7 +112,7 @@ def get_rewards(
     """
 
     miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
-        validator_request.id
+        int(validator_request.id)
     )
 
     if miner_uids is None:
@@ -198,10 +198,8 @@ def compute_softmax(score_values: np.ndarray, beta: float) -> np.ndarray:
     bt.logging.info(f"Going to use the following value of beta: {beta}")
 
     exp_scores = np.exp(beta * score_values)
-    softmax_scores_valid = exp_scores / np.sum(exp_scores)
-    softmax_scores = softmax_scores_valid
-
-    return softmax_scores
+    softmax_scores_valid: np.ndarray = exp_scores / np.sum(exp_scores)
+    return softmax_scores_valid
 
 
 def clean_numpy_in_crps_data(crps_data: list) -> list:
