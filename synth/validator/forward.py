@@ -39,6 +39,7 @@ from synth.utils.uids import check_uid_availability
 from synth.validator import prompt_config
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.moving_average import (
+    combine_moving_averages,
     compute_smoothed_score,
     prepare_df_for_moving_average,
     print_rewards_df,
@@ -115,9 +116,7 @@ def calculate_moving_average_and_update_rewards(
         miner_data_handler.update_miner_rewards(moving_averages)
         moving_averages_data[prompt.label] = moving_averages
 
-    # TODO: combine the 2 smoothed scores
-
-    return moving_averages
+    return combine_moving_averages(moving_averages_data)
 
 
 def calculate_scores(

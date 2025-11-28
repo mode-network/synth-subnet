@@ -194,7 +194,7 @@ def compute_smoothed_score(
                     "smoothed_score": item["rolling_avg"],
                     "reward_weight": float(reward_weight),
                     "updated_at": scored_time.isoformat(),
-                    "prompt_name": prompt_config.__name__,
+                    "prompt_name": prompt_config.label,
                 }
             )
 
@@ -205,3 +205,21 @@ def print_rewards_df(moving_averages_data: list[dict], label: str = ""):
     bt.logging.info(f"Scored responses moving averages {label}")
     df = pd.DataFrame.from_dict(moving_averages_data)
     bt.logging.info(df.to_string())
+
+
+def combine_moving_averages(
+    moving_averages_data: dict[str, list[dict]],
+) -> list[dict]:
+    map_miner_reward: dict[int, dict] = {}
+
+    for moving_averages in list(moving_averages_data.values()):
+        for reward in moving_averages:
+            miner_id = reward["miner_id"]
+            if miner_id in map_miner_reward:
+                map_miner_reward[miner_id]["reward_weight"] += reward[
+                    "reward_weight"
+                ]
+            else:
+                map_miner_reward[miner_id] = reward
+
+    return list(map_miner_reward.values())

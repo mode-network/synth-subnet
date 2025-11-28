@@ -17,6 +17,7 @@ from synth.validator.forward import (
 from synth.db.models import Miner, MinerReward
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
+from synth.validator import prompt_config
 from tests.utils import prepare_random_predictions
 
 
@@ -32,14 +33,13 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        window_days=7,
+        prompt=prompt_config.HIGH_FREQUENCY,
     )
 
     assert success
 
     miner_scores_df = handler.get_miner_scores(
-        scored_time=scored_time,
-        window_days=2,
+        scored_time=scored_time, prompt=prompt_config.HIGH_FREQUENCY
     )
 
     assert len(miner_scores_df) == len(miner_uids)
@@ -59,7 +59,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        window_days=7,
+        prompt=prompt_config.HIGH_FREQUENCY,
     )
 
     assert success
@@ -151,12 +151,13 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time,
-            window_days=7,
+            prompt=prompt_config.HIGH_FREQUENCY,
         )
 
         miner_scores_df = handler.get_miner_scores(
             scored_time=scored_time,
-            window_days=4,
+            window_days=prompt_config.HIGH_FREQUENCY.window_days,
+            time_length=prompt_config.HIGH_FREQUENCY.time_length,
         )
 
         print("miner_scores_df", miner_scores_df)
@@ -275,12 +276,13 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time,
-            window_days=7,
+            prompt=prompt_config.HIGH_FREQUENCY,
         )
 
         miner_scores_df = handler.get_miner_scores(
             scored_time=scored_time,
-            window_days=4,
+            window_days=prompt_config.HIGH_FREQUENCY.window_days,
+            time_length=prompt_config.HIGH_FREQUENCY.time_length,
         )
 
         print("miner_scores_df: ", miner_scores_df)
@@ -392,12 +394,13 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time,
-            window_days=7,
+            prompt=prompt_config.HIGH_FREQUENCY,
         )
 
         miner_scores_df = handler.get_miner_scores(
-            scored_time=scored_time,
-            window_days=4,
+            scored_time,
+            prompt_config.HIGH_FREQUENCY.window_days,
+            prompt_config.HIGH_FREQUENCY.time_length,
         )
 
         print("miner_scores_df", miner_scores_df)

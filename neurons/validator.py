@@ -129,7 +129,7 @@ class Validator(BaseValidatorNeuron):
 
         method = (
             self.cycle_low_frequency
-            if prompt_config.label == "low"
+            if prompt_config.label == LOW_FREQUENCY.label
             else self.cycle_high_frequency
         )
         self.scheduler.enter(

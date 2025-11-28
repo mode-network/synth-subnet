@@ -23,7 +23,7 @@ def upgrade() -> None:
     op.add_column(
         "miner_rewards", sa.Column("prompt_name", sa.Text, nullable=True)
     )
-    op.execute("UPDATE miner_rewards SET prompt_name='LOW_FREQUENCY'")
+    op.execute("UPDATE miner_rewards SET prompt_name='low'")
 
 
 def downgrade() -> None:
