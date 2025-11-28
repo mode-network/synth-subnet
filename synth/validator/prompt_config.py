@@ -13,6 +13,7 @@ class PromptConfig:
     window_days: int
     softmax_beta: float
     smoothed_score_coefficient: float
+    num_simulations: int = 1000
 
 
 LOW_FREQUENCY = PromptConfig(

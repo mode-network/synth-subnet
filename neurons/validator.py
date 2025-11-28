@@ -140,6 +140,7 @@ class Validator(BaseValidatorNeuron):
         )
 
     def cycle_low_frequency(self, asset: str):
+        bt.logging.info(f"starting the {LOW_FREQUENCY.label} frequency cycle")
         cycle_start_time = get_current_time()
 
         self.sync()
@@ -159,6 +160,7 @@ class Validator(BaseValidatorNeuron):
 
         current_time = get_current_time()
         scored_time: datetime = round_time_to_minutes(current_time)
+        bt.logging.info(f"forward score {HIGH_FREQUENCY.label} frequency")
         calculate_scores(
             self.miner_data_handler,
             self.price_data_provider,
@@ -168,6 +170,7 @@ class Validator(BaseValidatorNeuron):
         self.schedule_cycle(cycle_start_time, HIGH_FREQUENCY)
 
     def forward_prompt(self, asset: str, prompt_config: PromptConfig):
+        bt.logging.info(f"forward prompt for {prompt_config.label} frequency")
         if len(self.miner_uids) == 0:
             bt.logging.error(
                 "No miners available",
@@ -192,7 +195,7 @@ class Validator(BaseValidatorNeuron):
             start_time=start_time.isoformat(),
             time_increment=prompt_config.time_increment,
             time_length=prompt_config.time_length,
-            num_simulations=1000,
+            num_simulations=prompt_config.num_simulations,
         )
 
         query_available_miners_and_save_responses(
@@ -204,6 +207,7 @@ class Validator(BaseValidatorNeuron):
         )
 
     def forward_score_low_frequency(self):
+        bt.logging.info(f"forward score {LOW_FREQUENCY.label} frequency")
         current_time = get_current_time()
         scored_time: datetime = round_time_to_minutes(current_time)
 
