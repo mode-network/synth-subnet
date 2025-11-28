@@ -493,7 +493,6 @@ class MinerDataHandler:
                         MinerScore.scored_time,
                         MinerScore.score_details_v3,
                         ValidatorRequest.asset,
-                        ValidatorRequest.start_time,
                     )
                     .select_from(MinerScore)
                     .join(
