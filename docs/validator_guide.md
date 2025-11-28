@@ -9,7 +9,8 @@
 - [5. Options](#5-options)
   - [5.1. Common Options](#51-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
-    - [`--ewma.window_days INTEGER`](#--ewmawindow_days-float)
+    - [`--ewma.window_days INTEGER`](#--ewmawindow_days-integer)
+    - [`--softmax.beta FLOAT`](#--softmaxbeta-float)
     - [`--logging.debug`](#--loggingdebug)
     - [`--logging.info`](#--logginginfo)
     - [`--logging.trace`](#--loggingtrace)
@@ -317,9 +318,9 @@ pm2 start validator.config.js -- --ewma.window_days 10
 
 #### `--softmax.beta FLOAT`
 
-Negative beta to give higher weight to lower scores.
+Negative beta to give higher weight to lower scores for the 1h prompt
 
-Default: `-0.002`
+Default: `-0.05`
 
 Example:
 
@@ -331,7 +332,7 @@ module.exports = {
       name: "validator",
       interpreter: "python3",
       script: "./neurons/validator.py",
-      args: "--softmax.beta -0.003",
+      args: "--softmax.beta -0.05",
       env: {
         PYTHONPATH: ".",
       },
@@ -343,7 +344,7 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 
 ```shell
-pm2 start validator.config.js -- --softmax.beta -0.003
+pm2 start validator.config.js -- --softmax.beta -0.05
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

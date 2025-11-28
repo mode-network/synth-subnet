@@ -242,7 +242,7 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
         "--softmax.beta",
         type=float,
         help="Negative beta to give higher weight to lower scores.",
-        default=-0.1,
+        default=-0.05,
     )
 
 
