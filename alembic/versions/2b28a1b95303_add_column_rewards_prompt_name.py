@@ -21,9 +21,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 def upgrade() -> None:
     op.add_column(
-        "miner_rewards", sa.Column("prompt_name", sa.Text, nullable=True)
+        "miner_rewards",
+        sa.Column("prompt_name", sa.Text, server_default="low"),
     )
-    op.execute("UPDATE miner_rewards SET prompt_name='low'")
 
 
 def downgrade() -> None:
