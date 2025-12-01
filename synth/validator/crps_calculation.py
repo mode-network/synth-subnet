@@ -1,14 +1,6 @@
 import numpy as np
 from properscoring import crps_ensemble
 
-# Define scoring intervals in seconds
-scoring_intervals = {
-    "5min": 300,  # 5 minutes
-    "30min": 1800,  # 30 minutes
-    "3hour": 10800,  # 3 hours
-    "24hour_abs": 86400,  # 24 hours
-}
-
 
 def get_interval_steps(scoring_interval: int, time_increment: int) -> int:
     """
@@ -21,6 +13,7 @@ def calculate_crps_for_miner(
     simulation_runs: np.ndarray,
     real_price_path: np.ndarray,
     time_increment: int,
+    scoring_intervals: dict[str, int],
 ) -> tuple[float, list[dict]]:
     """
     Calculate the total CRPS score for a miner's simulations over specified intervals,
@@ -43,6 +36,7 @@ def calculate_crps_for_miner(
     for interval_name, interval_seconds in scoring_intervals.items():
         interval_steps = get_interval_steps(interval_seconds, time_increment)
         absolute_price = interval_name.endswith("_abs")
+        is_gap = interval_name.endswith("_gap")
 
         # If we are considering absolute prices, adjust the interval steps for potential gaps:
         # if only the initial price is present, then decrease the interval step
@@ -64,11 +58,13 @@ def calculate_crps_for_miner(
             simulation_runs,
             interval_steps,
             absolute_price,
+            is_gap,
         )
         real_changes = calculate_price_changes_over_intervals(
             real_price_path.reshape(1, -1),
             interval_steps,
             absolute_price,
+            is_gap,
         )
         data_blocks = label_observed_blocks(real_changes[0])
 
@@ -146,7 +142,10 @@ def label_observed_blocks(arr: np.ndarray) -> np.ndarray:
 
 
 def calculate_price_changes_over_intervals(
-    price_paths: np.ndarray, interval_steps: int, absolute_price=False
+    price_paths: np.ndarray,
+    interval_steps: int,
+    absolute_price=False,
+    is_gap=False,
 ) -> np.ndarray:
     """
     Calculate price changes over specified intervals.
@@ -160,7 +159,11 @@ def calculate_price_changes_over_intervals(
         numpy.ndarray: Array of price changes over intervals.
     """
     # Get the prices at the interval points
+    # [1, 2, 3, 4, 5, 6, 7] -> [1, 3, 5, 7] if interval_steps is 2
     interval_prices = price_paths[:, ::interval_steps]
+    if is_gap:
+        # [1, 2, 3, 4, 5, 6, 7] -> [1, 3] if interval_steps is 2
+        interval_prices = interval_prices[:1]
 
     # Calculate price changes over intervals
     if absolute_price:

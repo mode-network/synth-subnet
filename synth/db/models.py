@@ -13,6 +13,7 @@ from sqlalchemy import (
     String,
     JSON,
     ForeignKey,
+    Text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, relationship, Session
@@ -131,6 +132,7 @@ class MinerReward(Base):
     )
     smoothed_score = Column(Float, nullable=False)
     reward_weight = Column(Float, nullable=False)
+    prompt_name = Column(Text, nullable=True)
     updated_at = Column(DateTime(timezone=True), nullable=False)
 
     miner = relationship("Miner", back_populates="rewards")

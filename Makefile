@@ -15,7 +15,6 @@ validator_coldkey_name = validator-base
 validator_hotkey_name = default
 
 ewma_window_days = 10
-ewma_cutoff_days = 10
 
 # Python virtual environment
 venv_python=bt_venv/bin/python3
@@ -34,4 +33,3 @@ validator:
 		--logging.$(logging_level) \
 		--neuron.axon_off true \
 		--ewma.window_days $(ewma_window_days) \
-		--ewma.cutoff_days $(ewma_cutoff_days)

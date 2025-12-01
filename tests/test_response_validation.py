@@ -103,12 +103,12 @@ def test_validate_responses_incorrect_number_of_paths():
     )
     assert result == "Number of paths is incorrect: expected 2, got 0"
 
-    response = (int(start_time.timestamp()), time_increment, [123.45])
+    response2 = (int(start_time.timestamp()), time_increment, [123.45])
     request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
-        response, simulation_input, request_time, process_time_str
+        response2, simulation_input, request_time, process_time_str
     )
     assert result == "Number of paths is incorrect: expected 2, got 1"
 
@@ -174,19 +174,19 @@ def test_validate_responses_incorrect_start_time():
         == "Start time format is incorrect: expected int, got <class 'str'>"
     )
 
-    response = (start_time.timestamp(), time_increment, [123.45] * 11)
+    response2 = (start_time.timestamp(), time_increment, [123.45] * 11)
     request_time = start_time
     process_time_str = "0"
 
     result = validate_responses(
-        response, simulation_input, request_time, process_time_str
+        response2, simulation_input, request_time, process_time_str
     )
     assert (
         result
         == "Start time format is incorrect: expected int, got <class 'float'>"
     )
 
-    response = (
+    response3 = (
         int(start_time.timestamp()) + 1,
         time_increment,
         [123.45] * 11,
@@ -195,7 +195,7 @@ def test_validate_responses_incorrect_start_time():
     process_time_str = "0"
 
     result = validate_responses(
-        response, simulation_input, request_time, process_time_str
+        response3, simulation_input, request_time, process_time_str
     )
     assert (
         result
@@ -222,7 +222,7 @@ def test_validate_responses_incorrect_time_increment():
         == "Time increment format is incorrect: expected int, got <class 'str'>"
     )
 
-    response = (
+    response2 = (
         int(start_time.timestamp()),
         time_increment + 1,
         [123.45] * 11,
@@ -231,7 +231,7 @@ def test_validate_responses_incorrect_time_increment():
     process_time_str = "0"
 
     result = validate_responses(
-        response, simulation_input, request_time, process_time_str
+        response2, simulation_input, request_time, process_time_str
     )
     assert result == "Time increment is incorrect: expected 1, got 2"
 

@@ -12,11 +12,12 @@ from synth.simulation_input import SimulationInput
 from synth.validator import response_validation_v2
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
-    calculate_rewards_and_update_scores,
+    calculate_scores,
 )
 from synth.db.models import Miner, MinerReward
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
+from synth.validator import prompt_config
 from tests.utils import prepare_random_predictions
 
 
@@ -28,19 +29,16 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
 
     price_data_provider = PriceDataProvider()
 
-    success = calculate_rewards_and_update_scores(
+    success = calculate_scores(
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        cutoff_days=7,
+        prompt=prompt_config.LOW_FREQUENCY,
     )
 
     assert success
 
-    miner_scores_df = handler.get_miner_scores(
-        scored_time=scored_time,
-        cutoff_days=2,
-    )
+    miner_scores_df = handler.get_miner_scores(scored_time, 10)
 
     assert len(miner_scores_df) == len(miner_uids)
 
@@ -55,11 +53,11 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
 
     price_data_provider = PriceDataProvider()
 
-    success = calculate_rewards_and_update_scores(
+    success = calculate_scores(
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        cutoff_days=7,
+        prompt=prompt_config.LOW_FREQUENCY,
     )
 
     assert success
@@ -67,9 +65,6 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
     moving_averages_data = calculate_moving_average_and_update_rewards(
         miner_data_handler=handler,
         scored_time=scored_time,
-        cutoff_days=4,
-        window_days=2,
-        softmax_beta=-0.003,
     )
 
     print("moving_averages_data", moving_averages_data)
@@ -150,17 +145,14 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
 
-        success = calculate_rewards_and_update_scores(
+        success = calculate_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time,
-            cutoff_days=7,
+            prompt=prompt_config.LOW_FREQUENCY,
         )
 
-        miner_scores_df = handler.get_miner_scores(
-            scored_time=scored_time,
-            cutoff_days=4,
-        )
+        miner_scores_df = handler.get_miner_scores(scored_time, 10)
 
         print("miner_scores_df", miner_scores_df)
 
@@ -169,9 +161,6 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
         moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
             scored_time=scored_time,
-            cutoff_days=4,
-            window_days=2,
-            softmax_beta=-0.003,
         )
 
         print("moving_averages_data", moving_averages_data)
@@ -277,17 +266,14 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
 
-        success = calculate_rewards_and_update_scores(
+        success = calculate_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time,
-            cutoff_days=7,
+            prompt=prompt_config.LOW_FREQUENCY,
         )
 
-        miner_scores_df = handler.get_miner_scores(
-            scored_time=scored_time,
-            cutoff_days=4,
-        )
+        miner_scores_df = handler.get_miner_scores(scored_time, 10)
 
         print("miner_scores_df: ", miner_scores_df)
 
@@ -296,9 +282,6 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
             scored_time=scored_time,
-            cutoff_days=4,
-            window_days=2,
-            softmax_beta=-0.003,
         )
 
         print("moving_averages_data", moving_averages_data)
@@ -317,7 +300,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         miner_weights = [
             item["reward_weight"] for item in moving_averages_data
         ]
-        assert_almost_equal(sum(miner_weights), 1, decimal=12)
+        assert_almost_equal(sum(miner_weights), 0.5, decimal=12)
 
 
 def test_calculate_moving_average_and_update_rewards_only_invalid(
@@ -397,17 +380,14 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
         # scored time is start time + 24 hours and +4 minutes because new prompt every 64 minutes
         scored_time = start_time + timedelta(days=1, minutes=4)
 
-        success = calculate_rewards_and_update_scores(
+        success = calculate_scores(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time,
-            cutoff_days=7,
+            prompt=prompt_config.LOW_FREQUENCY,
         )
 
-        miner_scores_df = handler.get_miner_scores(
-            scored_time=scored_time,
-            cutoff_days=4,
-        )
+        miner_scores_df = handler.get_miner_scores(scored_time, 10)
 
         print("miner_scores_df", miner_scores_df)
 
@@ -416,9 +396,6 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
         moving_averages_data = calculate_moving_average_and_update_rewards(
             miner_data_handler=handler,
             scored_time=scored_time,
-            cutoff_days=4,
-            window_days=2,
-            softmax_beta=-0.003,
         )
 
         print("moving_averages_data", moving_averages_data)

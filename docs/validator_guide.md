@@ -9,8 +9,8 @@
 - [5. Options](#5-options)
   - [5.1. Common Options](#51-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
-    - [`--ewma.cutoff_days INTEGER`](#--ewmacutoff_days-integer)
-    - [`--ewma.window_days INTEGER`](#--ewmawindow_days-float)
+    - [`--ewma.window_days INTEGER`](#--ewmawindow_days-integer)
+    - [`--softmax.beta FLOAT`](#--softmaxbeta-float)
     - [`--logging.debug`](#--loggingdebug)
     - [`--logging.info`](#--logginginfo)
     - [`--logging.trace`](#--loggingtrace)
@@ -25,7 +25,6 @@
     - [`--neuron.sample_size INTEGER`](#--neuronsample_size-integer)
     - [`--neuron.timeout INTEGER`](#--neurontimeout-integer)
     - [`--neuron.nprocs INTEGER`](#--neuronnprocs-integer)
-    - [`--neuron.use_multiprocess INTEGER`](#--neuronuse_multiprocess-integer)
     - [`--neuron.vpermit_tao_limit INTEGER`](#--neuronvpermit_tao_limit-integer)
     - [`--wallet.hotkey TEXT`](#--wallethotkey-text)
     - [`--wallet.name TEXT`](#--walletname-text)
@@ -284,45 +283,6 @@ pm2 start validator.test.config.js -- --axon.port 8091
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
-#### `--ewma.cutoff_days INTEGER`
-
-The number of days against which to run the moving average, (e.g. 1).
-
-Default: `2`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: "validator",
-      interpreter: "python3",
-      script: "./neurons/validator.py",
-      args: "--ewma.cutoff_days 10",
-      env: {
-        PYTHONPATH: ".",
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-
-```shell
-pm2 start validator.config.js -- --ewma.cutoff_days 10
-```
-
-for testnet it's:
-
-```shell
-pm2 start validator.test.config.js -- --ewma.cutoff_days 10
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
 #### `--ewma.window_days INTEGER`
 
 The window in days for the rolling average, (e.g. 10).
@@ -358,9 +318,9 @@ pm2 start validator.config.js -- --ewma.window_days 10
 
 #### `--softmax.beta FLOAT`
 
-Negative beta to give higher weight to lower scores.
+Negative beta to give higher weight to lower scores for the 1h prompt
 
-Default: `-0.002`
+Default: `-0.05`
 
 Example:
 
@@ -372,7 +332,7 @@ module.exports = {
       name: "validator",
       interpreter: "python3",
       script: "./neurons/validator.py",
-      args: "--softmax.beta -0.003",
+      args: "--softmax.beta -0.05",
       env: {
         PYTHONPATH: ".",
       },
@@ -384,7 +344,7 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 
 ```shell
-pm2 start validator.config.js -- --softmax.beta -0.003
+pm2 start validator.config.js -- --softmax.beta -0.05
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -808,9 +768,9 @@ pm2 start validator.config.js -- --neuron.timeout 120
 
 #### `--neuron.nprocs INTEGER`
 
-The number of processes to run for the validator dendrite, (e.g. 8).
+The number of processes to run for the validator dendrite, (e.g. 2).
 
-Default: `8`
+Default: `2`
 
 Example:
 
@@ -819,10 +779,10 @@ Example:
 module.exports = {
   apps: [
     {
-      name: "validator",
-      interpreter: "python3",
-      script: "./neurons/validator.py",
-      args: "--neuron.nprocs 8",
+      name: 'validator',
+      interpreter: 'python3',
+      script: './neurons/validator.py',
+      args: '--neuron.nprocs 2',
       env: {
         PYTHONPATH: ".",
       },
@@ -834,7 +794,7 @@ module.exports = {
 Alternatively, you can add the args directly to the command:
 
 ```shell
-pm2 start validator.config.js -- --neuron.nprocs 8
+pm2 start validator.config.js -- --neuron.nprocs 2
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -868,39 +828,6 @@ Alternatively, you can add the args directly to the command:
 
 ```shell
 pm2 start validator.config.js -- --neuron.vpermit_tao_limit 1000
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-#### `--neuron.use_multiprocess INTEGER`
-
-Wether to use multiple processes for the validator dendrite.
-
-Default: `1`
-
-Example to disable multiprocess:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: "validator",
-      interpreter: "python3",
-      script: "./neurons/validator.py",
-      args: "--neuron.use_multiprocess 0",
-      env: {
-        PYTHONPATH: ".",
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-
-```shell
-pm2 start validator.config.js -- --neuron.nprocs 8
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

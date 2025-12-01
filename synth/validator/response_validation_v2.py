@@ -45,6 +45,8 @@ def validate_response_type(response) -> typing.Optional[str]:
     if not isinstance(response[1], int):
         return f"Time increment format is incorrect: expected int, got {type(response[1])}"
 
+    return None
+
 
 def validate_responses(
     response,
