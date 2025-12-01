@@ -33,14 +33,12 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        prompt=prompt_config.HIGH_FREQUENCY,
+        prompt=prompt_config.LOW_FREQUENCY,
     )
 
     assert success
 
-    miner_scores_df = handler.get_miner_scores(
-        scored_time=scored_time, prompt=prompt_config.HIGH_FREQUENCY
-    )
+    miner_scores_df = handler.get_miner_scores(scored_time, 10)
 
     assert len(miner_scores_df) == len(miner_uids)
 
@@ -59,7 +57,7 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
         miner_data_handler=handler,
         price_data_provider=price_data_provider,
         scored_time=scored_time,
-        prompt=prompt_config.HIGH_FREQUENCY,
+        prompt=prompt_config.LOW_FREQUENCY,
     )
 
     assert success
@@ -151,14 +149,10 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time,
-            prompt=prompt_config.HIGH_FREQUENCY,
+            prompt=prompt_config.LOW_FREQUENCY,
         )
 
-        miner_scores_df = handler.get_miner_scores(
-            scored_time=scored_time,
-            window_days=prompt_config.HIGH_FREQUENCY.window_days,
-            time_length=prompt_config.HIGH_FREQUENCY.time_length,
-        )
+        miner_scores_df = handler.get_miner_scores(scored_time, 10)
 
         print("miner_scores_df", miner_scores_df)
 
@@ -276,14 +270,10 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time,
-            prompt=prompt_config.HIGH_FREQUENCY,
+            prompt=prompt_config.LOW_FREQUENCY,
         )
 
-        miner_scores_df = handler.get_miner_scores(
-            scored_time=scored_time,
-            window_days=prompt_config.HIGH_FREQUENCY.window_days,
-            time_length=prompt_config.HIGH_FREQUENCY.time_length,
-        )
+        miner_scores_df = handler.get_miner_scores(scored_time, 10)
 
         print("miner_scores_df: ", miner_scores_df)
 
@@ -310,7 +300,7 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         miner_weights = [
             item["reward_weight"] for item in moving_averages_data
         ]
-        assert_almost_equal(sum(miner_weights), 1, decimal=12)
+        assert_almost_equal(sum(miner_weights), 0.5, decimal=12)
 
 
 def test_calculate_moving_average_and_update_rewards_only_invalid(
@@ -394,14 +384,10 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
             miner_data_handler=handler,
             price_data_provider=price_data_provider,
             scored_time=scored_time,
-            prompt=prompt_config.HIGH_FREQUENCY,
+            prompt=prompt_config.LOW_FREQUENCY,
         )
 
-        miner_scores_df = handler.get_miner_scores(
-            scored_time,
-            prompt_config.HIGH_FREQUENCY.window_days,
-            prompt_config.HIGH_FREQUENCY.time_length,
-        )
+        miner_scores_df = handler.get_miner_scores(scored_time, 10)
 
         print("miner_scores_df", miner_scores_df)
 
