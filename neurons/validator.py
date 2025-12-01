@@ -1,7 +1,7 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import multiprocessing as mp
 import sched
 import time
@@ -123,6 +123,16 @@ class Validator(BaseValidatorNeuron):
                 / len(self.asset_list)
             )
             delay = (next_cycle - get_current_time()).total_seconds()
+
+        # Schedule the launch of high frequency prompt
+        high_frequency_launch = datetime(
+            2025, 12, 2, 18, 0, 0, tzinfo=timezone.utc
+        )
+        if (
+            prompt_config.label == HIGH_FREQUENCY.label
+            and get_current_time() <= high_frequency_launch
+        ):
+            return
 
         bt.logging.info(
             f"Scheduling next {prompt_config.label} frequency cycle for asset {asset} in {delay} seconds"
