@@ -101,7 +101,20 @@ def prepare_df_for_moving_average(df):
 
 def apply_per_asset_coefficients(
     df: DataFrame,
-) -> DataFrame:
+) -> tuple[pd.Series, pd.Series]:
+    """
+    Apply per-asset coefficients to normalize scores across different assets.
+    
+    Returns weighted scores and weights separately to enable proper weighted averaging.
+    This prevents division by zero and ensures consistent scoring regardless of
+    which assets are present in the scoring window.
+    
+    Args:
+        df: DataFrame with 'prompt_score_v3' and 'asset' columns
+        
+    Returns:
+        tuple: (weighted_scores, weights) as pandas Series
+    """
     # Define coefficients for each asset
     asset_coefficients = {
         "BTC": 1.0,
@@ -109,16 +122,17 @@ def apply_per_asset_coefficients(
         "XAU": 1.4550630831254674,
         "SOL": 0.5021491038021751,
     }
-
-    sum_coefficients = 0.0
-
-    for asset, coef in asset_coefficients.items():
-        df.loc[df["asset"] == asset, "prompt_score_v3"] *= coef
-        sum_coefficients += coef * len(df.loc[df["asset"] == asset])
-
-    df["prompt_score_v3"] /= sum_coefficients
-
-    return df["prompt_score_v3"]
+    
+    # Create a copy to avoid modifying the original
+    df = df.copy()
+    
+    # Map asset to its coefficient, default to 1.0 for unknown assets
+    df["weight"] = df["asset"].map(asset_coefficients).fillna(1.0)
+    
+    # Calculate weighted scores
+    df["weighted_score"] = df["prompt_score_v3"] * df["weight"]
+    
+    return df["weighted_score"], df["weight"]
 
 
 def compute_smoothed_score(
@@ -148,10 +162,11 @@ def compute_smoothed_score(
         valid_scores = window_df[["prompt_score_v3", "asset"]].dropna()
 
         # Apply per-asset coefficients
-        window_df = apply_per_asset_coefficients(valid_scores)
+        weighted_scores, weights = apply_per_asset_coefficients(valid_scores)
 
-        if not window_df.empty:
-            rolling_avg = float(window_df.sum())
+        if not weighted_scores.empty and weights.sum() > 0:
+            # Calculate weighted average: sum(score * weight) / sum(weight)
+            rolling_avg = float(weighted_scores.sum() / weights.sum())
         else:
             bt.logging.warning(
                 f"Miner ID {miner_id} has no valid scores in the window. Assigning infinite rolling average."
