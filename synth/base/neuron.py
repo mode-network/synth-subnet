@@ -127,7 +127,7 @@ class BaseNeuron(ABC):
         # in the run() method. This to save to database the result of the set_weights.
 
         # Always save state.
-        # self.save_state()
+        self.save_state()
 
     def check_registered(self):
         # --- Check for registration.
