@@ -195,11 +195,76 @@ def compute_prompt_scores(score_values: np.ndarray):
 
 
 def compute_softmax(score_values: np.ndarray, beta: float) -> np.ndarray:
+    """
+    Compute softmax with explicit handling of infinite values and numerical stability.
+    
+    Infinite scores are treated as worst possible (zero weight).
+    Uses numerical stability techniques to prevent overflow/underflow.
+    
+    Args:
+        score_values: Array of scores (lower is better)
+        beta: Temperature parameter (typically negative)
+        
+    Returns:
+        Array of softmax weights summing to 1.0
+    """
     bt.logging.info(f"Going to use the following value of beta: {beta}")
-
-    exp_scores = np.exp(beta * score_values)
-    softmax_scores_valid: np.ndarray = exp_scores / np.sum(exp_scores)
-    return softmax_scores_valid
+    
+    # Handle edge case: empty array
+    if len(score_values) == 0:
+        bt.logging.warning("Empty score array in compute_softmax")
+        return np.array([])
+    
+    # Replace inf with a very large finite value (worst score)
+    # This ensures they get ~0 weight without numerical issues
+    has_finite = np.any(np.isfinite(score_values))
+    if has_finite:
+        max_finite = np.max(score_values[np.isfinite(score_values)])
+        worst_score = max_finite + 1000  # Significantly worse than any real score
+    else:
+        # All scores are infinite - return equal weights
+        bt.logging.warning("All scores are infinite. Returning equal weights.")
+        return np.ones_like(score_values, dtype=np.float64) / len(score_values)
+    
+    score_values_safe = np.where(np.isinf(score_values), worst_score, score_values)
+    
+    # Check if all scores are the same (edge case)
+    if np.allclose(score_values_safe, score_values_safe[0]):
+        bt.logging.info("All finite scores are equal. Returning equal weights.")
+        return np.ones_like(score_values_safe, dtype=np.float64) / len(score_values_safe)
+    
+    # Standard softmax with numerical stability
+    # For negative beta (lower score = better), subtract min instead of max
+    # This prevents overflow when beta is negative
+    if beta < 0:
+        score_values_shifted = score_values_safe - np.min(score_values_safe)
+    else:
+        score_values_shifted = score_values_safe - np.max(score_values_safe)
+    
+    # Compute exp with overflow protection
+    exp_input = beta * score_values_shifted
+    
+    # Clip extreme values to prevent overflow/underflow
+    exp_input = np.clip(exp_input, -700, 700)  # exp(±700) is within float64 range
+    
+    exp_scores = np.exp(exp_input)
+    
+    # Handle potential all-zero case
+    sum_exp = np.sum(exp_scores)
+    if sum_exp == 0 or np.isnan(sum_exp) or np.isinf(sum_exp):
+        bt.logging.warning(
+            f"Softmax sum is invalid: {sum_exp}. Returning equal weights."
+        )
+        return np.ones_like(score_values, dtype=np.float64) / len(score_values)
+    
+    softmax_scores = exp_scores / sum_exp
+    
+    # Final sanity check
+    if np.any(np.isnan(softmax_scores)) or np.any(np.isinf(softmax_scores)):
+        bt.logging.error("NaN or Inf in softmax output. Returning equal weights.")
+        return np.ones_like(score_values, dtype=np.float64) / len(score_values)
+    
+    return softmax_scores
 
 
 def clean_numpy_in_crps_data(crps_data: list) -> list:

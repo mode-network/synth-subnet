@@ -1,4 +1,5 @@
 import numpy as np
+import bittensor as bt
 from properscoring import crps_ensemble
 
 
@@ -91,8 +92,17 @@ def calculate_crps_for_miner(
                 observation = real_changes_block[0, t]
                 crps_values_block[t] = crps_ensemble(observation, forecasts)
                 if absolute_price:
+                    last_price = real_price_path[-1]
+                    # Check for invalid last price to prevent division by zero
+                    if last_price == 0 or np.isnan(last_price) or np.isinf(last_price):
+                        bt.logging.warning(
+                            f"Invalid last price for normalization: {last_price}. "
+                            f"Skipping absolute price normalization for interval {interval_name}"
+                        )
+                        # Skip this interval entirely as we cannot normalize properly
+                        continue
                     crps_values_block[t] = (
-                        crps_values_block[t] / real_price_path[-1] * 10_000
+                        crps_values_block[t] / last_price * 10_000
                     )
                 crps_values += crps_values_block[t]
 
