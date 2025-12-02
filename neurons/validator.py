@@ -144,7 +144,6 @@ class Validator(BaseValidatorNeuron):
         bt.logging.info(f"starting the {LOW_FREQUENCY.label} frequency cycle")
         cycle_start_time = get_current_time()
 
-        self.sync()
         # update the miners, also for the high frequency prompt that will use the same list
         self.miner_uids = get_available_miners_and_update_metagraph_history(
             base_neuron=self,
@@ -153,6 +152,7 @@ class Validator(BaseValidatorNeuron):
         self.forward_prompt(asset, LOW_FREQUENCY)
         self.forward_score_low_frequency()
         # self.cleanup_history()
+        self.sync()
         self.schedule_cycle(cycle_start_time, LOW_FREQUENCY)
 
     def cycle_high_frequency(self, asset: str):
