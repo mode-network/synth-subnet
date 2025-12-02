@@ -124,16 +124,6 @@ class Validator(BaseValidatorNeuron):
             )
             delay = (next_cycle - get_current_time()).total_seconds()
 
-        # Schedule the launch of high frequency prompt
-        high_frequency_launch = datetime(
-            2025, 12, 2, 18, 0, 0, tzinfo=timezone.utc
-        )
-        if (
-            prompt_config.label == HIGH_FREQUENCY.label
-            and get_current_time() <= high_frequency_launch
-        ):
-            return
-
         bt.logging.info(
             f"Scheduling next {prompt_config.label} frequency cycle for asset {asset} in {delay} seconds"
         )
@@ -167,6 +157,15 @@ class Validator(BaseValidatorNeuron):
 
     def cycle_high_frequency(self, asset: str):
         cycle_start_time = get_current_time()
+
+        # Schedule the launch of high frequency prompt
+        high_frequency_launch = datetime(
+            2025, 12, 2, 18, 0, 0, tzinfo=timezone.utc
+        )
+        if cycle_start_time <= high_frequency_launch:
+            self.schedule_cycle(cycle_start_time, HIGH_FREQUENCY)
+            return
+
         self.forward_prompt(asset, HIGH_FREQUENCY)
 
         current_time = get_current_time()
