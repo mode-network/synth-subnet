@@ -169,9 +169,9 @@ async def call(
     synapse.dendrite.signature = signature
 
     try:
-        bt.logging.trace(
-            f"dendrite | --> | {synapse.get_total_size()} B | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)} | 0 | Success"
-        )
+        # bt.logging.trace(
+        #     f"dendrite | --> | {synapse.get_total_size()} B | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)} | 0 | Success"
+        # )
         response = await client.post(
             url=url,
             headers=synapse.to_headers(),
@@ -189,9 +189,9 @@ async def call(
         synapse = process_error_message(synapse, REQUEST_NAME, e)
 
     finally:
-        bt.logging.trace(
-            f"dendrite | <-- | {synapse.get_total_size()} B | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)} | {synapse.dendrite.status_code} | {synapse.dendrite.status_message}"
-        )
+        # bt.logging.trace(
+        #     f"dendrite | <-- | {synapse.get_total_size()} B | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)} | {synapse.dendrite.status_code} | {synapse.dendrite.status_message}"
+        # )
 
         return [synapse.simulation_output, synapse.dendrite.process_time]
 
