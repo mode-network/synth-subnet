@@ -139,6 +139,8 @@ class Validator(BaseValidatorNeuron):
                 / len(self.asset_list)
             )
             delay = int((next_cycle - get_current_time()).total_seconds())
+            if delay < 0:
+                delay = 0
 
         return delay
 
