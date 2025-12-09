@@ -107,22 +107,8 @@ class Validator(BaseValidatorNeuron):
         prompt_config: PromptConfig,
         immediately: bool = False,
     ):
-        asset = self.asset_list[0]
-
-        latest_asset = self.miner_data_handler.get_latest_asset(
-            prompt_config.time_length
-        )
-        if latest_asset is not None and latest_asset in self.asset_list:
-            latest_index = self.asset_list.index(latest_asset)
-            asset = self.asset_list[(latest_index + 1) % len(self.asset_list)]
-
-        delay = prompt_config.initial_delay
-        if not immediately:
-            next_cycle = cycle_start_time + timedelta(
-                minutes=prompt_config.total_cycle_minutes
-                / len(self.asset_list)
-            )
-            delay = (next_cycle - get_current_time()).total_seconds()
+        delay = self.select_delay(cycle_start_time, prompt_config, immediately)
+        asset = self.select_asset(prompt_config, delay)
 
         bt.logging.info(
             f"Scheduling next {prompt_config.label} frequency cycle for asset {asset} in {delay} seconds"
@@ -139,6 +125,41 @@ class Validator(BaseValidatorNeuron):
             action=method,
             argument=(asset,),
         )
+
+    def select_delay(
+        self,
+        cycle_start_time: datetime,
+        prompt_config: PromptConfig,
+        immediately: bool,
+    ) -> int:
+        delay = prompt_config.initial_delay
+        if not immediately:
+            next_cycle = cycle_start_time + timedelta(
+                minutes=prompt_config.total_cycle_minutes
+                / len(self.asset_list)
+            )
+            delay = int((next_cycle - get_current_time()).total_seconds())
+
+        return delay
+
+    def select_asset(self, prompt_config: PromptConfig, delay: int) -> str:
+        asset = self.asset_list[0]
+
+        latest_asset = self.miner_data_handler.get_latest_asset(
+            prompt_config.time_length
+        )
+        if latest_asset is not None and latest_asset in self.asset_list:
+            latest_index = self.asset_list.index(latest_asset)
+            asset = self.asset_list[(latest_index + 1) % len(self.asset_list)]
+
+        future_start_time = get_current_time() + timedelta(seconds=delay)
+        future_start_time = round_time_to_minutes(future_start_time)
+        if should_skip_xau(future_start_time) and asset == "XAU":
+            asset = self.asset_list[
+                (self.asset_list.index("XAU") + 1) % len(self.asset_list)
+            ]
+
+        return asset
 
     def cycle_low_frequency(self, asset: str):
         bt.logging.info(f"starting the {LOW_FREQUENCY.label} frequency cycle")

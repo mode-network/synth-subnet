@@ -100,7 +100,6 @@ class MinerDataHandler:
                 if len(result) == 0:
                     return None
 
-                # Return the asset with the least count
                 return str(result[0].asset)
         except Exception as e:
             bt.logging.error(f"in get_next_asset (got an exception): {e}")
