@@ -183,14 +183,6 @@ class Validator(BaseValidatorNeuron):
     def cycle_high_frequency(self, asset: str):
         cycle_start_time = get_current_time()
 
-        # Schedule the launch of high frequency prompt
-        high_frequency_launch = datetime(
-            2025, 12, 2, 18, 0, 0, tzinfo=timezone.utc
-        )
-        if cycle_start_time <= high_frequency_launch:
-            self.schedule_cycle(cycle_start_time, HIGH_FREQUENCY)
-            return
-
         self.forward_prompt(asset, HIGH_FREQUENCY)
 
         current_time = get_current_time()
