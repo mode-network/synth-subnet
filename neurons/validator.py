@@ -138,7 +138,9 @@ class Validator(BaseValidatorNeuron):
                 minutes=prompt_config.total_cycle_minutes
                 / len(self.asset_list)
             )
-            delay = int((next_cycle - get_current_time()).total_seconds())
+            next_cycle = round_time_to_minutes(next_cycle)
+            next_cycle_diff = next_cycle - get_current_time()
+            delay = int(next_cycle_diff.total_seconds())
             if delay < 0:
                 delay = 0
 
