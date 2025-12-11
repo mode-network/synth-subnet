@@ -1,7 +1,7 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 import multiprocessing as mp
 import sched
 import time
@@ -61,6 +61,8 @@ class Validator(BaseValidatorNeuron):
     This class provides reasonable default behavior for a validator such as keeping a moving average of the scores of the miners and using them to set weights at the end of each epoch. Additionally, the scores are reset for new hotkeys at the end of each epoch.
     """
 
+    asset_list = ["BTC", "ETH", "XAU", "SOL"]
+
     def __init__(self, config=None):
         super(Validator, self).__init__(config=config)
 
@@ -74,7 +76,6 @@ class Validator(BaseValidatorNeuron):
 
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.miner_uids: list[int] = []
-        self.asset_list = ["BTC", "ETH", "XAU", "SOL"]
         HIGH_FREQUENCY.softmax_beta = self.config.softmax.beta
 
         self.assert_assets_supported()
@@ -107,22 +108,13 @@ class Validator(BaseValidatorNeuron):
         prompt_config: PromptConfig,
         immediately: bool = False,
     ):
-        asset = self.asset_list[0]
-
+        delay = self.select_delay(
+            self.asset_list, cycle_start_time, prompt_config, immediately
+        )
         latest_asset = self.miner_data_handler.get_latest_asset(
             prompt_config.time_length
         )
-        if latest_asset is not None and latest_asset in self.asset_list:
-            latest_index = self.asset_list.index(latest_asset)
-            asset = self.asset_list[(latest_index + 1) % len(self.asset_list)]
-
-        delay = prompt_config.initial_delay
-        if not immediately:
-            next_cycle = cycle_start_time + timedelta(
-                minutes=prompt_config.total_cycle_minutes
-                / len(self.asset_list)
-            )
-            delay = (next_cycle - get_current_time()).total_seconds()
+        asset = self.select_asset(latest_asset, self.asset_list, delay)
 
         bt.logging.info(
             f"Scheduling next {prompt_config.label} frequency cycle for asset {asset} in {delay} seconds"
@@ -139,6 +131,43 @@ class Validator(BaseValidatorNeuron):
             action=method,
             argument=(asset,),
         )
+
+    @staticmethod
+    def select_delay(
+        asset_list: list[str],
+        cycle_start_time: datetime,
+        prompt_config: PromptConfig,
+        immediately: bool,
+    ) -> int:
+        delay = prompt_config.initial_delay
+        if not immediately:
+            next_cycle = cycle_start_time + timedelta(
+                minutes=prompt_config.total_cycle_minutes / len(asset_list)
+            )
+            next_cycle = round_time_to_minutes(next_cycle)
+            next_cycle_diff = next_cycle - get_current_time()
+            delay = int(next_cycle_diff.total_seconds())
+            if delay < 0:
+                delay = 0
+
+        return delay
+
+    @staticmethod
+    def select_asset(
+        latest_asset: str | None, asset_list: list[str], delay: int
+    ) -> str:
+        asset = asset_list[0]
+
+        if latest_asset is not None and latest_asset in asset_list:
+            latest_index = asset_list.index(latest_asset)
+            asset = asset_list[(latest_index + 1) % len(asset_list)]
+
+        future_start_time = get_current_time() + timedelta(seconds=delay)
+        future_start_time = round_time_to_minutes(future_start_time)
+        if should_skip_xau(future_start_time) and asset == "XAU":
+            asset = asset_list[(asset_list.index("XAU") + 1) % len(asset_list)]
+
+        return asset
 
     def cycle_low_frequency(self, asset: str):
         bt.logging.info(f"starting the {LOW_FREQUENCY.label} frequency cycle")
@@ -157,14 +186,6 @@ class Validator(BaseValidatorNeuron):
 
     def cycle_high_frequency(self, asset: str):
         cycle_start_time = get_current_time()
-
-        # Schedule the launch of high frequency prompt
-        high_frequency_launch = datetime(
-            2025, 12, 2, 18, 0, 0, tzinfo=timezone.utc
-        )
-        if cycle_start_time <= high_frequency_launch:
-            self.schedule_cycle(cycle_start_time, HIGH_FREQUENCY)
-            return
 
         self.forward_prompt(asset, HIGH_FREQUENCY)
 
