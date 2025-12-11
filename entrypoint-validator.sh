@@ -10,7 +10,7 @@ validator_coldkey_name=validator
 validator_hotkey_name=default
 
 ewma_window_days=10
-softmax_beta=-0.05
+softmax_beta=-0.2
 
 log_id_prefix=my_validator_name
 
