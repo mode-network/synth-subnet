@@ -31,6 +31,14 @@ class PriceDataProvider:
         "SOL": "Crypto.SOL/USD",
     }
 
+    def __init__(self, asset_list: list[str]):
+        self.assert_assets_supported(asset_list)
+
+    def assert_assets_supported(self, asset_list: list[str]):
+        # Assert assets are all implemented in the price data provider:
+        for asset in asset_list:
+            assert asset in self.TOKEN_MAP
+
     @retry(
         stop=stop_after_attempt(5),
         wait=wait_random_exponential(multiplier=7),
