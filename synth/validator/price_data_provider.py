@@ -31,7 +31,7 @@ class PriceDataProvider:
         "SOL": "Crypto.SOL/USD",
     }
 
-    def __init__(self, asset_list: list[str]):
+    def __init__(self, asset_list: list[str] = []):
         self.assert_assets_supported(asset_list)
 
     def assert_assets_supported(self, asset_list: list[str]):
