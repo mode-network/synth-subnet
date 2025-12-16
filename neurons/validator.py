@@ -32,7 +32,6 @@ from synth.utils.helpers import (
     round_time_to_minutes,
 )
 from synth.utils.logging import setup_gcp_logging
-from synth.utils.opening_hours import should_skip_xau
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_scores,
@@ -162,11 +161,6 @@ class Validator(BaseValidatorNeuron):
             latest_index = asset_list.index(latest_asset)
             asset = asset_list[(latest_index + 1) % len(asset_list)]
 
-        future_start_time = get_current_time() + timedelta(seconds=delay)
-        future_start_time = round_time_to_minutes(future_start_time)
-        if should_skip_xau(future_start_time) and asset == "XAU":
-            asset = asset_list[(asset_list.index("XAU") + 1) % len(asset_list)]
-
         return asset
 
     def cycle_low_frequency(self, asset: str):
@@ -213,13 +207,6 @@ class Validator(BaseValidatorNeuron):
         start_time: datetime = round_time_to_minutes(
             request_time, prompt_config.timeout_extra_seconds
         )
-
-        if should_skip_xau(start_time) and asset == "XAU":
-            bt.logging.info(
-                "Skipping XAU simulation as market is closed",
-                "forward_prompt",
-            )
-            return
 
         simulation_input = SimulationInput(
             asset=asset,
