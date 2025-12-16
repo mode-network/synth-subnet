@@ -27,7 +27,7 @@ class PriceDataProvider:
     TOKEN_MAP = {
         "BTC": "Crypto.BTC/USD",
         "ETH": "Crypto.ETH/USD",
-        "XAU": "Metal.XAU/USD",
+        "XAU": "Crypto.XAUT/USD",
         "SOL": "Crypto.SOL/USD",
     }
 
