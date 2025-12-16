@@ -61,7 +61,7 @@ HIGH_FREQUENCY = PromptConfig(
         "0_55min_gaps": 3300,
         "0_60min_gaps": 3600,
     },
-    window_days=1,
+    window_days=2,
     softmax_beta=-0.2,
     smoothed_score_coefficient=0.5,
 )
