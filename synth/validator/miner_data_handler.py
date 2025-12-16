@@ -1,6 +1,4 @@
 from datetime import datetime, timedelta
-import traceback
-import sys
 import typing
 import logging
 import math
@@ -102,8 +100,7 @@ class MinerDataHandler:
 
                 return str(result[0].asset)
         except Exception as e:
-            bt.logging.error(f"in get_next_asset (got an exception): {e}")
-            traceback.print_exc(file=sys.stderr)
+            bt.logging.exception(f"in get_next_asset (got an exception): {e}")
             return None
 
     @retry(
@@ -180,8 +177,7 @@ class MinerDataHandler:
                     connection.execute(insert_stmt_miner_predictions)
             return validator_requests_id  # TODO: finish this: refactor to add the validator_requests_id in the score and reward table
         except Exception as e:
-            bt.logging.error(f"in save_responses (got an exception): {e}")
-            traceback.print_exc(file=sys.stderr)
+            bt.logging.exception(f"in save_responses (got an exception): {e}")
 
     @retry(
         stop=stop_after_attempt(5),
@@ -260,8 +256,9 @@ class MinerDataHandler:
                     )
                     connection.execute(insert_stmt_miner_scores)
         except Exception as e:
-            bt.logging.error(f"in set_miner_scores (got an exception): {e}")
-            traceback.print_exc(file=sys.stderr)
+            bt.logging.exception(
+                f"in set_miner_scores (got an exception): {e}"
+            )
 
     def get_miner_uid_of_prediction_request(
         self, validator_request_id: int
@@ -291,10 +288,9 @@ class MinerDataHandler:
 
             return result
         except Exception as e:
-            bt.logging.error(
+            bt.logging.exception(
                 f"in get_miner_uid_of_prediction_request (got an exception): {e}"
             )
-            traceback.print_exc(file=sys.stderr)
             return None
 
     def get_miner_prediction(
@@ -333,10 +329,9 @@ class MinerDataHandler:
 
             return result
         except Exception as e:
-            bt.logging.error(
+            bt.logging.exception(
                 f"in get_miner_prediction (got an exception): {e}"
             )
-            traceback.print_exc(file=sys.stderr)
             return None
 
     def get_validator_requests_to_score(
@@ -418,10 +413,9 @@ class MinerDataHandler:
 
                 return results
         except Exception as e:
-            bt.logging.error(
+            bt.logging.exception(
                 f"in get_latest_prediction_request (got an exception): {e}"
             )
-            traceback.print_exc(file=sys.stderr)
             return None
 
     @retry(
@@ -456,8 +450,9 @@ class MinerDataHandler:
                     )
                     connection.execute(insert_stmt)
         except Exception as e:
-            bt.logging.error(f"in insert_new_miners (got an exception): {e}")
-            traceback.print_exc(file=sys.stderr)
+            bt.logging.exception(
+                f"in insert_new_miners (got an exception): {e}"
+            )
 
     def update_metagraph_history(self, metagraph_info: list):
         try:
@@ -468,10 +463,9 @@ class MinerDataHandler:
                     )
                     connection.execute(insert_stmt)
         except Exception as e:
-            bt.logging.error(
+            bt.logging.exception(
                 f"in update_metagraph_history (got an exception): {e}"
             )
-            traceback.print_exc(file=sys.stderr)
 
     def get_miner_scores(
         self,
@@ -515,8 +509,9 @@ class MinerDataHandler:
 
             return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
         except Exception as e:
-            bt.logging.error(f"in get_miner_scores (got an exception): {e}")
-            traceback.print_exc(file=sys.stderr)
+            bt.logging.exception(
+                f"in get_miner_scores (got an exception): {e}"
+            )
             return pd.DataFrame()
 
     def populate_miner_uid_in_miner_data(self, miner_data: list[dict]):
@@ -525,10 +520,9 @@ class MinerDataHandler:
                 with connection.begin():
                     miner_uid_map = self.get_miner_ids_map(connection)
         except Exception as e:
-            bt.logging.error(
+            bt.logging.exception(
                 f"in populate_miner_uid_in_miner_data (got an exception): {e}"
             )
-            traceback.print_exc(file=sys.stderr)
             return None
 
         for row in miner_data:
@@ -554,10 +548,9 @@ class MinerDataHandler:
                     )
                     connection.execute(insert_stmt)
         except Exception as e:
-            bt.logging.error(
+            bt.logging.exception(
                 f"in update_miner_rewards (got an exception): {e}"
             )
-            traceback.print_exc(file=sys.stderr)
 
     def update_weights_history(
         self,
@@ -585,7 +578,6 @@ class MinerDataHandler:
                     )
                     connection.execute(insert_stmt)
         except Exception as e:
-            bt.logging.error(
+            bt.logging.exception(
                 f"in update_weights_history (got an exception): {e}"
             )
-            traceback.print_exc(file=sys.stderr)
