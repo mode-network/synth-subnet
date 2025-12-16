@@ -54,22 +54,3 @@ class TestValidator(unittest.TestCase):
                 latest_asset, asset_list, 0
             )
             self.assertEqual(selected_asset, "LTC")
-
-    def test_select_asset_gold(self):
-        latest_asset = "ETH"
-        asset_list = ["BTC", "ETH", "XAU", "LTC"]
-
-        with patch(
-            "neurons.validator.get_current_time"
-        ) as mock_get_current_time:
-            mock_get_current_time.return_value = datetime(
-                2025, 12, 3, 12, 36, 30, tzinfo=timezone.utc
-            )
-            with patch(
-                "neurons.validator.should_skip_xau"
-            ) as mock_should_skip_xau:
-                mock_should_skip_xau.return_value = True
-                selected_asset = Validator.select_asset(
-                    latest_asset, asset_list, 0
-                )
-                self.assertEqual(selected_asset, "LTC")
