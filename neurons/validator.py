@@ -174,16 +174,6 @@ class Validator(BaseValidatorNeuron):
         cycle_start_time = get_current_time()
 
         self.forward_prompt(asset, HIGH_FREQUENCY)
-
-        current_time = get_current_time()
-        scored_time: datetime = round_time_to_minutes(current_time)
-        bt.logging.info(f"forward score {HIGH_FREQUENCY.label} frequency")
-        calculate_scores(
-            self.miner_data_handler,
-            self.price_data_provider,
-            scored_time,
-            HIGH_FREQUENCY,
-        )
         self.schedule_cycle(cycle_start_time, HIGH_FREQUENCY)
 
     def forward_prompt(self, asset: str, prompt_config: PromptConfig):
@@ -217,10 +207,6 @@ class Validator(BaseValidatorNeuron):
         )
 
     def forward_score_low_frequency(self):
-        bt.logging.info(f"forward score {LOW_FREQUENCY.label} frequency")
-        current_time = get_current_time()
-        scored_time: datetime = round_time_to_minutes(current_time)
-
         # ================= Step 3 ================= #
         # Calculate rewards based on historical predictions data
         # from the miner_predictions table:
@@ -230,11 +216,28 @@ class Validator(BaseValidatorNeuron):
         # we store the rewards in the miner_scores table
         # ========================================== #
 
+        bt.logging.info(f"forward score {LOW_FREQUENCY.label} frequency")
+        current_time = get_current_time()
+        scored_time: datetime = round_time_to_minutes(current_time)
+
         success = calculate_scores(
             self.miner_data_handler,
             self.price_data_provider,
             scored_time,
             LOW_FREQUENCY,
+        )
+
+        if not success:
+            return
+
+        scored_time: datetime = round_time_to_minutes(current_time)
+        current_time = get_current_time()
+        bt.logging.info(f"forward score {HIGH_FREQUENCY.label} frequency")
+        success = calculate_scores(
+            self.miner_data_handler,
+            self.price_data_provider,
+            scored_time,
+            HIGH_FREQUENCY,
         )
 
         if not success:
