@@ -19,7 +19,6 @@ import time
 import asyncio
 import threading
 import argparse
-import traceback
 
 import bittensor as bt
 
@@ -138,7 +137,7 @@ class BaseMinerNeuron(BaseNeuron):
 
         # In case of unforeseen errors, the miner will log the error and continue operations.
         except Exception:
-            bt.logging.error(traceback.format_exc())
+            bt.logging.exception("Unknown error")
 
     def run_in_background_thread(self):
         """

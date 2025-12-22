@@ -71,18 +71,11 @@ class Validator(BaseValidatorNeuron):
         self.load_state()
 
         self.miner_data_handler = MinerDataHandler()
-        self.price_data_provider = PriceDataProvider()
+        self.price_data_provider = PriceDataProvider(self.asset_list)
 
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.miner_uids: list[int] = []
         HIGH_FREQUENCY.softmax_beta = self.config.softmax.beta
-
-        self.assert_assets_supported()
-
-    def assert_assets_supported(self):
-        # Assert assets are all implemented in the price data provider:
-        for asset in self.asset_list:
-            assert asset in PriceDataProvider.TOKEN_MAP
 
     def forward_validator(self):
         """

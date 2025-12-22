@@ -18,7 +18,6 @@
 # DEALINGS IN THE SOFTWARE.
 
 
-import sys
 import copy
 import numpy as np
 import asyncio
@@ -27,7 +26,6 @@ import threading
 import bittensor as bt
 
 from typing import List, Union
-import traceback
 
 from synth.base.dendrite import SynthDendrite
 from synth.base.neuron import BaseNeuron
@@ -132,13 +130,11 @@ class BaseValidatorNeuron(BaseNeuron):
             if not self.config.neuron.axon_off:
                 self.axon.stop()
             bt.logging.success("Validator killed by keyboard interrupt.")
-            traceback.print_exc(file=sys.stderr)
             exit()
 
         # In case of unforeseen errors, the validator will log the error and continue operations.
         except Exception as err:
-            bt.logging.error(f"Error during validation: {str(err)}")
-            traceback.print_exc(file=sys.stderr)
+            bt.logging.exception(f"Error during validation: {str(err)}")
 
     def set_weights(self):
         """
