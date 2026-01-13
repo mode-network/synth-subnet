@@ -3,6 +3,7 @@ import time
 import asyncio
 import uuid
 import aiohttp
+import logging
 
 
 import bittensor as bt
@@ -10,7 +11,13 @@ from bittensor_wallet import Keypair, Wallet
 import httpx
 from pydantic import ValidationError
 import uvloop
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+    before_sleep_log,
+)
 
 
 from synth.protocol import Simulation
@@ -131,7 +138,7 @@ class SynthDendrite(bt.Dendrite):
         async with httpx.AsyncClient(
             http2=True,
             limits=httpx.Limits(
-                max_connections=None, max_keepalive_connections=25
+                max_connections=255, max_keepalive_connections=255
             ),
             timeout=timeout,
         ) as client:
@@ -202,8 +209,11 @@ class SynthDendrite(bt.Dendrite):
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=0.5, min=0.5, max=4),
-        retry=retry_if_exception_type((AttributeError, httpx.HTTPStatusError, httpx.ConnectError)),
-        reraise=True
+        retry=retry_if_exception_type(
+            (AttributeError, httpx.HTTPStatusError, httpx.ConnectError)
+        ),
+        reraise=True,
+        before_sleep=before_sleep_log(bt.logging._logger, logging.DEBUG),
     )
     async def call_http2_with_retry(
         self,
