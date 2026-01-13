@@ -41,7 +41,7 @@ class TestValidator(unittest.TestCase):
                 HIGH_FREQUENCY,
                 False,
             )
-            self.assertEqual(delay, 90)
+            self.assertEqual(delay, 30)
 
             delay = ThreadScheduler.select_delay(
                 LOW_FREQUENCY.asset_list,
@@ -49,7 +49,7 @@ class TestValidator(unittest.TestCase):
                 LOW_FREQUENCY,
                 False,
             )
-            self.assertEqual(delay, 330)
+            self.assertEqual(delay, 270)
 
     def test_select_asset(self):
         latest_asset = "ETH"
