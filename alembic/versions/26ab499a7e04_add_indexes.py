@@ -52,28 +52,8 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     conn = op.get_bind()
-    conn.execute(
-        sa.text(
-            "DROP INDEX idx_ms_scored_time_predid;"
-        )
-    )
-    conn.execute(
-        sa.text(
-            "DROP INDEX idx_vr_asset_time;"
-        )
-    )
-    conn.execute(
-        sa.text(
-            "DROP INDEX idx_vr_id_starttime;"
-        )
-    )
-    conn.execute(
-        sa.text(
-            "DROP INDEX idx_mp_created_miner;"
-        )
-    )
-    conn.execute(
-        sa.text(
-            "DROP INDEX idx_mp_minerid_validatorid;"
-        )
-    )
+    conn.execute(sa.text("DROP INDEX idx_ms_scored_time_predid;"))
+    conn.execute(sa.text("DROP INDEX idx_vr_asset_time;"))
+    conn.execute(sa.text("DROP INDEX idx_vr_id_starttime;"))
+    conn.execute(sa.text("DROP INDEX idx_mp_created_miner;"))
+    conn.execute(sa.text("DROP INDEX idx_mp_minerid_validatorid;"))
