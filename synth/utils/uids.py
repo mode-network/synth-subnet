@@ -2,7 +2,7 @@ import bittensor as bt
 
 
 def check_uid_availability(
-    metagraph: bt.metagraph, uid: int, vpermit_tao_limit: int
+    metagraph: bt.Metagraph, uid: int, vpermit_tao_limit: int
 ) -> bool:
     """Check if uid is available. The UID should be available if it is serving and has less than vpermit_tao_limit stake
     Args:

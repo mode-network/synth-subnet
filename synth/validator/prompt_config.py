@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 @dataclass
 class PromptConfig:
+    asset_list: list[str]
     label: str
     time_length: int
     time_increment: int
@@ -17,6 +18,17 @@ class PromptConfig:
 
 
 LOW_FREQUENCY = PromptConfig(
+    asset_list=[
+        "BTC",
+        "ETH",
+        "XAU",
+        "SOL",
+        "SPYX",
+        "NVDAX",
+        "TSLAX",
+        "AAPLX",
+        "GOOGLX",
+    ],
     label="low",
     time_length=86400,
     time_increment=300,
@@ -35,6 +47,7 @@ LOW_FREQUENCY = PromptConfig(
 )
 
 HIGH_FREQUENCY = PromptConfig(
+    asset_list=["BTC", "ETH", "XAU", "SOL"],
     label="high",
     time_length=3600,
     time_increment=60,

@@ -29,15 +29,18 @@ class PriceDataProvider:
         "ETH": "Crypto.ETH/USD",
         "XAU": "Crypto.XAUT/USD",
         "SOL": "Crypto.SOL/USD",
+        "SPYX": "Crypto.SPYX/USD",
+        "NVDAX": "Crypto.NVDAX/USD",
+        "TSLAX": "Crypto.TSLAX/USD",
+        "AAPLX": "Crypto.AAPLX/USD",
+        "GOOGLX": "Crypto.GOOGLX/USD",
     }
 
-    def __init__(self, asset_list: list[str] = []):
-        self.assert_assets_supported(asset_list)
-
-    def assert_assets_supported(self, asset_list: list[str]):
+    @staticmethod
+    def assert_assets_supported(asset_list: list[str]):
         # Assert assets are all implemented in the price data provider:
         for asset in asset_list:
-            assert asset in self.TOKEN_MAP
+            assert asset in PriceDataProvider.TOKEN_MAP
 
     @retry(
         stop=stop_after_attempt(5),

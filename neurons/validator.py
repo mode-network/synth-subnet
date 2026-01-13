@@ -60,8 +60,6 @@ class Validator(BaseValidatorNeuron):
     This class provides reasonable default behavior for a validator such as keeping a moving average of the scores of the miners and using them to set weights at the end of each epoch. Additionally, the scores are reset for new hotkeys at the end of each epoch.
     """
 
-    asset_list = ["BTC", "ETH", "XAU", "SOL"]
-
     def __init__(self, config=None):
         super(Validator, self).__init__(config=config)
 
@@ -71,10 +69,13 @@ class Validator(BaseValidatorNeuron):
         self.load_state()
 
         self.miner_data_handler = MinerDataHandler()
-        self.price_data_provider = PriceDataProvider(self.asset_list)
+        self.price_data_provider = PriceDataProvider()
 
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.miner_uids: list[int] = []
+
+        PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
+        PriceDataProvider.assert_assets_supported(LOW_FREQUENCY.asset_list)
 
     def forward_validator(self):
         """
@@ -100,12 +101,15 @@ class Validator(BaseValidatorNeuron):
         immediately: bool = False,
     ):
         delay = self.select_delay(
-            self.asset_list, cycle_start_time, prompt_config, immediately
+            prompt_config.asset_list,
+            cycle_start_time,
+            prompt_config,
+            immediately,
         )
         latest_asset = self.miner_data_handler.get_latest_asset(
             prompt_config.time_length
         )
-        asset = self.select_asset(latest_asset, self.asset_list, delay)
+        asset = self.select_asset(latest_asset, prompt_config.asset_list)
 
         bt.logging.info(
             f"Scheduling next {prompt_config.label} frequency cycle for asset {asset} in {delay} seconds"
@@ -144,9 +148,7 @@ class Validator(BaseValidatorNeuron):
         return delay
 
     @staticmethod
-    def select_asset(
-        latest_asset: str | None, asset_list: list[str], delay: int
-    ) -> str:
+    def select_asset(latest_asset: str | None, asset_list: list[str]) -> str:
         asset = asset_list[0]
 
         if latest_asset is not None and latest_asset in asset_list:
@@ -165,7 +167,7 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
         )
         self.forward_prompt(asset, LOW_FREQUENCY)
-        self.forward_score_low_frequency()
+        self.forward_score()
         # self.cleanup_history()
         self.sync()
         self.schedule_cycle(cycle_start_time, LOW_FREQUENCY)
@@ -177,7 +179,9 @@ class Validator(BaseValidatorNeuron):
         self.schedule_cycle(cycle_start_time, HIGH_FREQUENCY)
 
     def forward_prompt(self, asset: str, prompt_config: PromptConfig):
-        bt.logging.info(f"forward prompt for {prompt_config.label} frequency")
+        bt.logging.info(
+            f"forward prompt for {asset} in {prompt_config.label} frequency"
+        )
         if len(self.miner_uids) == 0:
             bt.logging.error(
                 "No miners available",
@@ -206,7 +210,7 @@ class Validator(BaseValidatorNeuron):
             request_time=request_time,
         )
 
-    def forward_score_low_frequency(self):
+    def forward_score(self):
         # ================= Step 3 ================= #
         # Calculate rewards based on historical predictions data
         # from the miner_predictions table:

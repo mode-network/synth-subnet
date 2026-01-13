@@ -105,9 +105,14 @@ def apply_per_asset_coefficients(
     # Define coefficients for each asset
     asset_coefficients = {
         "BTC": 1.0,
-        "ETH": 0.6210893136676585,
-        "XAU": 1.4550630831254674,
-        "SOL": 0.5021491038021751,
+        "ETH": 0.6715516528608204,
+        "XAU": 2.262003561659039,
+        "SOL": 0.5883682889710361,
+        "SPYX": 2.9914378891824693,
+        "NVDAX": 1.3885444209082594,
+        "TSLAX": 1.420016421725336,
+        "AAPLX": 1.864976360560554,
+        "GOOGLX": 1.4310534797250312,
     }
 
     sum_coefficients = 0.0
