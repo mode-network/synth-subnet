@@ -7,8 +7,8 @@ import json
 async def main(
     wallet_name: str, hotkey_name: str, hyperparam: str, body: dict
 ):
-    wallet = bt.wallet(name=wallet_name, hotkey=hotkey_name)
-    subtensor = bt.subtensor(network="finney")
+    wallet = bt.Wallet(name=wallet_name, hotkey=hotkey_name)
+    subtensor = bt.Subtensor(network="finney")
     call = subtensor.substrate.compose_call(
         call_module="AdminUtils",
         call_function=hyperparam,
