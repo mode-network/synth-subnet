@@ -92,19 +92,3 @@ def setup_gcp_logging(log_id_prefix: str):
             )
         else:
             client.setup_logging(labels={"log_id": log_id})
-
-
-class SubstringFilter(logging.Filter):
-    def __init__(self, forbidden):
-        super().__init__()
-        self.forbidden = forbidden
-
-    def filter(self, record):
-        # keep only those records whose formatted message does *not* contain the substring
-        return self.forbidden not in record.getMessage()
-
-
-def setup_log_filter(forbidden_substring):
-    logging.getLogger("bittensor").addFilter(
-        SubstringFilter(forbidden_substring)
-    )
