@@ -26,11 +26,11 @@ class ThreadScheduler:
         self.miner_data_handler = miner_data_handler
 
     def enter(self, *args):
+        cycle_start_time = get_current_time()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.target(*args))
         loop.close()
-        cycle_start_time = get_current_time()
         self.schedule_cycle(cycle_start_time)
 
     def schedule_cycle(
