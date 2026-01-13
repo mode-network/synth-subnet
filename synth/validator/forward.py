@@ -26,7 +26,6 @@ import bittensor as bt
 import numpy as np
 
 
-from synth.base.dendrite_multiprocess import sync_forward_multiprocess
 from synth.base.validator import BaseValidatorNeuron
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
@@ -168,7 +167,7 @@ def calculate_scores(
     return fail_count != len(validator_requests)
 
 
-def query_available_miners_and_save_responses(
+async def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
     miner_uids: list,
@@ -196,14 +195,10 @@ def query_available_miners_and_save_responses(
 
     start_time = time.time()
 
-    synapses = sync_forward_multiprocess(
-        base_neuron.dendrite.keypair,
-        base_neuron.dendrite.uuid,
-        base_neuron.dendrite.external_ip,
-        axons,
-        synapse,
-        timeout,
-        base_neuron.config.neuron.nprocs,
+    synapses = await base_neuron.dendrite.forward(
+        axons=axons,
+        synapse=synapse,
+        timeout=timeout,
     )
 
     total_process_time = str(time.time() - start_time)
