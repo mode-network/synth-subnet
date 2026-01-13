@@ -231,20 +231,6 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
         help="The GCP log ID prefix.",
     )
 
-    parser.add_argument(
-        "--ewma.window_days",
-        type=int,
-        help="The window in days for the rolling average.",
-        default=10,
-    )
-
-    parser.add_argument(
-        "--softmax.beta",
-        type=float,
-        help="Negative beta to give higher weight to lower scores.",
-        default=-0.2,
-    )
-
 
 def config(cls):
     """
