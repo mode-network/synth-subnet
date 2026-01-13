@@ -9,8 +9,6 @@
 - [5. Options](#5-options)
   - [5.1. Common Options](#51-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
-    - [`--ewma.window_days INTEGER`](#--ewmawindow_days-integer)
-    - [`--softmax.beta FLOAT`](#--softmaxbeta-float)
     - [`--logging.debug`](#--loggingdebug)
     - [`--logging.info`](#--logginginfo)
     - [`--logging.trace`](#--loggingtrace)
@@ -279,72 +277,6 @@ for testnet it's:
 
 ```shell
 pm2 start validator.test.config.js -- --axon.port 8091
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-#### `--ewma.window_days INTEGER`
-
-The window in days for the rolling average, (e.g. 10).
-
-Default: `10`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: "validator",
-      interpreter: "python3",
-      script: "./neurons/validator.py",
-      args: "--ewma.window_days 10",
-      env: {
-        PYTHONPATH: ".",
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-
-```shell
-pm2 start validator.config.js -- --ewma.window_days 10
-```
-
-<sup>[Back to top ^][table-of-contents]</sup>
-
-#### `--softmax.beta FLOAT`
-
-Negative beta to give higher weight to lower scores for the 1h prompt
-
-Default: `-0.2`
-
-Example:
-
-```js
-// validator.config.js
-module.exports = {
-  apps: [
-    {
-      name: "validator",
-      interpreter: "python3",
-      script: "./neurons/validator.py",
-      args: "--softmax.beta -0.2",
-      env: {
-        PYTHONPATH: ".",
-      },
-    },
-  ],
-};
-```
-
-Alternatively, you can add the args directly to the command:
-
-```shell
-pm2 start validator.config.js -- --softmax.beta -0.2
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -779,10 +711,10 @@ Example:
 module.exports = {
   apps: [
     {
-      name: 'validator',
-      interpreter: 'python3',
-      script: './neurons/validator.py',
-      args: '--neuron.nprocs 2',
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.nprocs 2",
       env: {
         PYTHONPATH: ".",
       },

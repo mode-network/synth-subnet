@@ -75,7 +75,6 @@ class Validator(BaseValidatorNeuron):
 
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.miner_uids: list[int] = []
-        HIGH_FREQUENCY.softmax_beta = self.config.softmax.beta
 
         self.assert_assets_supported()
 
