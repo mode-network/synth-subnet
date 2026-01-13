@@ -1,5 +1,3 @@
-import sys
-import traceback
 from typing import List, Optional, Tuple, Type, Union
 import time
 import asyncio
@@ -268,5 +266,4 @@ def log_exception(exception: Exception):
         # bt.logging.trace(f"{error_type}#{error_id}: {exception}")
         pass
     else:
-        bt.logging.error(f"{error_type}#{error_id}: {exception}")
-        traceback.print_exc(file=sys.stderr)
+        bt.logging.exception(f"{error_type}#{error_id}: {exception}")
