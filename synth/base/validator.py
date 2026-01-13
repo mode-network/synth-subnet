@@ -133,8 +133,8 @@ class BaseValidatorNeuron(BaseNeuron):
             exit()
 
         # In case of unforeseen errors, the validator will log the error and continue operations.
-        except Exception as err:
-            bt.logging.exception(f"Error during validation: {str(err)}")
+        except Exception:
+            bt.logging.exception("Error during validation")
 
     def set_weights(self):
         """
