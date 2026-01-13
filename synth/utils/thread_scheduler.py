@@ -68,7 +68,6 @@ class ThreadScheduler:
             next_cycle = cycle_start_time + timedelta(
                 minutes=prompt_config.total_cycle_minutes / len(asset_list)
             )
-            next_cycle = round_time_to_minutes(next_cycle)
             next_cycle_diff = next_cycle - get_current_time()
             delay = int(next_cycle_diff.total_seconds())
             if delay < 0:
