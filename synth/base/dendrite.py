@@ -174,9 +174,6 @@ class SynthDendrite(bt.Dendrite):
         )
 
         try:
-            # Log outgoing request
-            self._log_outgoing_request(synapse)
-
             # Make the HTTP POST request
             response = await client.post(
                 url=url,
@@ -201,8 +198,6 @@ class SynthDendrite(bt.Dendrite):
             synapse = self.process_error_message(synapse, request_name, e)
 
         finally:
-            self._log_incoming_response(synapse)
-
             # Return the updated synapse object after deserializing if requested
             return synapse
 
