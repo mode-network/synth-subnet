@@ -1,10 +1,8 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
-from datetime import datetime, timedelta
+from datetime import datetime
 import multiprocessing as mp
-import sched
-import time
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -32,6 +30,7 @@ from synth.utils.helpers import (
     round_time_to_minutes,
 )
 from synth.utils.logging import setup_gcp_logging
+from synth.utils.thread_scheduler import ThreadScheduler
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_scores,
@@ -71,7 +70,12 @@ class Validator(BaseValidatorNeuron):
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
 
-        self.scheduler = sched.scheduler(time.time, time.sleep)
+        self.scheduler_low = ThreadScheduler(
+            LOW_FREQUENCY, self.cycle_low_frequency, self.miner_data_handler
+        )
+        self.scheduler_high = ThreadScheduler(
+            HIGH_FREQUENCY, self.cycle_high_frequency, self.miner_data_handler
+        )
         self.miner_uids: list[int] = []
 
         PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
@@ -90,95 +94,27 @@ class Validator(BaseValidatorNeuron):
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
         )
-        self.schedule_cycle(get_current_time(), HIGH_FREQUENCY, True)
-        self.schedule_cycle(get_current_time(), LOW_FREQUENCY, True)
-        self.scheduler.run()
+        self.scheduler_low.schedule_cycle(get_current_time(), True)
+        self.scheduler_high.schedule_cycle(get_current_time(), True)
 
-    def schedule_cycle(
-        self,
-        cycle_start_time: datetime,
-        prompt_config: PromptConfig,
-        immediately: bool = False,
-    ):
-        delay = self.select_delay(
-            prompt_config.asset_list,
-            cycle_start_time,
-            prompt_config,
-            immediately,
-        )
-        latest_asset = self.miner_data_handler.get_latest_asset(
-            prompt_config.time_length
-        )
-        asset = self.select_asset(latest_asset, prompt_config.asset_list)
-
-        bt.logging.info(
-            f"Scheduling next {prompt_config.label} frequency cycle for asset {asset} in {delay} seconds"
-        )
-
-        method = (
-            self.cycle_low_frequency
-            if prompt_config.label == LOW_FREQUENCY.label
-            else self.cycle_high_frequency
-        )
-        self.scheduler.enter(
-            delay=delay,
-            priority=1,
-            action=method,
-            argument=(asset,),
-        )
-
-    @staticmethod
-    def select_delay(
-        asset_list: list[str],
-        cycle_start_time: datetime,
-        prompt_config: PromptConfig,
-        immediately: bool,
-    ) -> int:
-        delay = prompt_config.initial_delay
-        if not immediately:
-            next_cycle = cycle_start_time + timedelta(
-                minutes=prompt_config.total_cycle_minutes / len(asset_list)
-            )
-            next_cycle = round_time_to_minutes(next_cycle)
-            next_cycle_diff = next_cycle - get_current_time()
-            delay = int(next_cycle_diff.total_seconds())
-            if delay < 0:
-                delay = 0
-
-        return delay
-
-    @staticmethod
-    def select_asset(latest_asset: str | None, asset_list: list[str]) -> str:
-        asset = asset_list[0]
-
-        if latest_asset is not None and latest_asset in asset_list:
-            latest_index = asset_list.index(latest_asset)
-            asset = asset_list[(latest_index + 1) % len(asset_list)]
-
-        return asset
-
-    def cycle_low_frequency(self, asset: str):
-        bt.logging.info(f"starting the {LOW_FREQUENCY.label} frequency cycle")
-        cycle_start_time = get_current_time()
+    async def cycle_low_frequency(self, asset: str):
+        bt.logging.info("starting the low frequency cycle")
 
         # update the miners, also for the high frequency prompt that will use the same list
         self.miner_uids = get_available_miners_and_update_metagraph_history(
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
         )
-        self.forward_prompt(asset, LOW_FREQUENCY)
+        await self.forward_prompt(asset, LOW_FREQUENCY)
         self.forward_score()
         # self.cleanup_history()
         self.sync()
-        self.schedule_cycle(cycle_start_time, LOW_FREQUENCY)
 
-    def cycle_high_frequency(self, asset: str):
-        cycle_start_time = get_current_time()
+    async def cycle_high_frequency(self, asset: str):
+        bt.logging.info("starting the high frequency cycle")
+        await self.forward_prompt(asset, HIGH_FREQUENCY)
 
-        self.forward_prompt(asset, HIGH_FREQUENCY)
-        self.schedule_cycle(cycle_start_time, HIGH_FREQUENCY)
-
-    def forward_prompt(self, asset: str, prompt_config: PromptConfig):
+    async def forward_prompt(self, asset: str, prompt_config: PromptConfig):
         bt.logging.info(
             f"forward prompt for {asset} in {prompt_config.label} frequency"
         )
@@ -202,7 +138,7 @@ class Validator(BaseValidatorNeuron):
             num_simulations=prompt_config.num_simulations,
         )
 
-        query_available_miners_and_save_responses(
+        await query_available_miners_and_save_responses(
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
             miner_uids=self.miner_uids,

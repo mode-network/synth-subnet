@@ -188,13 +188,6 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
-        "--neuron.nprocs",
-        type=int,
-        help="The number of processes to run for the validator dendrite.",
-        default=2,
-    )
-
-    parser.add_argument(
         "--neuron.sample_size",
         type=int,
         help="The number of miners to query in a single step.",
