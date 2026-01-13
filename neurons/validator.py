@@ -74,8 +74,8 @@ class Validator(BaseValidatorNeuron):
         self.scheduler = sched.scheduler(time.time, time.sleep)
         self.miner_uids: list[int] = []
 
-        PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY)
-        PriceDataProvider.assert_assets_supported(LOW_FREQUENCY)
+        PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
+        PriceDataProvider.assert_assets_supported(LOW_FREQUENCY.asset_list)
 
     def forward_validator(self):
         """
@@ -167,7 +167,7 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
         )
         self.forward_prompt(asset, LOW_FREQUENCY)
-        self.forward_score_low_frequency()
+        self.forward_score()
         # self.cleanup_history()
         self.sync()
         self.schedule_cycle(cycle_start_time, LOW_FREQUENCY)
@@ -179,7 +179,9 @@ class Validator(BaseValidatorNeuron):
         self.schedule_cycle(cycle_start_time, HIGH_FREQUENCY)
 
     def forward_prompt(self, asset: str, prompt_config: PromptConfig):
-        bt.logging.info(f"forward prompt for {prompt_config.label} frequency")
+        bt.logging.info(
+            f"forward prompt for {asset} in {prompt_config.label} frequency"
+        )
         if len(self.miner_uids) == 0:
             bt.logging.error(
                 "No miners available",
@@ -208,7 +210,7 @@ class Validator(BaseValidatorNeuron):
             request_time=request_time,
         )
 
-    def forward_score_low_frequency(self):
+    def forward_score(self):
         # ================= Step 3 ================= #
         # Calculate rewards based on historical predictions data
         # from the miner_predictions table:
