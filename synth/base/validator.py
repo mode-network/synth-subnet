@@ -196,6 +196,9 @@ class BaseValidatorNeuron(BaseNeuron):
             version_key=self.spec_version,
         )
 
+        if msg is None:
+            msg = ""
+
         return result, msg, uint_uids, uint_weights
 
     def resync_metagraph(self):

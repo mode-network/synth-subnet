@@ -26,11 +26,11 @@ class ThreadScheduler:
         self.miner_data_handler = miner_data_handler
 
     def enter(self, *args):
+        cycle_start_time = get_current_time()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.target(*args))
         loop.close()
-        cycle_start_time = get_current_time()
         self.schedule_cycle(cycle_start_time)
 
     def schedule_cycle(
@@ -68,7 +68,12 @@ class ThreadScheduler:
             next_cycle = cycle_start_time + timedelta(
                 minutes=prompt_config.total_cycle_minutes / len(asset_list)
             )
-            next_cycle = round_time_to_minutes(next_cycle)
+            next_cycle = round_time_to_minutes(
+                next_cycle
+            )  # round to the next minutes
+            next_cycle = next_cycle - timedelta(
+                minutes=1
+            )  # subtract 1 minute to align with the desired frequency
             next_cycle_diff = next_cycle - get_current_time()
             delay = int(next_cycle_diff.total_seconds())
             if delay < 0:
