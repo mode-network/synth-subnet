@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from threading import Timer
 import asyncio
 
@@ -38,8 +38,15 @@ class ThreadScheduler:
     ):
         prompt_config = self.prompt_config
 
+        new_equities_launch = datetime(
+            2026, 1, 20, 14, 0, 0, tzinfo=timezone.utc
+        )
+        asset_list = prompt_config.asset_list
+        if get_current_time() <= new_equities_launch:
+            asset_list = asset_list[:4]
+
         delay = self.select_delay(
-            prompt_config.asset_list,
+            asset_list,
             cycle_start_time,
             prompt_config,
             immediately,
@@ -47,7 +54,7 @@ class ThreadScheduler:
         latest_asset = self.miner_data_handler.get_latest_asset(
             prompt_config.time_length
         )
-        asset = self.select_asset(latest_asset, prompt_config.asset_list)
+        asset = self.select_asset(latest_asset, asset_list)
 
         bt.logging.info(
             f"Scheduling next {prompt_config.label} frequency cycle for asset {asset} in {delay} seconds"
