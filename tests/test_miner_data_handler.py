@@ -62,7 +62,7 @@ def test_get_values_within_range(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 1
 
-    result = handler.get_miner_prediction(
+    result = handler.get_predictions_by_request(
         miner_uid, int(validator_requests[0].id)
     )
 
@@ -191,7 +191,7 @@ def test_multiple_records_for_same_miner(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 2
 
-    result = handler.get_miner_prediction(
+    result = handler.get_predictions_by_request(
         miner_uid, int(validator_requests[1].id)
     )
 
@@ -278,7 +278,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 1
 
-    result = handler.get_miner_prediction(
+    result = handler.get_predictions_by_request(
         miner_uid, int(validator_requests[0].id)
     )
 
@@ -350,7 +350,7 @@ def test_get_values_incorrect_format(db_engine: Engine):
     )
     assert validator_requests is not None
     assert len(validator_requests) == 1
-    result = handler.get_miner_prediction(
+    result = handler.get_predictions_by_request(
         miner_uid, int(validator_requests[0].id)
     )
 

@@ -262,47 +262,16 @@ class MinerDataHandler:
                 f"in set_miner_scores (got an exception): {e}"
             )
 
-    def get_miner_uid_of_prediction_request(
+    @print_execution_time
+    def get_predictions_by_request(
         self, validator_request_id: int
-    ) -> typing.Optional[list[int]]:
-        """Retrieve the miner_uid of the given validator_request_id."""
-        try:
-            with self.engine.connect() as connection:
-                query = (
-                    select(
-                        Miner.miner_uid,
-                    )
-                    .select_from(MinerPrediction)
-                    .join(
-                        Miner,
-                        Miner.id == MinerPrediction.miner_id,
-                    )
-                    .where(
-                        MinerPrediction.validator_requests_id
-                        == validator_request_id
-                    )
-                )
-
-                data = connection.execute(query).fetchall()
-                result = []
-                for row in data:
-                    result.append(row.miner_uid)
-
-            return result
-        except Exception as e:
-            bt.logging.exception(
-                f"in get_miner_uid_of_prediction_request (got an exception): {e}"
-            )
-            return None
-
-    def get_miner_prediction(
-        self, miner_uid: int, validator_request_id: int
     ) -> typing.Optional[MinerPrediction]:
         """Retrieve the record with the longest valid interval for the given miner_id."""
         try:
             with self.engine.connect() as connection:
                 query = (
                     select(
+                        Miner.miner_uid,
                         MinerPrediction.id,
                         MinerPrediction.prediction,
                         MinerPrediction.format_validation,
@@ -314,22 +283,15 @@ class MinerDataHandler:
                         Miner.id == MinerPrediction.miner_id,
                     )
                     .where(
-                        Miner.miner_uid == miner_uid,
                         MinerPrediction.validator_requests_id
                         == validator_request_id,
                     )
                     .limit(1)
                 )
 
-                result = MinerPrediction()
-                row = connection.execute(query).fetchone()
-                if row is not None:
-                    result.id = row.id
-                    result.prediction = row.prediction
-                    result.format_validation = row.format_validation
-                    result.process_time = row.process_time
+                row = connection.execute(query).fetchall()
 
-            return result
+            return row
         except Exception as e:
             bt.logging.exception(
                 f"in get_miner_prediction (got an exception): {e}"

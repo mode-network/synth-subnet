@@ -26,7 +26,7 @@ import pandas as pd
 import bittensor as bt
 
 
-from synth.db.models import MinerPrediction, ValidatorRequest
+from synth.db.models import ValidatorRequest
 from synth.utils.helpers import adjust_predictions
 from synth.utils.logging import print_execution_time
 from synth.validator.crps_calculation import calculate_crps_for_miner
@@ -38,13 +38,15 @@ from synth.validator import prompt_config
 
 @print_execution_time
 def reward(
-    miner_prediction: MinerPrediction | None,
-    miner_uid: int,
-    validator_request: ValidatorRequest,
+    miner_prediction: object | None,
+    time_length: int,
+    time_increment: int,
     real_prices: list[float],
 ):
     if miner_prediction is None:
         return -1, [], None
+
+    miner_uid = miner_prediction.miner_uid
 
     if miner_prediction.format_validation != response_validation_v2.CORRECT:
         return -1, [], miner_prediction
@@ -59,8 +61,7 @@ def reward(
 
     scoring_intervals = (
         prompt_config.HIGH_FREQUENCY.scoring_intervals
-        if validator_request.time_length
-        == prompt_config.HIGH_FREQUENCY.time_length
+        if time_length == prompt_config.HIGH_FREQUENCY.time_length
         else prompt_config.LOW_FREQUENCY.scoring_intervals
     )
 
@@ -68,7 +69,7 @@ def reward(
         score, detailed_crps_data = calculate_crps_for_miner(
             simulation_runs,
             np.array(real_prices),
-            int(validator_request.time_increment),
+            int(time_increment),
             scoring_intervals,
         )
         t3 = time.time()
@@ -109,14 +110,6 @@ def get_rewards(
     Returns:
     - np.ndarray: An array of rewards for the given query and responses.
     """
-
-    miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
-        int(validator_request.id)
-    )
-
-    if miner_uids is None:
-        return None, [], []
-
     try:
         real_prices = price_data_provider.fetch_data(validator_request)
     except Exception as e:
@@ -125,14 +118,8 @@ def get_rewards(
         )
         return None, [], []
 
-    t0 = time.time()
-    predictions: dict[int, MinerPrediction] = {}
-    for miner_uid in miner_uids:
-        predictions[miner_uid] = miner_data_handler.get_miner_prediction(
-            miner_uid, int(validator_request.id)
-        )
-    bt.logging.info(
-        f"Prefetched {len(predictions)} predictions in {time.time()-t0:.2f}s"
+    predictions = miner_data_handler.get_predictions_by_request(
+        int(validator_request.id)
     )
 
     scores = []
@@ -144,12 +131,12 @@ def get_rewards(
         futures = [
             executor.submit(
                 reward,
-                predictions[miner_uid],
-                miner_uid,
-                validator_request,
+                prediction,
+                validator_request.time_length,
+                validator_request.time_increment,
                 real_prices,
             )
-            for miner_uid in miner_uids
+            for prediction in predictions
         ]
 
         # Collect results in order
@@ -176,7 +163,7 @@ def get_rewards(
     # for log and debug purposes
     detailed_info = [
         {
-            "miner_uid": miner_uid,
+            "miner_uid": prediction.miner_uid,
             "prompt_score_v3": float(prompt_score),
             "percentile90": float(percentile90),
             "lowest_score": float(lowest_score),
@@ -194,8 +181,8 @@ def get_rewards(
             "total_crps": float(score),
             "crps_data": clean_numpy_in_crps_data(crps_data),
         }
-        for miner_uid, score, crps_data, prompt_score, miner_prediction in zip(
-            miner_uids,
+        for prediction, score, crps_data, prompt_score, miner_prediction in zip(
+            predictions,
             scores,
             detailed_crps_data_list,
             prompt_scores,
