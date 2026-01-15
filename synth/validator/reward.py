@@ -35,6 +35,7 @@ from synth.validator import response_validation_v2
 from synth.validator import prompt_config
 
 
+@print_execution_time
 def reward(
     miner_data_handler: MinerDataHandler,
     miner_uid: int,
@@ -185,6 +186,7 @@ def get_rewards(
     return prompt_scores, detailed_info, real_prices
 
 
+@print_execution_time
 def compute_prompt_scores(score_values: np.ndarray):
     if np.all(score_values == -1):
         return None, 0, 0
