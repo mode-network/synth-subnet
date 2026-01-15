@@ -2,6 +2,7 @@
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
 from datetime import datetime
+import time
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -29,7 +30,7 @@ from synth.utils.helpers import (
     round_time_to_minutes,
 )
 from synth.utils.logging import print_execution_time, setup_gcp_logging
-from synth.utils.thread_scheduler import ThreadScheduler, ThreadSchedulerScore
+from synth.utils.thread_scheduler import ThreadScheduler
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_scores,
@@ -81,7 +82,6 @@ class Validator(BaseValidatorNeuron):
             self.cycle_high_frequency,
             self.miner_data_handler,
         )
-        self.scheduler_score = ThreadSchedulerScore(self.forward_score)
         self.miner_uids: list[int] = []
 
         PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
@@ -102,7 +102,14 @@ class Validator(BaseValidatorNeuron):
         )
         self.scheduler_low.schedule_cycle(get_current_time(), True)
         self.scheduler_high.schedule_cycle(get_current_time(), True)
-        self.scheduler_score.schedule_cycle()
+        while True:
+            self.forward_score()
+            delay = 10
+            bt.logging.info(
+                f"Sleeping for {delay} seconds before next score calculation",
+                "forward_validator",
+            )
+            time.sleep(delay)
 
     async def cycle_low_frequency(self, asset: str):
         bt.logging.info(

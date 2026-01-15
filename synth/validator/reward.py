@@ -14,6 +14,7 @@
 import typing
 import traceback
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
 # THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -25,7 +26,7 @@ import pandas as pd
 import bittensor as bt
 
 
-from synth.db.models import ValidatorRequest
+from synth.db.models import MinerPrediction, ValidatorRequest
 from synth.utils.helpers import adjust_predictions
 from synth.utils.logging import print_execution_time
 from synth.validator.crps_calculation import calculate_crps_for_miner
@@ -37,7 +38,7 @@ from synth.validator import prompt_config
 
 @print_execution_time
 def reward(
-    miner_data_handler: MinerDataHandler,
+    miner_prediction: MinerPrediction | None,
     miner_uid: int,
     validator_request: ValidatorRequest,
     real_prices: list[float],
@@ -49,9 +50,7 @@ def reward(
     Returns:
     - float: The reward value for the miner.
     """
-    miner_prediction = miner_data_handler.get_miner_prediction(
-        miner_uid, int(validator_request.id)
-    )
+    # function that calculates a score for an individual miner
 
     if miner_prediction is None:
         return -1, [], None
@@ -132,14 +131,30 @@ def get_rewards(
     scores = []
     detailed_crps_data_list = []
     miner_prediction_list = []
-    for miner_uid in miner_uids:
-        # function that calculates a score for an individual miner
-        score, detailed_crps_data, miner_prediction = reward(
-            miner_data_handler,
-            miner_uid,
-            validator_request,
-            real_prices,
-        )
+
+    # Submit ALL tasks first, THEN collect results
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        futures = [
+            executor.submit(
+                reward,
+                miner_data_handler.get_miner_prediction(
+                    miner_uid, int(validator_request.id)
+                ),
+                miner_uid,
+                validator_request,
+                real_prices,
+            )
+            for miner_uid in miner_uids
+        ]
+
+        # Collect results in order
+        results = [f.result() for f in futures]
+
+    scores = []
+    detailed_crps_data_list = []
+    miner_prediction_list = []
+
+    for score, detailed_crps_data, miner_prediction in results:
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
         miner_prediction_list.append(miner_prediction)

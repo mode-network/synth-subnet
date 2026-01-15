@@ -111,26 +111,3 @@ class ThreadScheduler:
             asset = asset_list[(latest_index + 1) % len(asset_list)]
 
         return asset
-
-
-class ThreadSchedulerScore:
-    def __init__(
-        self,
-        target: callable,
-    ):
-        self.target = target
-
-    def enter(self):
-        self.target()
-        self.schedule_cycle()
-
-    def schedule_cycle(self):
-        bt.logging.info(
-            "Scheduling next score calculation cycle in 10 seconds"
-        )
-
-        self.thread = Timer(
-            10,
-            self.enter,
-        )
-        self.thread.start()
