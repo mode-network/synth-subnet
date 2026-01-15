@@ -34,6 +34,7 @@ from synth.utils.helpers import (
     timeout_from_start_time,
     convert_list_elements_to_str,
 )
+from synth.utils.logging import print_execution_time
 from synth.utils.uids import check_uid_availability
 from synth.validator import prompt_config
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -50,6 +51,7 @@ from synth.validator.response_validation_v2 import (
 from synth.validator.reward import get_rewards, print_scores_df
 
 
+@print_execution_time
 def send_weights_to_bittensor_and_update_weights_history(
     base_neuron: BaseValidatorNeuron,
     moving_averages_data: list[dict],
@@ -84,6 +86,7 @@ def send_weights_to_bittensor_and_update_weights_history(
     )
 
 
+@print_execution_time
 def calculate_moving_average_and_update_rewards(
     miner_data_handler: MinerDataHandler,
     scored_time: datetime,
@@ -118,6 +121,7 @@ def calculate_moving_average_and_update_rewards(
     return combine_moving_averages(moving_averages_data)
 
 
+@print_execution_time
 def calculate_scores(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
@@ -167,6 +171,7 @@ def calculate_scores(
     return fail_count != len(validator_requests)
 
 
+@print_execution_time
 async def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
@@ -233,6 +238,7 @@ async def query_available_miners_and_save_responses(
         bt.logging.info("skip saving because no prediction")
 
 
+@print_execution_time
 def get_available_miners_and_update_metagraph_history(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,

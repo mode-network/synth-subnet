@@ -28,7 +28,7 @@ from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
 )
-from synth.utils.logging import setup_gcp_logging
+from synth.utils.logging import print_execution_time, setup_gcp_logging
 from synth.utils.thread_scheduler import ThreadScheduler
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
@@ -156,6 +156,7 @@ class Validator(BaseValidatorNeuron):
             request_time=request_time,
         )
 
+    @print_execution_time
     def forward_score(self):
         # ================= Step 3 ================= #
         # Calculate rewards based on historical predictions data

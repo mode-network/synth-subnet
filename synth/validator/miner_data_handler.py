@@ -39,6 +39,7 @@ from synth.db.models import (
     WeightsUpdateHistory,
 )
 from synth.simulation_input import SimulationInput
+from synth.utils.logging import print_execution_time
 from synth.validator import prompt_config, response_validation_v2
 
 
@@ -109,6 +110,7 @@ class MinerDataHandler:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
+    @print_execution_time
     def save_responses(
         self,
         miner_predictions: dict,
@@ -185,6 +187,7 @@ class MinerDataHandler:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
+    @print_execution_time
     def set_miner_scores(
         self,
         real_prices: list[dict],
@@ -293,6 +296,7 @@ class MinerDataHandler:
             )
             return None
 
+    @print_execution_time
     def get_miner_prediction(
         self, miner_uid: int, validator_request_id: int
     ) -> typing.Optional[MinerPrediction]:
@@ -467,6 +471,7 @@ class MinerDataHandler:
                 f"in update_metagraph_history (got an exception): {e}"
             )
 
+    @print_execution_time
     def get_miner_scores(
         self,
         scored_time: datetime,
@@ -539,6 +544,7 @@ class MinerDataHandler:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
+    @print_execution_time
     def update_miner_rewards(self, miner_rewards_data: list[dict]):
         try:
             with self.engine.connect() as connection:

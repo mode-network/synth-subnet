@@ -1,6 +1,9 @@
+import asyncio
+import functools
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+import time
 import bittensor as bt
 
 import google.cloud.logging
@@ -137,3 +140,30 @@ def close_gcp_logging(handler, client):
             client.close()
         except Exception as e:
             bt.logging.warning(f"Error closing GCP log client: {e}")
+
+
+def print_execution_time(func):
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        start = time.time()
+        result = await func(*args, **kwargs)
+        end = time.time()
+        bt.logging.info(
+            f"Execution time for {func.__name__}: {end - start:.4f} seconds"
+        )
+        return result
+
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        bt.logging.info(
+            f"Execution time for {func.__name__}: {end - start:.4f} seconds"
+        )
+        return result
+
+    if asyncio.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper
