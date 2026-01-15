@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
-from threading import Timer
+from multiprocessing import Process
 import asyncio
+import time
 
 
 import bittensor as bt
@@ -28,17 +29,14 @@ class ThreadScheduler:
         self.miner_data_handler = miner_data_handler
 
     def enter(self, *args):
-        asset, _ = args
-        # handler, client = setup_gcp_logging(
-        #     self.log_id_prefix, f"{asset}-{prompt_label}"
-        # )
+        delay, asset, _ = args
+        time.sleep(delay)
         cycle_start_time = get_current_time()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.target(asset))
         loop.close()
         self.schedule_cycle(cycle_start_time)
-        # close_gcp_logging(handler, client)
 
     def schedule_cycle(
         self, cycle_start_time: datetime, immediately: bool = False
@@ -67,15 +65,8 @@ class ThreadScheduler:
             f"Scheduling next {prompt_config.label} frequency cycle for asset {asset} in {delay} seconds"
         )
 
-        self.thread = Timer(
-            delay,
-            self.enter,
-            (
-                asset,
-                prompt_config.label,
-            ),
-        )
-        self.thread.start()
+        self.process = Process(target=self.enter, args=(delay, asset, prompt_config.label))
+        self.process.start()
 
     @staticmethod
     def select_delay(
