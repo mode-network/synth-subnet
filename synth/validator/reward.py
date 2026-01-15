@@ -12,7 +12,7 @@
 # the Software.
 
 import typing
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor
 import time
 
 
@@ -36,62 +36,56 @@ from synth.validator import response_validation_v2
 from synth.validator import prompt_config
 
 
-@print_execution_time
-def reward(
-    miner_prediction: object | None,
-    time_length: int,
-    time_increment: int,
-    real_prices: list[float],
-):
-    if miner_prediction is None:
-        return -1, [], None
+# Module level - must be picklable
+def _crps_worker(args):
+    """Standalone worker - no database, no complex objects"""
+    (
+        miner_uid,
+        prediction_array,
+        real_prices,
+        time_increment,
+        scoring_intervals,
+        format_validation,
+    ) = args
 
-    miner_uid = miner_prediction.miner_uid
+    # Early returns
+    if prediction_array is None:
+        return (miner_uid, -1, [], None, format_validation)
 
-    if miner_prediction.format_validation != response_validation_v2.CORRECT:
-        return -1, [], miner_prediction
+    if format_validation != "CORRECT":  # Use string, not enum
+        return (miner_uid, -1, [], None, format_validation)
 
     if len(real_prices) == 0:
-        return -1, [], miner_prediction
-
-    t1 = time.time()
-    predictions_path = adjust_predictions(list(miner_prediction.prediction))
-    simulation_runs = np.array(predictions_path).astype(float)
-    t2 = time.time()
-
-    scoring_intervals = (
-        prompt_config.HIGH_FREQUENCY.scoring_intervals
-        if time_length == prompt_config.HIGH_FREQUENCY.time_length
-        else prompt_config.LOW_FREQUENCY.scoring_intervals
-    )
+        return (miner_uid, -1, [], None, format_validation)
 
     try:
+        simulation_runs = np.array(prediction_array).astype(float)
         score, detailed_crps_data = calculate_crps_for_miner(
             simulation_runs,
             np.array(real_prices),
             int(time_increment),
             scoring_intervals,
         )
-        t3 = time.time()
-    except Exception:
-        bt.logging.exception(
-            f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction.id}"
-        )
-        return -1, [], miner_prediction
 
-    bt.logging.info(
-        f"Miner {miner_uid} timing: "
-        f"prepare_data={t2-t1:.3f}s, "
-        f"calculate_crps={t3-t2:.3f}s"
-    )
+        if np.isnan(score):
+            return (miner_uid, -1, detailed_crps_data, None, format_validation)
 
-    if np.isnan(score):
-        bt.logger.warning(
-            f"CRPS calculation returned NaN for miner {miner_uid} with prediction_id {miner_prediction.id}"
-        )
-        return -1, detailed_crps_data, miner_prediction
+        return (miner_uid, score, detailed_crps_data, None, format_validation)
 
-    return score, detailed_crps_data, miner_prediction
+    except Exception as e:
+        return (miner_uid, -1, [], str(e), format_validation)
+
+
+# Global executor - create once
+_PROCESS_EXECUTOR = None
+
+
+def get_process_executor():
+    global _PROCESS_EXECUTOR
+    if _PROCESS_EXECUTOR is None:
+        # Use more workers for 255 miners
+        _PROCESS_EXECUTOR = ProcessPoolExecutor(max_workers=8)
+    return _PROCESS_EXECUTOR
 
 
 @print_execution_time
@@ -113,43 +107,82 @@ def get_rewards(
     try:
         real_prices = price_data_provider.fetch_data(validator_request)
     except Exception as e:
-        bt.logging.warning(
-            f"Error fetching data for validator request {validator_request.id}: {e}"
-        )
+        bt.logging.warning(f"Error fetching data: {e}")
         return None, [], []
 
+    # ✅ Step 1: Prefetch all predictions (I/O bound - do sequentially or with ThreadPool)
+    t0 = time.time()
     predictions = miner_data_handler.get_predictions_by_request(
         int(validator_request.id)
     )
+    bt.logging.info(f"Prefetch done in {time.time() - t0:.2f}s")
 
-    scores = []
-    detailed_crps_data_list = []
-    miner_prediction_list = []
+    # ✅ Step 2: Prepare picklable work items
+    scoring_intervals = (
+        prompt_config.HIGH_FREQUENCY.scoring_intervals
+        if validator_request.time_length
+        == prompt_config.HIGH_FREQUENCY.time_length
+        else prompt_config.LOW_FREQUENCY.scoring_intervals
+    )
 
-    # Submit ALL tasks first, THEN collect results
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        futures = [
-            executor.submit(
-                reward,
-                prediction,
-                validator_request.time_length,
-                validator_request.time_increment,
-                real_prices,
+    work_items = []
+    for pred in predictions:
+        if pred is None:
+            work_items.append(
+                (
+                    pred.miner_uid,
+                    None,
+                    real_prices,
+                    int(validator_request.time_increment),
+                    scoring_intervals,
+                    None,
+                )
             )
-            for prediction in predictions
-        ]
+        else:
+            # Convert to picklable types
+            prediction_array = adjust_predictions(list(pred.prediction))
+            format_val = pred.format_validation
+            # Convert enum to string if needed
+            if hasattr(format_val, "value"):
+                format_val = format_val.value
+            elif format_val == response_validation_v2.CORRECT:
+                format_val = "CORRECT"
+            else:
+                format_val = str(format_val)
 
-        # Collect results in order
-        results = [f.result() for f in futures]
+            work_items.append(
+                (
+                    pred.miner_uid,
+                    prediction_array,
+                    real_prices,
+                    int(validator_request.time_increment),
+                    scoring_intervals,
+                    format_val,
+                )
+            )
 
+    # ✅ Step 3: Process in parallel (CPU bound - use ProcessPool)
+    bt.logging.info(f"Starting CRPS calculation for {len(work_items)} miners")
+    t0 = time.time()
+
+    executor = get_process_executor()
+    results = list(executor.map(_crps_worker, work_items))
+
+    bt.logging.info(f"CRPS done in {time.time() - t0:.2f}s")
+
+    # ✅ Step 4: Rebuild results
     scores = []
     detailed_crps_data_list = []
     miner_prediction_list = []
 
-    for score, detailed_crps_data, miner_prediction in results:
+    # Create lookup for original prediction objects
+    for miner_uid, score, detailed_crps_data, error, format_val in results:
+        if error:
+            bt.logging.error(f"Miner {miner_uid} error: {error}")
+
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
-        miner_prediction_list.append(miner_prediction)
+        miner_prediction_list.append(predictions[miner_uid])
 
     score_values = np.array(scores)
     prompt_scores, percentile90, lowest_score = compute_prompt_scores(
@@ -159,11 +192,9 @@ def get_rewards(
     if prompt_scores is None:
         return None, [], []
 
-    # gather all the detailed information
-    # for log and debug purposes
     detailed_info = [
         {
-            "miner_uid": prediction.miner_uid,
+            "miner_uid": pred.miner_uid,
             "prompt_score_v3": float(prompt_score),
             "percentile90": float(percentile90),
             "lowest_score": float(lowest_score),
@@ -181,7 +212,7 @@ def get_rewards(
             "total_crps": float(score),
             "crps_data": clean_numpy_in_crps_data(crps_data),
         }
-        for prediction, score, crps_data, prompt_score, miner_prediction in zip(
+        for pred, score, crps_data, prompt_score, miner_prediction in zip(
             predictions,
             scores,
             detailed_crps_data_list,
