@@ -77,7 +77,7 @@ def setup_wandb_alert(wandb_run):
 
 
 def setup_gcp_logging(
-    log_id_prefix: str | None, cycle_label: str | None
+    log_id_prefix: str | None, cycle_label: str | None = None
 ) -> None:
     log_id = f"{log_id_prefix}-synth-validator"
     bt.logging.info(f"setting up GCP log forwarder with log_id: {log_id}")
