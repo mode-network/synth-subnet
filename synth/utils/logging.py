@@ -78,9 +78,20 @@ def setup_wandb_alert(wandb_run):
 
 def setup_gcp_logging(
     log_id_prefix: str | None, cycle_label: str | None = None
-) -> None:
+) -> tuple[
+    google.cloud.logging.handlers.CloudLoggingHandler | None,
+    google.cloud.logging.Client | None,
+]:
+    """
+    Sets up GCP logging and returns the handler and client for manual flushing/closing.
+    Call close_gcp_logging(handler, client) before shutdown to avoid losing logs.
+    """
     log_id = f"{log_id_prefix}-synth-validator"
-    bt.logging.info(f"setting up GCP log forwarder with log_id: {log_id}")
+    bt.logging.info(
+        f"setting up GCP log forwarder with log_id: {log_id} and cycle_label: {cycle_label}"
+    )
+    handler = None
+    client = None
     try:
         client = google.cloud.logging.Client()
     except google.auth.exceptions.GoogleAuthError as e:
@@ -97,6 +108,29 @@ def setup_gcp_logging(
             labels = {"log_id": log_id}
             if cycle_label is not None:
                 labels["cycle_label"] = cycle_label
-            client.setup_logging(labels=labels)
+            client.setup_logging(log_level=logging.DEBUG, labels=labels)
             handler = google.cloud.logging.handlers.CloudLoggingHandler(client)
             setup_logging(handler)
+
+    return handler, client
+
+
+def close_gcp_logging(handler, client):
+    """
+    Flushes and closes the GCP logging handler and client to ensure all logs are sent.
+    Call this before process shutdown.
+    """
+    if handler is not None:
+        try:
+            handler.flush()
+        except Exception as e:
+            bt.logging.warning(f"Error flushing GCP log handler: {e}")
+        try:
+            handler.close()
+        except Exception as e:
+            bt.logging.warning(f"Error closing GCP log handler: {e}")
+    if client is not None:
+        try:
+            client.close()
+        except Exception as e:
+            bt.logging.warning(f"Error closing GCP log client: {e}")
