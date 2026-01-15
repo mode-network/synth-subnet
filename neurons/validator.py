@@ -2,7 +2,6 @@
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
 from datetime import datetime
-import multiprocessing as mp
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -250,5 +249,4 @@ class Validator(BaseValidatorNeuron):
 
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
-    mp.set_start_method("spawn", force=True)
     Validator().run()

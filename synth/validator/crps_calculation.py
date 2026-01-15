@@ -1,8 +1,6 @@
 import numpy as np
 from properscoring import crps_ensemble
 
-from synth.utils.logging import print_execution_time
-
 
 def get_interval_steps(scoring_interval: int, time_increment: int) -> int:
     """
@@ -11,7 +9,6 @@ def get_interval_steps(scoring_interval: int, time_increment: int) -> int:
     return int(scoring_interval / time_increment)
 
 
-@print_execution_time
 def calculate_crps_for_miner(
     simulation_runs: np.ndarray,
     real_price_path: np.ndarray,
