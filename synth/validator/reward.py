@@ -27,6 +27,7 @@ import bittensor as bt
 
 from synth.db.models import ValidatorRequest
 from synth.utils.helpers import adjust_predictions
+from synth.utils.logging import print_execution_time
 from synth.validator.crps_calculation import calculate_crps_for_miner
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
@@ -95,6 +96,7 @@ def reward(
     return score, detailed_crps_data, miner_prediction
 
 
+@print_execution_time
 def get_rewards(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,

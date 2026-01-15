@@ -187,7 +187,6 @@ class MinerDataHandler:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
-    @print_execution_time
     def set_miner_scores(
         self,
         real_prices: list[dict],
@@ -296,7 +295,6 @@ class MinerDataHandler:
             )
             return None
 
-    @print_execution_time
     def get_miner_prediction(
         self, miner_uid: int, validator_request_id: int
     ) -> typing.Optional[MinerPrediction]:
