@@ -286,7 +286,6 @@ class MinerDataHandler:
                         MinerPrediction.validator_requests_id
                         == validator_request_id,
                     )
-                    .limit(1)
                 )
 
                 row = connection.execute(query).fetchall()
