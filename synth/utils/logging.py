@@ -112,8 +112,8 @@ def setup_gcp_logging(
             if cycle_label is not None:
                 labels["cycle_label"] = cycle_label
             client.setup_logging(log_level=logging.DEBUG, labels=labels)
-            # handler = google.cloud.logging.handlers.CloudLoggingHandler(client)
-            handler = google.cloud.logging.handlers.StructuredLogHandler()
+            handler = google.cloud.logging.handlers.CloudLoggingHandler(client)
+            # handler = google.cloud.logging.handlers.StructuredLogHandler()
             setup_logging(handler)
             logging.getLogger().addHandler(handler)
             logging.getLogger().setLevel(logging.DEBUG)
