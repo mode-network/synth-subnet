@@ -73,7 +73,7 @@ def calculate_crps_for_miner(
             continue
 
         # Calculate CRPS over intervals
-        total_increment = 0
+        # total_increment = 0
         crps_values = 0.0
         for block in np.unique(data_blocks):
             # skip missing value blocks
@@ -97,32 +97,32 @@ def calculate_crps_for_miner(
                 crps_values += crps_values_block[t]
 
                 # Append detailed data for this increment
-                detailed_crps_data.append(
-                    {
-                        "Interval": interval_name,
-                        "Increment": total_increment + 1,
-                        "CRPS": crps_values_block[t],
-                    }
-                )
-                total_increment += 1
+                # detailed_crps_data.append(
+                #     {
+                #         "Interval": interval_name,
+                #         "Increment": total_increment + 1,
+                #         "CRPS": crps_values_block[t],
+                #     }
+                # )
+                # total_increment += 1
 
         # Total CRPS for this interval
         total_crps_interval = crps_values
         sum_all_scores += float(total_crps_interval)
 
         # Append total CRPS for this interval to detailed data
-        detailed_crps_data.append(
-            {
-                "Interval": interval_name,
-                "Increment": "Total",
-                "CRPS": total_crps_interval,
-            }
-        )
+        # detailed_crps_data.append(
+        #     {
+        #         "Interval": interval_name,
+        #         "Increment": "Total",
+        #         "CRPS": total_crps_interval,
+        #     }
+        # )
 
     # Append overall total CRPS to detailed data
-    detailed_crps_data.append(
-        {"Interval": "Overall", "Increment": "Total", "CRPS": sum_all_scores}
-    )
+    # detailed_crps_data.append(
+    #     {"Interval": "Overall", "Increment": "Total", "CRPS": sum_all_scores}
+    # )
 
     # Return the sum of all scores
     return sum_all_scores, detailed_crps_data
