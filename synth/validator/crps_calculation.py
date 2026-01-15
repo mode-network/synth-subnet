@@ -23,14 +23,13 @@ def calculate_crps_for_miner(
         simulation_runs (numpy.ndarray): Simulated price paths.
         real_price_path (numpy.ndarray): The real price path.
         time_increment (int): Time increment in seconds.
+        scoring_intervals (dict): Dictionary of scoring intervals with their names and durations in seconds.
 
     Returns:
         float: Sum of total CRPS scores over the intervals.
     """
     # Initialize lists to store detailed CRPS data
     detailed_crps_data: list[dict] = []
-
-    # Sum of all scores
     sum_all_scores = 0.0
 
     for interval_name, interval_seconds in scoring_intervals.items():
@@ -73,58 +72,62 @@ def calculate_crps_for_miner(
             continue
 
         # Calculate CRPS over intervals
-        # total_increment = 0
+        total_increment = 0
         crps_values = 0.0
         for block in np.unique(data_blocks):
             # skip missing value blocks
             if block == -1:
                 continue
 
-            simulated_changes_block = simulated_changes[
-                :, data_blocks == block
-            ]
-            real_changes_block = real_changes[:, data_blocks == block]
+            mask = data_blocks == block
+            simulated_changes_block = simulated_changes[:, mask]
+            real_changes_block = real_changes[0, mask]  # 1D array now
             num_intervals = simulated_changes_block.shape[1]
-            crps_values_block = np.zeros(num_intervals)
-            for t in range(num_intervals):
-                forecasts = simulated_changes_block[:, t]
-                observation = real_changes_block[0, t]
-                crps_values_block[t] = crps_ensemble(observation, forecasts)
-                if absolute_price:
-                    crps_values_block[t] = (
-                        crps_values_block[t] / real_price_path[-1] * 10_000
-                    )
-                crps_values += crps_values_block[t]
 
-                # Append detailed data for this increment
-                # detailed_crps_data.append(
-                #     {
-                #         "Interval": interval_name,
-                #         "Increment": total_increment + 1,
-                #         "CRPS": crps_values_block[t],
-                #     }
-                # )
-                # total_increment += 1
+            # Calculate all CRPS values at once
+            crps_values_block = np.array(
+                [
+                    crps_ensemble(
+                        real_changes_block[t], simulated_changes_block[:, t]
+                    )
+                    for t in range(num_intervals)
+                ]
+            )
+
+            if absolute_price:
+                crps_values_block = (
+                    crps_values_block / real_price_path[-1] * 10_000
+                )
+
+            crps_values += crps_values_block.sum()
+
+            # Build detailed data in bulk
+            for t in range(num_intervals):
+                detailed_crps_data.append(
+                    {
+                        "Interval": interval_name,
+                        "Increment": total_increment + 1,
+                        "CRPS": crps_values_block[t],
+                    }
+                )
+                total_increment += 1
 
         # Total CRPS for this interval
         total_crps_interval = crps_values
         sum_all_scores += float(total_crps_interval)
 
-        # Append total CRPS for this interval to detailed data
-        # detailed_crps_data.append(
-        #     {
-        #         "Interval": interval_name,
-        #         "Increment": "Total",
-        #         "CRPS": total_crps_interval,
-        #     }
-        # )
+        detailed_crps_data.append(
+            {
+                "Interval": interval_name,
+                "Increment": "Total",
+                "CRPS": total_crps_interval,
+            }
+        )
 
-    # Append overall total CRPS to detailed data
-    # detailed_crps_data.append(
-    #     {"Interval": "Overall", "Increment": "Total", "CRPS": sum_all_scores}
-    # )
+    detailed_crps_data.append(
+        {"Interval": "Overall", "Increment": "Total", "CRPS": sum_all_scores}
+    )
 
-    # Return the sum of all scores
     return sum_all_scores, detailed_crps_data
 
 
