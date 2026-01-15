@@ -15,6 +15,8 @@ import typing
 import traceback
 import sys
 from concurrent.futures import ThreadPoolExecutor
+import time
+
 
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
 # THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
@@ -38,25 +40,23 @@ from synth.validator import prompt_config
 
 @print_execution_time
 def reward(
-    miner_prediction: MinerPrediction | None,
+    # miner_prediction: MinerPrediction | None,
+    miner_data_handler: MinerDataHandler,
     miner_uid: int,
     validator_request: ValidatorRequest,
     real_prices: list[float],
 ):
-    """
-    Reward the miner response to the simulation_input request. This method returns a reward
-    value for the miner, which is used to update the miner's score.
+    t0 = time.time()
 
-    Returns:
-    - float: The reward value for the miner.
-    """
-    # function that calculates a score for an individual miner
+    miner_prediction = miner_data_handler.get_miner_prediction(
+        miner_uid, int(validator_request.id)
+    )
+    t1 = time.time()
 
     if miner_prediction is None:
         return -1, [], None
 
     if miner_prediction.format_validation != response_validation_v2.CORRECT:
-        # represents no prediction data from the miner
         return -1, [], miner_prediction
 
     if len(real_prices) == 0:
@@ -64,6 +64,7 @@ def reward(
 
     predictions_path = adjust_predictions(list(miner_prediction.prediction))
     simulation_runs = np.array(predictions_path).astype(float)
+    t2 = time.time()
 
     scoring_intervals = (
         prompt_config.HIGH_FREQUENCY.scoring_intervals
@@ -79,14 +80,20 @@ def reward(
             int(validator_request.time_increment),
             scoring_intervals,
         )
-    except Exception as e:
-        bt.logging.error(
-            f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction.id}: {e}"
+        t3 = time.time()
+    except Exception:
+        bt.logging.exception(
+            f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction.id}"
         )
-        traceback.print_exc(file=sys.stderr)
         return -1, [], miner_prediction
 
-    # if score is nan, return -1
+    bt.logging.info(
+        f"Miner {miner_uid} timing: "
+        f"get_prediction={t1-t0:.3f}s, "
+        f"prepare_data={t2-t1:.3f}s, "
+        f"calculate_crps={t3-t2:.3f}s"
+    )
+
     if np.isnan(score):
         bt.logger.warning(
             f"CRPS calculation returned NaN for miner {miner_uid} with prediction_id {miner_prediction.id}"
@@ -137,9 +144,10 @@ def get_rewards(
         futures = [
             executor.submit(
                 reward,
-                miner_data_handler.get_miner_prediction(
-                    miner_uid, int(validator_request.id)
-                ),
+                miner_data_handler,
+                # miner_data_handler.get_miner_prediction(
+                #     miner_uid, int(validator_request.id)
+                # ),
                 miner_uid,
                 validator_request,
                 real_prices,
