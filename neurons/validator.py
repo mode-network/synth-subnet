@@ -29,7 +29,7 @@ from synth.utils.helpers import (
     round_time_to_minutes,
 )
 from synth.utils.logging import print_execution_time, setup_gcp_logging
-from synth.utils.thread_scheduler import ThreadScheduler
+from synth.utils.thread_scheduler import ThreadScheduler, ThreadSchedulerScore
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_scores,
@@ -81,6 +81,7 @@ class Validator(BaseValidatorNeuron):
             self.cycle_high_frequency,
             self.miner_data_handler,
         )
+        self.scheduler_score = ThreadSchedulerScore(self.forward_score)
         self.miner_uids: list[int] = []
 
         PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
@@ -101,6 +102,7 @@ class Validator(BaseValidatorNeuron):
         )
         self.scheduler_low.schedule_cycle(get_current_time(), True)
         self.scheduler_high.schedule_cycle(get_current_time(), True)
+        self.scheduler_score.schedule_cycle()
 
     async def cycle_low_frequency(self, asset: str):
         bt.logging.info(
@@ -113,8 +115,6 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
         )
         await self.forward_prompt(asset, LOW_FREQUENCY)
-        self.forward_score()
-        # self.cleanup_history()
         self.sync()
 
     async def cycle_high_frequency(self, asset: str):
@@ -242,6 +242,8 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
             scored_time=scored_time,
         )
+
+        # self.cleanup_history()
 
     async def forward_miner(self, _: bt.Synapse) -> bt.Synapse:
         pass
