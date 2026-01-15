@@ -63,17 +63,23 @@ class Validator(BaseValidatorNeuron):
 
         setup_gcp_logging(self.config.gcp.log_id_prefix)
 
-        bt.logging.info("load_state()")
+        bt.logging.info("load_state()", "__init__")
         self.load_state()
 
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
 
         self.scheduler_low = ThreadScheduler(
-            LOW_FREQUENCY, self.cycle_low_frequency, self.miner_data_handler
+            self.config.gcp.log_id_prefix,
+            LOW_FREQUENCY,
+            self.cycle_low_frequency,
+            self.miner_data_handler,
         )
         self.scheduler_high = ThreadScheduler(
-            HIGH_FREQUENCY, self.cycle_high_frequency, self.miner_data_handler
+            self.config.gcp.log_id_prefix,
+            HIGH_FREQUENCY,
+            self.cycle_high_frequency,
+            self.miner_data_handler,
         )
         self.miner_uids: list[int] = []
 
@@ -97,7 +103,9 @@ class Validator(BaseValidatorNeuron):
         self.scheduler_high.schedule_cycle(get_current_time(), True)
 
     async def cycle_low_frequency(self, asset: str):
-        bt.logging.info("starting the low frequency cycle")
+        bt.logging.info(
+            "starting the low frequency cycle", "cycle_low_frequency"
+        )
 
         # update the miners, also for the high frequency prompt that will use the same list
         self.miner_uids = get_available_miners_and_update_metagraph_history(
@@ -110,12 +118,15 @@ class Validator(BaseValidatorNeuron):
         self.sync()
 
     async def cycle_high_frequency(self, asset: str):
-        bt.logging.info("starting the high frequency cycle")
+        bt.logging.info(
+            "starting the high frequency cycle", "cycle_high_frequency"
+        )
         await self.forward_prompt(asset, HIGH_FREQUENCY)
 
     async def forward_prompt(self, asset: str, prompt_config: PromptConfig):
         bt.logging.info(
-            f"forward prompt for {asset} in {prompt_config.label} frequency"
+            f"forward prompt for {asset} in {prompt_config.label} frequency",
+            "forward_prompt",
         )
         if len(self.miner_uids) == 0:
             bt.logging.error(
@@ -155,7 +166,9 @@ class Validator(BaseValidatorNeuron):
         # we store the rewards in the miner_scores table
         # ========================================== #
 
-        bt.logging.info(f"forward score {LOW_FREQUENCY.label} frequency")
+        bt.logging.info(
+            f"forward score {LOW_FREQUENCY.label} frequency", "forward_score"
+        )
         current_time = get_current_time()
         scored_time: datetime = round_time_to_minutes(current_time)
 
@@ -171,7 +184,9 @@ class Validator(BaseValidatorNeuron):
 
         scored_time: datetime = round_time_to_minutes(current_time)
         current_time = get_current_time()
-        bt.logging.info(f"forward score {HIGH_FREQUENCY.label} frequency")
+        bt.logging.info(
+            f"forward score {HIGH_FREQUENCY.label} frequency", "forward_score"
+        )
         success = calculate_scores(
             self.miner_data_handler,
             self.price_data_provider,
@@ -216,7 +231,8 @@ class Validator(BaseValidatorNeuron):
         )
 
         bt.logging.info(
-            f"Moving averages data for owner: {moving_averages_data[-1]}"
+            f"Moving averages data for owner: {moving_averages_data[-1]}",
+            "forward_score",
         )
 
         send_weights_to_bittensor_and_update_weights_history(

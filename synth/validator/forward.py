@@ -204,7 +204,7 @@ async def query_available_miners_and_save_responses(
     total_process_time = str(time.time() - start_time)
     bt.logging.debug(
         f"Forwarding took {total_process_time} seconds",
-        "sync_forward_multiprocess",
+        "base_neuron.dendrite.forward",
     )
 
     miner_predictions = {}

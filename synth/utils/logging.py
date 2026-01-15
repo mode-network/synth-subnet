@@ -4,6 +4,7 @@ from logging.handlers import RotatingFileHandler
 import bittensor as bt
 
 import google.cloud.logging
+from google.cloud.logging_v2.handlers import setup_logging
 import google.auth.exceptions
 
 
@@ -75,7 +76,9 @@ def setup_wandb_alert(wandb_run):
     return wandb_handler
 
 
-def setup_gcp_logging(log_id_prefix: str):
+def setup_gcp_logging(
+    log_id_prefix: str | None, cycle_label: str | None
+) -> None:
     log_id = f"{log_id_prefix}-synth-validator"
     bt.logging.info(f"setting up GCP log forwarder with log_id: {log_id}")
     try:
@@ -91,4 +94,9 @@ def setup_gcp_logging(log_id_prefix: str):
                 "log_id_prefix is None. GCP logging will not be set up."
             )
         else:
-            client.setup_logging(labels={"log_id": log_id})
+            labels = {"log_id": log_id}
+            if cycle_label is not None:
+                labels["cycle_label"] = cycle_label
+            client.setup_logging(labels=labels)
+            handler = google.cloud.logging.handlers.CloudLoggingHandler(client)
+            setup_logging(handler)
