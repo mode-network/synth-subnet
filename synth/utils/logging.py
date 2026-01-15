@@ -112,6 +112,8 @@ def setup_gcp_logging(
             # handler = google.cloud.logging.handlers.CloudLoggingHandler(client)
             handler = google.cloud.logging.handlers.StructuredLogHandler()
             setup_logging(handler)
+            logging.getLogger().addHandler(handler)
+            logging.getLogger().setLevel(logging.DEBUG)
 
     return handler, client
 
