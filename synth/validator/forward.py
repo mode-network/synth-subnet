@@ -136,7 +136,7 @@ def calculate_scores(
 
     if validator_requests is None or len(validator_requests) == 0:
         bt.logging.warning("No prediction requests found")
-        return False
+        return True
 
     bt.logging.debug(f"found {len(validator_requests)} prediction requests")
 
