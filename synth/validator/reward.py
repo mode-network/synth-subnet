@@ -12,8 +12,6 @@
 # the Software.
 
 import typing
-import traceback
-import sys
 from concurrent.futures import ThreadPoolExecutor
 import time
 
@@ -40,19 +38,11 @@ from synth.validator import prompt_config
 
 @print_execution_time
 def reward(
-    # miner_prediction: MinerPrediction | None,
-    miner_data_handler: MinerDataHandler,
+    miner_prediction: MinerPrediction | None,
     miner_uid: int,
     validator_request: ValidatorRequest,
     real_prices: list[float],
 ):
-    t0 = time.time()
-
-    miner_prediction = miner_data_handler.get_miner_prediction(
-        miner_uid, int(validator_request.id)
-    )
-    t1 = time.time()
-
     if miner_prediction is None:
         return -1, [], None
 
@@ -62,6 +52,7 @@ def reward(
     if len(real_prices) == 0:
         return -1, [], miner_prediction
 
+    t1 = time.time()
     predictions_path = adjust_predictions(list(miner_prediction.prediction))
     simulation_runs = np.array(predictions_path).astype(float)
     t2 = time.time()
@@ -89,7 +80,6 @@ def reward(
 
     bt.logging.info(
         f"Miner {miner_uid} timing: "
-        f"get_prediction={t1-t0:.3f}s, "
         f"prepare_data={t2-t1:.3f}s, "
         f"calculate_crps={t3-t2:.3f}s"
     )
@@ -135,6 +125,16 @@ def get_rewards(
         )
         return None, [], []
 
+    t0 = time.time()
+    predictions: dict[int, MinerPrediction] = {}
+    for miner_uid in miner_uids:
+        predictions[miner_uid] = miner_data_handler.get_miner_prediction(
+            miner_uid, int(validator_request.id)
+        )
+    bt.logging.info(
+        f"Prefetched {len(predictions)} predictions in {time.time()-t0:.2f}s"
+    )
+
     scores = []
     detailed_crps_data_list = []
     miner_prediction_list = []
@@ -144,10 +144,7 @@ def get_rewards(
         futures = [
             executor.submit(
                 reward,
-                miner_data_handler,
-                # miner_data_handler.get_miner_prediction(
-                #     miner_uid, int(validator_request.id)
-                # ),
+                predictions[miner_uid],
                 miner_uid,
                 validator_request,
                 real_prices,
