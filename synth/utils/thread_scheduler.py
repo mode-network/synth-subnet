@@ -6,7 +6,6 @@ import asyncio
 import bittensor as bt
 
 
-from synth.utils.logging import close_gcp_logging, setup_gcp_logging
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.prompt_config import PromptConfig
 from synth.utils.helpers import (
@@ -29,17 +28,17 @@ class ThreadScheduler:
         self.miner_data_handler = miner_data_handler
 
     def enter(self, *args):
-        asset, prompt_label = args
-        handler, client = setup_gcp_logging(
-            self.log_id_prefix, f"{asset}-{prompt_label}"
-        )
+        asset, _ = args
+        # handler, client = setup_gcp_logging(
+        #     self.log_id_prefix, f"{asset}-{prompt_label}"
+        # )
         cycle_start_time = get_current_time()
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self.target(asset))
         loop.close()
         self.schedule_cycle(cycle_start_time)
-        close_gcp_logging(handler, client)
+        # close_gcp_logging(handler, client)
 
     def schedule_cycle(
         self, cycle_start_time: datetime, immediately: bool = False
