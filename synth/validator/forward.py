@@ -110,10 +110,10 @@ def calculate_moving_average_and_update_rewards(
             prompt,
         )
 
-        if moving_averages is None:
-            continue
-
         print_rewards_df(moving_averages, prompt.label)
+
+        if moving_averages is None or len(moving_averages) == 0:
+            continue
 
         miner_data_handler.update_miner_rewards(moving_averages)
         moving_averages_data[prompt.label] = moving_averages
@@ -135,7 +135,7 @@ def calculate_scores(
 
     if validator_requests is None or len(validator_requests) == 0:
         bt.logging.warning("No prediction requests found")
-        return True
+        return False
 
     bt.logging.debug(f"found {len(validator_requests)} prediction requests")
 

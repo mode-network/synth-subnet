@@ -173,29 +173,26 @@ class Validator(BaseValidatorNeuron):
         current_time = get_current_time()
         scored_time: datetime = round_time_to_minutes(current_time)
 
-        success = calculate_scores(
+        success_low = calculate_scores(
             self.miner_data_handler,
             self.price_data_provider,
             scored_time,
             LOW_FREQUENCY,
         )
 
-        if not success:
-            return
-
         scored_time: datetime = round_time_to_minutes(current_time)
         current_time = get_current_time()
         bt.logging.info(
             f"forward score {HIGH_FREQUENCY.label} frequency", "forward_score"
         )
-        success = calculate_scores(
+        success_high = calculate_scores(
             self.miner_data_handler,
             self.price_data_provider,
             scored_time,
             HIGH_FREQUENCY,
         )
 
-        if not success:
+        if not success_low and not success_high:
             return
 
         # ================= Step 4 ================= #
