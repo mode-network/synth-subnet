@@ -201,7 +201,9 @@ def compute_prompt_scores(score_values: np.ndarray):
 def compute_softmax(score_values: np.ndarray, beta: float) -> np.ndarray:
     bt.logging.info(f"Going to use the following value of beta: {beta}")
 
-    exp_scores = np.exp(beta * score_values)
+    scaled_scores = beta * score_values
+    scaled_scores -= np.max(scaled_scores)
+    exp_scores = np.exp(scaled_scores)
     softmax_scores_valid: np.ndarray = exp_scores / np.sum(exp_scores)
     return softmax_scores_valid
 
