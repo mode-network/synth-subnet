@@ -1,5 +1,4 @@
 import numpy as np
-from properscoring import crps_ensemble
 
 
 def get_interval_steps(scoring_interval: int, time_increment: int) -> int:
@@ -81,17 +80,40 @@ def calculate_crps_for_miner(
 
             mask = data_blocks == block
             simulated_changes_block = simulated_changes[:, mask]
-            real_changes_block = real_changes[0, mask]  # 1D array now
+            real_changes_block = real_changes[0, mask]
             num_intervals = simulated_changes_block.shape[1]
 
-            # Calculate all CRPS values at once
-            crps_values_block = np.array(
-                [
-                    crps_ensemble(
-                        real_changes_block[t], simulated_changes_block[:, t]
-                    )
-                    for t in range(num_intervals)
-                ]
+            def crps_ensemble_vectorized(observations, forecasts_2d):
+                """
+                Calculate CRPS for multiple observations at once.
+
+                observations: 1D array of shape (n_times,)
+                forecasts_2d: 2D array of shape (n_ensemble, n_times)
+
+                Returns: 1D array of CRPS values of shape (n_times,)
+                """
+                # Sort forecasts along ensemble axis
+                forecasts_sorted = np.sort(forecasts_2d, axis=0)
+                n_ensemble = forecasts_sorted.shape[0]
+
+                # Calculate CRPS using the formula
+                obs = observations[np.newaxis, :]  # Shape: (1, n_times)
+
+                # Absolute difference term
+                abs_diff = np.abs(forecasts_sorted - obs).mean(axis=0)
+
+                # Ensemble spread term
+                diffs = np.abs(
+                    forecasts_sorted[:, np.newaxis, :]
+                    - forecasts_sorted[np.newaxis, :, :]
+                )
+                spread = diffs.sum(axis=(0, 1)) / (2 * n_ensemble * n_ensemble)
+
+                return abs_diff - spread
+
+            # ✅ Single vectorized call instead of loop
+            crps_values_block = crps_ensemble_vectorized(
+                real_changes_block, simulated_changes_block
             )
 
             if absolute_price:
