@@ -46,17 +46,45 @@ def _crps_worker(args):
         time_increment,
         scoring_intervals,
         format_validation,
+        prediction_id,
+        process_time,
     ) = args
 
     # Early returns
     if prediction_array is None:
-        return (miner_uid, -1, [], None, format_validation)
+        return (
+            miner_uid,
+            -1,
+            [],
+            None,
+            format_validation,
+            prediction_id,
+            process_time,
+        )
 
     if format_validation != "CORRECT":  # Use string, not enum
-        return (miner_uid, -1, [], None, format_validation)
+        return (
+            miner_uid,
+            -1,
+            [],
+            None,
+            format_validation,
+            prediction_id,
+            process_time,
+        )
 
     if len(real_prices) == 0:
-        return (miner_uid, -1, [], None, format_validation)
+        return (
+            miner_uid,
+            -1,
+            [],
+            None,
+            format_validation,
+            prediction_id,
+            process_time,
+        )
+
+    prediction_array = adjust_predictions(list(prediction_array))
 
     try:
         simulation_runs = np.array(prediction_array).astype(float)
@@ -68,12 +96,36 @@ def _crps_worker(args):
         )
 
         if np.isnan(score):
-            return (miner_uid, -1, detailed_crps_data, None, format_validation)
+            return (
+                miner_uid,
+                -1,
+                detailed_crps_data,
+                f"Error calculating CRPS for miner {miner_uid} with uid {miner_uid} and request",
+                format_validation,
+                prediction_id,
+                process_time,
+            )
 
-        return (miner_uid, score, detailed_crps_data, None, format_validation)
+        return (
+            miner_uid,
+            score,
+            detailed_crps_data,
+            None,
+            format_validation,
+            prediction_id,
+            process_time,
+        )
 
     except Exception as e:
-        return (miner_uid, -1, [], str(e), format_validation)
+        return (
+            miner_uid,
+            -1,
+            [],
+            str(e),
+            format_validation,
+            prediction_id,
+            process_time,
+        )
 
 
 # Global executor - create once
@@ -104,20 +156,20 @@ def get_rewards_multiprocess(
     Returns:
     - np.ndarray: An array of rewards for the given query and responses.
     """
+    miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
+        int(validator_request.id)
+    )
+
+    if miner_uids is None:
+        return None, [], []
+
     try:
         real_prices = price_data_provider.fetch_data(validator_request)
     except Exception as e:
         bt.logging.warning(f"Error fetching data: {e}")
         return None, [], []
 
-    # ✅ Step 1: Prefetch all predictions (I/O bound - do sequentially or with ThreadPool)
-    t0 = time.time()
-    predictions = miner_data_handler.get_predictions_by_request(
-        int(validator_request.id)
-    )
-    bt.logging.info(f"Prefetch done in {time.time() - t0:.2f}s")
-
-    # ✅ Step 2: Prepare picklable work items
+    # Prepare picklable work items
     scoring_intervals = (
         prompt_config.HIGH_FREQUENCY.scoring_intervals
         if validator_request.time_length
@@ -126,44 +178,38 @@ def get_rewards_multiprocess(
     )
 
     work_items = []
-    for pred in predictions:
-        if pred is None:
-            work_items.append(
-                (
-                    None,
-                    None,
-                    real_prices,
-                    int(validator_request.time_increment),
-                    scoring_intervals,
-                    None,
-                )
-            )
+    for miner_uid in miner_uids:
+        pred = miner_data_handler.get_miner_prediction(
+            miner_uid, int(validator_request.id)
+        )
+        # Convert to picklable types
+        format_val = pred.format_validation
+        # Convert enum to string if needed
+        if hasattr(format_val, "value"):
+            format_val = format_val.value
+        elif format_val == response_validation_v2.CORRECT:
+            format_val = "CORRECT"
         else:
-            # Convert to picklable types
-            prediction_array = adjust_predictions(
-                list(pred.prediction)
-            )  # TODO: can be bone in the sub-process
-            format_val = pred.format_validation
-            # Convert enum to string if needed
-            if hasattr(format_val, "value"):
-                format_val = format_val.value
-            elif format_val == response_validation_v2.CORRECT:
-                format_val = "CORRECT"
-            else:
-                format_val = str(format_val)
+            format_val = str(format_val)
 
-            work_items.append(
+        work_items.append(
+            (
+                pred.miner_uid,
+                list(pred.prediction),
+                real_prices,
+                int(validator_request.time_increment),
+                scoring_intervals,
+                format_val,
+                int(pred.id),
                 (
-                    pred.miner_uid,
-                    prediction_array,
-                    real_prices,
-                    int(validator_request.time_increment),
-                    scoring_intervals,
-                    format_val,
-                )
+                    float(pred.process_time)
+                    if pred.process_time is not None
+                    else 0.0
+                ),
             )
+        )
 
-    # ✅ Step 3: Process in parallel (CPU bound - use ProcessPool)
+    # Process in parallel (CPU bound - use ProcessPool)
     bt.logging.info(f"Starting CRPS calculation for {len(work_items)} miners")
     t0 = time.time()
 
@@ -172,19 +218,31 @@ def get_rewards_multiprocess(
 
     bt.logging.info(f"CRPS done in {time.time() - t0:.2f}s")
 
-    # ✅ Step 4: Rebuild results
+    # Rebuild results
     scores = []
     detailed_crps_data_list = []
-    miner_prediction_list = []
+    miner_prediction_format_list = []
+    miner_prediction_id_list = []
+    miner_prediction_process_time = []
 
     # Create lookup for original prediction objects
-    for miner_uid, score, detailed_crps_data, error, format_val in results:
+    for (
+        miner_uid,
+        score,
+        detailed_crps_data,
+        error,
+        format_val,
+        prediction_id,
+        process_time,
+    ) in results:
         if error:
             bt.logging.error(f"Miner {miner_uid} error: {error}")
 
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
-        miner_prediction_list.append(predictions[miner_uid])
+        miner_prediction_format_list.append(format_val)
+        miner_prediction_id_list.append(prediction_id)
+        miner_prediction_process_time.append(process_time)
 
     score_values = np.array(scores)
     prompt_scores, percentile90, lowest_score = compute_prompt_scores(
@@ -196,30 +254,24 @@ def get_rewards_multiprocess(
 
     detailed_info = [
         {
-            "miner_uid": pred.miner_uid,
+            "miner_uid": miner_uid,
             "prompt_score_v3": float(prompt_score),
             "percentile90": float(percentile90),
             "lowest_score": float(lowest_score),
-            "miner_prediction_id": (
-                miner_prediction.id if miner_prediction else None
-            ),
-            "format_validation": (
-                miner_prediction.format_validation
-                if miner_prediction
-                else None
-            ),
-            "process_time": (
-                miner_prediction.process_time if miner_prediction else None
-            ),
+            "miner_prediction_id": prediction_id,
+            "format_validation": format,
+            "process_time": process_time,
             "total_crps": float(score),
             "crps_data": clean_numpy_in_crps_data(crps_data),
         }
-        for pred, score, crps_data, prompt_score, miner_prediction in zip(
-            predictions,
+        for miner_uid, score, crps_data, prompt_score, format, prediction_id, process_time in zip(
+            miner_uids,
             scores,
             detailed_crps_data_list,
             prompt_scores,
-            miner_prediction_list,
+            miner_prediction_format_list,
+            miner_prediction_id_list,
+            miner_prediction_process_time,
         )
     ]
 
@@ -242,8 +294,6 @@ def reward(
     """
     if miner_prediction is None:
         return -1, [], None
-
-    miner_uid = miner_prediction.miner_uid
 
     if miner_prediction.format_validation != response_validation_v2.CORRECT:
         return -1, [], miner_prediction

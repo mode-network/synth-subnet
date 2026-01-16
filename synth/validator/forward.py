@@ -49,7 +49,7 @@ from synth.validator.response_validation_v2 import (
     validate_responses as validate_responses_v2,
 )
 from synth.validator.reward import (
-    get_rewards_threading,
+    get_rewards_multiprocess,
     print_scores_df,
 )
 
@@ -146,7 +146,7 @@ def calculate_scores(
     for validator_request in validator_requests:
         bt.logging.debug(f"validator_request_id: {validator_request.id}")
 
-        prompt_scores, detailed_info, real_prices = get_rewards_threading(
+        prompt_scores, detailed_info, real_prices = get_rewards_multiprocess(
             miner_data_handler=miner_data_handler,
             price_data_provider=price_data_provider,
             validator_request=validator_request,
