@@ -130,7 +130,7 @@ def get_rewards(
         if pred is None:
             work_items.append(
                 (
-                    pred.miner_uid,
+                    None,
                     None,
                     real_prices,
                     int(validator_request.time_increment),
@@ -140,7 +140,9 @@ def get_rewards(
             )
         else:
             # Convert to picklable types
-            prediction_array = adjust_predictions(list(pred.prediction))
+            prediction_array = adjust_predictions(
+                list(pred.prediction)
+            )  # TODO: can be bone in the sub-process
             format_val = pred.format_validation
             # Convert enum to string if needed
             if hasattr(format_val, "value"):
