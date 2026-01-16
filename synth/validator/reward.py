@@ -89,7 +89,7 @@ def get_process_executor():
 
 
 @print_execution_time
-def get_rewards(
+def get_rewards_multiprocess(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
     validator_request: ValidatorRequest,
@@ -216,6 +216,162 @@ def get_rewards(
         }
         for pred, score, crps_data, prompt_score, miner_prediction in zip(
             predictions,
+            scores,
+            detailed_crps_data_list,
+            prompt_scores,
+            miner_prediction_list,
+        )
+    ]
+
+    return prompt_scores, detailed_info, real_prices
+
+
+@print_execution_time
+def reward(
+    miner_data_handler: MinerDataHandler,
+    miner_uid: int,
+    validator_request: ValidatorRequest,
+    real_prices: list[float],
+):
+    """
+    Reward the miner response to the simulation_input request. This method returns a reward
+    value for the miner, which is used to update the miner's score.
+
+    Returns:
+    - float: The reward value for the miner.
+    """
+    miner_prediction = miner_data_handler.get_miner_prediction(
+        miner_uid, int(validator_request.id)
+    )
+    if miner_prediction is None:
+        return -1, [], None
+
+    miner_uid = miner_prediction.miner_uid
+
+    if miner_prediction.format_validation != response_validation_v2.CORRECT:
+        return -1, [], miner_prediction
+
+    if len(real_prices) == 0:
+        return -1, [], miner_prediction
+
+    t1 = time.time()
+    predictions_path = adjust_predictions(list(miner_prediction.prediction))
+    simulation_runs = np.array(predictions_path).astype(float)
+    t2 = time.time()
+
+    scoring_intervals = (
+        prompt_config.HIGH_FREQUENCY.scoring_intervals
+        if validator_request.time_length
+        == prompt_config.HIGH_FREQUENCY.time_length
+        else prompt_config.LOW_FREQUENCY.scoring_intervals
+    )
+
+    try:
+        score, detailed_crps_data = calculate_crps_for_miner(
+            simulation_runs,
+            np.array(real_prices),
+            int(validator_request.time_increment),
+            scoring_intervals,
+        )
+        t3 = time.time()
+    except Exception:
+        bt.logging.exception(
+            f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction.id}"
+        )
+        return -1, [], miner_prediction
+
+    bt.logging.info(
+        f"Miner {miner_uid} timing: "
+        f"prepare_data={t2-t1:.3f}s, "
+        f"calculate_crps={t3-t2:.3f}s"
+    )
+
+    if np.isnan(score):
+        bt.logger.warning(
+            f"CRPS calculation returned NaN for miner {miner_uid} with prediction_id {miner_prediction.id}"
+        )
+        return -1, detailed_crps_data, miner_prediction
+
+    return score, detailed_crps_data, miner_prediction
+
+
+def get_rewards(
+    miner_data_handler: MinerDataHandler,
+    price_data_provider: PriceDataProvider,
+    validator_request: ValidatorRequest,
+) -> tuple[typing.Optional[np.ndarray], list, list[dict]]:
+    """
+    Returns an array of rewards for the given query and responses.
+
+    Args:
+    - query (int): The query sent to the miner.
+    - responses (List[float]): A list of responses from the miner.
+
+    Returns:
+    - np.ndarray: An array of rewards for the given query and responses.
+    """
+    miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
+        int(validator_request.id)
+    )
+
+    if miner_uids is None:
+        return None, [], []
+
+    try:
+        real_prices = price_data_provider.fetch_data(validator_request)
+    except Exception as e:
+        bt.logging.warning(
+            f"Error fetching data for validator request {validator_request.id}: {e}"
+        )
+        return None, [], []
+
+    scores = []
+    detailed_crps_data_list = []
+    miner_prediction_list = []
+    for miner_uid in miner_uids:
+        # function that calculates a score for an individual miner
+        score, detailed_crps_data, miner_prediction = reward(
+            miner_data_handler,
+            miner_uid,
+            validator_request,
+            real_prices,
+        )
+        scores.append(score)
+        detailed_crps_data_list.append(detailed_crps_data)
+        miner_prediction_list.append(miner_prediction)
+
+    score_values = np.array(scores)
+    prompt_scores, percentile90, lowest_score = compute_prompt_scores(
+        score_values
+    )
+
+    if prompt_scores is None:
+        return None, [], []
+
+    # gather all the detailed information
+    # for log and debug purposes
+    detailed_info = [
+        {
+            "miner_uid": miner_uid,
+            "prompt_score_v3": float(prompt_score),
+            "percentile90": float(percentile90),
+            "lowest_score": float(lowest_score),
+            "miner_prediction_id": (
+                miner_prediction.id if miner_prediction else None
+            ),
+            "format_validation": (
+                miner_prediction.format_validation
+                if miner_prediction
+                else None
+            ),
+            "process_time": (
+                miner_prediction.process_time if miner_prediction else None
+            ),
+            "total_crps": float(score),
+            "crps_data": clean_numpy_in_crps_data(crps_data),
+        }
+        for miner_uid, score, crps_data, prompt_score, miner_prediction in zip(
+            miner_uids,
             scores,
             detailed_crps_data_list,
             prompt_scores,
