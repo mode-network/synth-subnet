@@ -12,7 +12,7 @@
 # the Software.
 
 import typing
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import time
 
 
@@ -26,7 +26,7 @@ import pandas as pd
 import bittensor as bt
 
 
-from synth.db.models import ValidatorRequest
+from synth.db.models import MinerPrediction, ValidatorRequest
 from synth.utils.helpers import adjust_predictions
 from synth.utils.logging import print_execution_time
 from synth.validator.crps_calculation import calculate_crps_for_miner
@@ -228,7 +228,7 @@ def get_rewards_multiprocess(
 
 @print_execution_time
 def reward(
-    miner_data_handler: MinerDataHandler,
+    miner_prediction: MinerPrediction | None,
     miner_uid: int,
     validator_request: ValidatorRequest,
     real_prices: list[float],
@@ -240,9 +240,6 @@ def reward(
     Returns:
     - float: The reward value for the miner.
     """
-    miner_prediction = miner_data_handler.get_miner_prediction(
-        miner_uid, int(validator_request.id)
-    )
     if miner_prediction is None:
         return -1, [], None
 
@@ -331,11 +328,117 @@ def get_rewards(
     for miner_uid in miner_uids:
         # function that calculates a score for an individual miner
         score, detailed_crps_data, miner_prediction = reward(
-            miner_data_handler,
+            miner_data_handler.get_miner_prediction(
+                miner_uid, int(validator_request.id)
+            ),
             miner_uid,
             validator_request,
             real_prices,
         )
+        scores.append(score)
+        detailed_crps_data_list.append(detailed_crps_data)
+        miner_prediction_list.append(miner_prediction)
+
+    score_values = np.array(scores)
+    prompt_scores, percentile90, lowest_score = compute_prompt_scores(
+        score_values
+    )
+
+    if prompt_scores is None:
+        return None, [], []
+
+    # gather all the detailed information
+    # for log and debug purposes
+    detailed_info = [
+        {
+            "miner_uid": miner_uid,
+            "prompt_score_v3": float(prompt_score),
+            "percentile90": float(percentile90),
+            "lowest_score": float(lowest_score),
+            "miner_prediction_id": (
+                miner_prediction.id if miner_prediction else None
+            ),
+            "format_validation": (
+                miner_prediction.format_validation
+                if miner_prediction
+                else None
+            ),
+            "process_time": (
+                miner_prediction.process_time if miner_prediction else None
+            ),
+            "total_crps": float(score),
+            "crps_data": clean_numpy_in_crps_data(crps_data),
+        }
+        for miner_uid, score, crps_data, prompt_score, miner_prediction in zip(
+            miner_uids,
+            scores,
+            detailed_crps_data_list,
+            prompt_scores,
+            miner_prediction_list,
+        )
+    ]
+
+    return prompt_scores, detailed_info, real_prices
+
+
+@print_execution_time
+def get_rewards_threading(
+    miner_data_handler: MinerDataHandler,
+    price_data_provider: PriceDataProvider,
+    validator_request: ValidatorRequest,
+) -> tuple[typing.Optional[np.ndarray], list, list[dict]]:
+    """
+    Returns an array of rewards for the given query and responses.
+
+    Args:
+    - query (int): The query sent to the miner.
+    - responses (List[float]): A list of responses from the miner.
+
+    Returns:
+    - np.ndarray: An array of rewards for the given query and responses.
+    """
+    miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
+        int(validator_request.id)
+    )
+
+    if miner_uids is None:
+        return None, [], []
+
+    try:
+        real_prices = price_data_provider.fetch_data(validator_request)
+    except Exception as e:
+        bt.logging.warning(
+            f"Error fetching data for validator request {validator_request.id}: {e}"
+        )
+        return None, [], []
+
+    scores = []
+    detailed_crps_data_list = []
+    miner_prediction_list = []
+
+    # Submit ALL tasks first, THEN collect results
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        futures = [
+            executor.submit(
+                reward,
+                miner_data_handler.get_miner_prediction(
+                    miner_uid, int(validator_request.id)
+                ),
+                miner_uid,
+                validator_request,
+                real_prices,
+            )
+            for miner_uid in miner_uids
+        ]
+
+        # Collect results in order
+        results = [f.result() for f in futures]
+
+    scores = []
+    detailed_crps_data_list = []
+    miner_prediction_list = []
+
+    for score, detailed_crps_data, miner_prediction in results:
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
         miner_prediction_list.append(miner_prediction)

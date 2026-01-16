@@ -48,7 +48,10 @@ from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.response_validation_v2 import (
     validate_responses as validate_responses_v2,
 )
-from synth.validator.reward import get_rewards, print_scores_df
+from synth.validator.reward import (
+    get_rewards_threading,
+    print_scores_df,
+)
 
 
 @print_execution_time
@@ -143,7 +146,7 @@ def calculate_scores(
     for validator_request in validator_requests:
         bt.logging.debug(f"validator_request_id: {validator_request.id}")
 
-        prompt_scores, detailed_info, real_prices = get_rewards(
+        prompt_scores, detailed_info, real_prices = get_rewards_threading(
             miner_data_handler=miner_data_handler,
             price_data_provider=price_data_provider,
             validator_request=validator_request,

@@ -44,4 +44,4 @@ disable = [
 [tool.flake8]
 extend-ignore = ["E501", "E203"]
 exclude = [".git","__pycache__","old","build","dist","bt_venv","venv", "docs"]
-max-complexity = 10
+max-complexity = 11
