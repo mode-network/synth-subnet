@@ -169,6 +169,10 @@ def get_rewards_multiprocess(
         bt.logging.warning(f"Error fetching data: {e}")
         return None, [], []
 
+    predictions = miner_data_handler.get_predictions_by_request(
+        int(validator_request.id)
+    )
+
     # Prepare picklable work items
     scoring_intervals = (
         prompt_config.HIGH_FREQUENCY.scoring_intervals
@@ -178,36 +182,46 @@ def get_rewards_multiprocess(
     )
 
     work_items = []
-    for miner_uid in miner_uids:
-        pred = miner_data_handler.get_miner_prediction(
-            miner_uid, int(validator_request.id)
-        )
-        # Convert to picklable types
-        format_val = pred.format_validation
-        # Convert enum to string if needed
-        if hasattr(format_val, "value"):
-            format_val = format_val.value
-        elif format_val == response_validation_v2.CORRECT:
-            format_val = "CORRECT"
-        else:
-            format_val = str(format_val)
 
-        work_items.append(
-            (
-                pred.miner_uid,
-                list(pred.prediction),
-                real_prices,
-                int(validator_request.time_increment),
-                scoring_intervals,
-                format_val,
-                int(pred.id),
+    for pred in predictions:
+        if pred is None:
+            work_items.append(
                 (
-                    float(pred.process_time)
-                    if pred.process_time is not None
-                    else 0.0
-                ),
+                    None,
+                    None,
+                    real_prices,
+                    int(validator_request.time_increment),
+                    scoring_intervals,
+                    None,
+                )
             )
-        )
+        else:
+            # Convert to picklable types
+            format_val = pred.format_validation
+            # Convert enum to string if needed
+            if hasattr(format_val, "value"):
+                format_val = format_val.value
+            elif format_val == response_validation_v2.CORRECT:
+                format_val = "CORRECT"
+            else:
+                format_val = str(format_val)
+
+            work_items.append(
+                (
+                    pred.miner_uid,
+                    list(pred.prediction),
+                    real_prices,
+                    int(validator_request.time_increment),
+                    scoring_intervals,
+                    format_val,
+                    int(pred.id),
+                    (
+                        float(pred.process_time)
+                        if pred.process_time is not None
+                        else 0.0
+                    ),
+                )
+            )
 
     # Process in parallel (CPU bound - use ProcessPool)
     bt.logging.info(f"Starting CRPS calculation for {len(work_items)} miners")
@@ -254,7 +268,7 @@ def get_rewards_multiprocess(
 
     detailed_info = [
         {
-            "miner_uid": miner_uid,
+            "miner_uid": pred.miner_uid,
             "prompt_score_v3": float(prompt_score),
             "percentile90": float(percentile90),
             "lowest_score": float(lowest_score),
@@ -264,8 +278,8 @@ def get_rewards_multiprocess(
             "total_crps": float(score),
             "crps_data": clean_numpy_in_crps_data(crps_data),
         }
-        for miner_uid, score, crps_data, prompt_score, format, prediction_id, process_time in zip(
-            miner_uids,
+        for pred, score, crps_data, prompt_score, format, prediction_id, process_time in zip(
+            predictions,
             scores,
             detailed_crps_data_list,
             prompt_scores,
