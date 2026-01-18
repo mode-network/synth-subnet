@@ -18,28 +18,46 @@ from synth.utils.helpers import (
 class ThreadScheduler:
     def __init__(
         self,
-        log_id_prefix: str | None,
         prompt_config: PromptConfig,
         target: callable,
         miner_data_handler: MinerDataHandler,
     ):
-        self.log_id_prefix = log_id_prefix
         self.prompt_config = prompt_config
         self.target = target
         self.miner_data_handler = miner_data_handler
 
     def enter(self, *args):
-        asset, _ = args
-        # handler, client = setup_gcp_logging(
-        #     self.log_id_prefix, f"{asset}-{prompt_label}"
-        # )
+        (asset,) = args
         cycle_start_time = get_current_time()
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.target(asset))
-        loop.close()
         self.schedule_cycle(cycle_start_time)
-        # close_gcp_logging(handler, client)
+        loop = asyncio.new_event_loop()
+
+        target_timeout = 300  # seconds
+
+        try:
+            asyncio.set_event_loop(loop)
+            loop.run_until_complete(
+                asyncio.wait_for(self.target(asset), timeout=target_timeout)
+            )
+        except asyncio.TimeoutError:
+            bt.logging.error(
+                f"Target timed out after {target_timeout}s for asset {asset}"
+            )
+        except Exception:
+            bt.logging.exception(f"Error in cycle for asset {asset}")
+        finally:
+            try:
+                # Cancel any remaining tasks
+                pending = asyncio.all_tasks(loop)
+                for task in pending:
+                    task.cancel()
+                if pending:
+                    loop.run_until_complete(
+                        asyncio.gather(*pending, return_exceptions=True)
+                    )
+                loop.close()
+            except Exception:
+                bt.logging.exception("Error closing event loop")
 
     def schedule_cycle(
         self, cycle_start_time: datetime, immediately: bool = False
@@ -68,10 +86,7 @@ class ThreadScheduler:
         self.thread = Timer(
             delay,
             self.enter,
-            (
-                asset,
-                prompt_config.label,
-            ),
+            (asset,),
         )
         self.thread.start()
 
@@ -106,6 +121,6 @@ class ThreadScheduler:
 
         if latest_asset is not None and latest_asset in asset_list:
             latest_index = asset_list.index(latest_asset)
-            asset = asset_list[(latest_index + 1) % len(asset_list)]
+            asset = asset_list[(latest_index + 2) % len(asset_list)]
 
         return asset

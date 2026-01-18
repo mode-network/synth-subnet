@@ -71,13 +71,11 @@ class Validator(BaseValidatorNeuron):
         self.price_data_provider = PriceDataProvider()
 
         self.scheduler_low = ThreadScheduler(
-            self.config.gcp.log_id_prefix,
             LOW_FREQUENCY,
             self.cycle_low_frequency,
             self.miner_data_handler,
         )
         self.scheduler_high = ThreadScheduler(
-            self.config.gcp.log_id_prefix,
             HIGH_FREQUENCY,
             self.cycle_high_frequency,
             self.miner_data_handler,
