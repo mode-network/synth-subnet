@@ -124,7 +124,6 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
         )
         await self.forward_prompt(asset, LOW_FREQUENCY)
-        self.sync()
 
     @print_execution_time
     async def cycle_high_frequency(self, asset: str):

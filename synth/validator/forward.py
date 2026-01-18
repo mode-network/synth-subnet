@@ -66,6 +66,7 @@ def send_weights_to_bittensor_and_update_weights_history(
 
     base_neuron.update_scores(np.array(miner_weights), miner_uids)
 
+    base_neuron.sync()
     base_neuron.resync_metagraph()
     result, msg, uint_uids, uint_weights = base_neuron.set_weights()
 
