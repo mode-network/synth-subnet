@@ -102,6 +102,7 @@ class Validator(BaseValidatorNeuron):
         )
         self.scheduler_low.schedule_cycle(get_current_time(), True)
         self.scheduler_high.schedule_cycle(get_current_time(), True)
+
         while True:
             self.forward_score()
             delay = 10
@@ -111,6 +112,7 @@ class Validator(BaseValidatorNeuron):
             )
             time.sleep(delay)
 
+    @print_execution_time
     async def cycle_low_frequency(self, asset: str):
         bt.logging.info(
             "starting the low frequency cycle", "cycle_low_frequency"
@@ -124,12 +126,14 @@ class Validator(BaseValidatorNeuron):
         await self.forward_prompt(asset, LOW_FREQUENCY)
         self.sync()
 
+    @print_execution_time
     async def cycle_high_frequency(self, asset: str):
         bt.logging.info(
             "starting the high frequency cycle", "cycle_high_frequency"
         )
         await self.forward_prompt(asset, HIGH_FREQUENCY)
 
+    @print_execution_time
     async def forward_prompt(self, asset: str, prompt_config: PromptConfig):
         bt.logging.info(
             f"forward prompt for {asset} in {prompt_config.label} frequency",
@@ -173,7 +177,6 @@ class Validator(BaseValidatorNeuron):
         # with predictions and calculate the rewards,
         # we store the rewards in the miner_scores table
         # ========================================== #
-
         bt.logging.info(
             f"forward score {LOW_FREQUENCY.label} frequency", "forward_score"
         )
