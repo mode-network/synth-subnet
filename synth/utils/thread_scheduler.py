@@ -29,7 +29,7 @@ class ThreadScheduler:
     def enter(self, *args):
         (asset,) = args
         cycle_start_time = get_current_time()
-        self.schedule_cycle(cycle_start_time)
+        self.schedule_cycle(cycle_start_time, False, asset)
         loop = asyncio.new_event_loop()
 
         target_timeout = 300  # seconds
@@ -60,7 +60,10 @@ class ThreadScheduler:
                 bt.logging.exception("Error closing event loop")
 
     def schedule_cycle(
-        self, cycle_start_time: datetime, immediately: bool = False
+        self,
+        cycle_start_time: datetime,
+        immediately: bool = False,
+        latest_asset: str = None,
     ):
         prompt_config = self.prompt_config
 
@@ -74,9 +77,10 @@ class ThreadScheduler:
             prompt_config,
             immediately,
         )
-        latest_asset = self.miner_data_handler.get_latest_asset(
-            prompt_config.time_length
-        )
+        if latest_asset is None:
+            latest_asset = self.miner_data_handler.get_latest_asset(
+                prompt_config.time_length
+            )
         asset = self.select_asset(latest_asset, asset_list)
 
         bt.logging.info(
@@ -121,6 +125,6 @@ class ThreadScheduler:
 
         if latest_asset is not None and latest_asset in asset_list:
             latest_index = asset_list.index(latest_asset)
-            asset = asset_list[(latest_index + 2) % len(asset_list)]
+            asset = asset_list[(latest_index + 1) % len(asset_list)]
 
         return asset
