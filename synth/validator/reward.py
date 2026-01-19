@@ -100,7 +100,7 @@ def _crps_worker(args):
                 miner_uid,
                 -1,
                 detailed_crps_data,
-                f"Error calculating CRPS for miner {miner_uid} with uid {miner_uid} and request",
+                f"Error calculating CRPS for miner {miner_uid}",
                 format_validation,
                 prediction_id,
                 process_time,
