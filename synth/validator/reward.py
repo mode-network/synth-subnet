@@ -184,44 +184,32 @@ def get_rewards_multiprocess(
     work_items = []
 
     for pred in predictions:
-        if pred is None:
-            work_items.append(
-                (
-                    None,
-                    None,
-                    real_prices,
-                    int(validator_request.time_increment),
-                    scoring_intervals,
-                    None,
-                )
-            )
+        # Convert to picklable types
+        format_val = pred.format_validation
+        # Convert enum to string if needed
+        if hasattr(format_val, "value"):
+            format_val = format_val.value
+        elif format_val == response_validation_v2.CORRECT:
+            format_val = "CORRECT"
         else:
-            # Convert to picklable types
-            format_val = pred.format_validation
-            # Convert enum to string if needed
-            if hasattr(format_val, "value"):
-                format_val = format_val.value
-            elif format_val == response_validation_v2.CORRECT:
-                format_val = "CORRECT"
-            else:
-                format_val = str(format_val)
+            format_val = str(format_val)
 
-            work_items.append(
+        work_items.append(
+            (
+                pred.miner_uid,
+                list(pred.prediction),
+                real_prices,
+                int(validator_request.time_increment),
+                scoring_intervals,
+                format_val,
+                int(pred.id),
                 (
-                    pred.miner_uid,
-                    list(pred.prediction),
-                    real_prices,
-                    int(validator_request.time_increment),
-                    scoring_intervals,
-                    format_val,
-                    int(pred.id),
-                    (
-                        float(pred.process_time)
-                        if pred.process_time is not None
-                        else 0.0
-                    ),
-                )
+                    float(pred.process_time)
+                    if pred.process_time is not None
+                    else 0.0
+                ),
             )
+        )
 
     # Process in parallel (CPU bound - use ProcessPool)
     bt.logging.info(f"Starting CRPS calculation for {len(work_items)} miners")
@@ -475,10 +463,6 @@ def get_rewards_threading(
             f"Error fetching data for validator request {validator_request.id}: {e}"
         )
         return None, [], []
-
-    scores = []
-    detailed_crps_data_list = []
-    miner_prediction_list = []
 
     # Submit ALL tasks first, THEN collect results
     with ThreadPoolExecutor(max_workers=8) as executor:
