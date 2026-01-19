@@ -40,7 +40,7 @@ class ThreadScheduler:
                 asyncio.wait_for(self.target(asset), timeout=target_timeout)
             )
         except asyncio.TimeoutError:
-            bt.logging.error(
+            bt.logging.warning(
                 f"Target timed out after {target_timeout}s for asset {asset}"
             )
         except Exception:
