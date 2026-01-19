@@ -34,7 +34,7 @@ LOW_FREQUENCY = PromptConfig(
     time_increment=300,
     initial_delay=60,  # avoid 2 prompts to start simultaneously
     total_cycle_minutes=60,
-    timeout_extra_seconds=60,
+    timeout_extra_seconds=120,
     scoring_intervals={
         "5min": 300,  # 5 minutes
         "30min": 1800,  # 30 minutes
@@ -53,7 +53,7 @@ HIGH_FREQUENCY = PromptConfig(
     time_increment=60,
     initial_delay=0,
     total_cycle_minutes=12,
-    timeout_extra_seconds=60,
+    timeout_extra_seconds=120,
     scoring_intervals={
         "1min": 60,
         "2min": 120,
