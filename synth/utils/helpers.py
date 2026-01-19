@@ -1,6 +1,8 @@
 from typing import Optional
 from datetime import datetime, timedelta, timezone
 
+new_equities_launch = datetime(2026, 1, 20, 14, 0, 0, tzinfo=timezone.utc)
+
 
 def get_current_time() -> datetime:
     # Get current date and time

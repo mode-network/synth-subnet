@@ -34,6 +34,7 @@ from synth.utils.helpers import (
     timeout_from_start_time,
     convert_list_elements_to_str,
 )
+from synth.utils.logging import print_execution_time
 from synth.utils.uids import check_uid_availability
 from synth.validator import prompt_config
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -47,9 +48,13 @@ from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.response_validation_v2 import (
     validate_responses as validate_responses_v2,
 )
-from synth.validator.reward import get_rewards, print_scores_df
+from synth.validator.reward import (
+    get_rewards_multiprocess,
+    print_scores_df,
+)
 
 
+@print_execution_time
 def send_weights_to_bittensor_and_update_weights_history(
     base_neuron: BaseValidatorNeuron,
     moving_averages_data: list[dict],
@@ -61,6 +66,7 @@ def send_weights_to_bittensor_and_update_weights_history(
 
     base_neuron.update_scores(np.array(miner_weights), miner_uids)
 
+    base_neuron.sync()
     base_neuron.resync_metagraph()
     result, msg, uint_uids, uint_weights = base_neuron.set_weights()
 
@@ -68,11 +74,7 @@ def send_weights_to_bittensor_and_update_weights_history(
         bt.logging.success("set_weights on chain successfully!")
         msg = "SUCCESS"
     else:
-        rate_limit_message = "Perhaps it is too soon to commit weights"
-        if rate_limit_message in msg:
-            bt.logging.warning(msg, "set_weights failed")
-        else:
-            bt.logging.error(msg, "set_weights failed")
+        bt.logging.warning(msg, "set_weights failed")
 
     miner_data_handler.update_weights_history(
         miner_uids=miner_uids,
@@ -84,6 +86,7 @@ def send_weights_to_bittensor_and_update_weights_history(
     )
 
 
+@print_execution_time
 def calculate_moving_average_and_update_rewards(
     miner_data_handler: MinerDataHandler,
     scored_time: datetime,
@@ -107,10 +110,10 @@ def calculate_moving_average_and_update_rewards(
             prompt,
         )
 
-        if moving_averages is None:
-            continue
-
         print_rewards_df(moving_averages, prompt.label)
+
+        if moving_averages is None or len(moving_averages) == 0:
+            continue
 
         miner_data_handler.update_miner_rewards(moving_averages)
         moving_averages_data[prompt.label] = moving_averages
@@ -118,6 +121,7 @@ def calculate_moving_average_and_update_rewards(
     return combine_moving_averages(moving_averages_data)
 
 
+@print_execution_time
 def calculate_scores(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
@@ -139,7 +143,7 @@ def calculate_scores(
     for validator_request in validator_requests:
         bt.logging.debug(f"validator_request_id: {validator_request.id}")
 
-        prompt_scores, detailed_info, real_prices = get_rewards(
+        prompt_scores, detailed_info, real_prices = get_rewards_multiprocess(
             miner_data_handler=miner_data_handler,
             price_data_provider=price_data_provider,
             validator_request=validator_request,
@@ -167,6 +171,7 @@ def calculate_scores(
     return fail_count != len(validator_requests)
 
 
+@print_execution_time
 async def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
@@ -204,7 +209,7 @@ async def query_available_miners_and_save_responses(
     total_process_time = str(time.time() - start_time)
     bt.logging.debug(
         f"Forwarding took {total_process_time} seconds",
-        "sync_forward_multiprocess",
+        "base_neuron.dendrite.forward",
     )
 
     miner_predictions = {}
@@ -233,6 +238,7 @@ async def query_available_miners_and_save_responses(
         bt.logging.info("skip saving because no prediction")
 
 
+@print_execution_time
 def get_available_miners_and_update_metagraph_history(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,

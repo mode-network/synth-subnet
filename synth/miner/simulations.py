@@ -6,6 +6,18 @@ from synth.utils.helpers import (
     convert_prices_to_time_format,
 )
 
+SIGMA_MAP = {
+    "BTC": 0.00472,
+    "ETH": 0.00695,
+    "XAU": 0.00208,
+    "SOL": 0.00782,
+    "SPYX": 0.00156,
+    "NVDAX": 0.00342,
+    "TSLAX": 0.00332,
+    "AAPLX": 0.00250,
+    "GOOGLX": 0.00332,
+}
+
 
 def generate_simulations(
     asset="BTC",
@@ -13,7 +25,6 @@ def generate_simulations(
     time_increment=300,
     time_length=86400,
     num_simulations=1,
-    sigma=0.01,
 ):
     """
     Generate simulated price paths.
@@ -24,7 +35,6 @@ def generate_simulations(
         time_increment (int): Time increment in seconds.
         time_length (int): Total time length in seconds.
         num_simulations (int): Number of simulation runs.
-        sigma (float): Standard deviation of the simulated price path.
 
     Returns:
         numpy.ndarray: Simulated price paths.
@@ -36,14 +46,7 @@ def generate_simulations(
     if current_price is None:
         raise ValueError(f"Failed to fetch current price for asset: {asset}")
 
-    if asset == "BTC":
-        sigma *= 3
-    elif asset == "ETH":
-        sigma *= 1.25
-    elif asset == "XAU":
-        sigma *= 0.5
-    elif asset == "SOL":
-        sigma *= 0.75
+    sigma = SIGMA_MAP.get(asset, 0.005)  # Default sigma if asset not found
 
     simulations = simulate_crypto_price_paths(
         current_price=current_price,

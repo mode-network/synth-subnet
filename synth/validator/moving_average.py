@@ -8,6 +8,7 @@ from pandas import DataFrame
 import bittensor as bt
 
 
+from synth.utils.helpers import get_current_time, new_equities_launch
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.prompt_config import PromptConfig
 from synth.validator.reward import compute_softmax
@@ -114,6 +115,19 @@ def apply_per_asset_coefficients(
         "AAPLX": 1.864976360560554,
         "GOOGLX": 1.4310534797250312,
     }
+
+    if get_current_time() <= new_equities_launch:
+        asset_coefficients = {
+            "BTC": 1.0,
+            "ETH": 0.6210893136676585,
+            "XAU": 1.4550630831254674,
+            "SOL": 0.5021491038021751,
+            "SPYX": 0,
+            "NVDAX": 0,
+            "TSLAX": 0,
+            "AAPLX": 0,
+            "GOOGLX": 0,
+        }
 
     sum_coefficients = 0.0
 

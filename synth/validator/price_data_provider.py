@@ -14,6 +14,7 @@ import bittensor as bt
 
 from synth.db.models import ValidatorRequest
 from synth.utils.helpers import from_iso_to_unix_time
+from synth.utils.logging import print_execution_time
 
 # Pyth API benchmarks doc: https://benchmarks.pyth.network/docs
 # get the list of stocks supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_stock
@@ -48,6 +49,7 @@ class PriceDataProvider:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
+    @print_execution_time
     def fetch_data(self, validator_request: ValidatorRequest) -> list:
         """
         Fetch real prices data from an external REST service.

@@ -1,11 +1,14 @@
+import asyncio
+import functools
 import os
 import logging
 from logging.handlers import RotatingFileHandler
+import time
 import bittensor as bt
 
 import google.cloud.logging
+from google.cloud.logging_v2.handlers import setup_logging
 import google.auth.exceptions
-
 
 EVENTS_LEVEL_NUM = 38
 DEFAULT_LOG_BACKUP_COUNT = 10
@@ -75,9 +78,22 @@ def setup_wandb_alert(wandb_run):
     return wandb_handler
 
 
-def setup_gcp_logging(log_id_prefix: str):
+def setup_gcp_logging(
+    log_id_prefix: str | None, cycle_label: str | None = None
+) -> tuple[
+    google.cloud.logging.handlers.CloudLoggingHandler | None,
+    google.cloud.logging.Client | None,
+]:
+    """
+    Sets up GCP logging and returns the handler and client for manual flushing/closing.
+    Call close_gcp_logging(handler, client) before shutdown to avoid losing logs.
+    """
     log_id = f"{log_id_prefix}-synth-validator"
-    bt.logging.info(f"setting up GCP log forwarder with log_id: {log_id}")
+    bt.logging.info(
+        f"setting up GCP log forwarder with log_id: {log_id} and cycle_label: {cycle_label}"
+    )
+    handler = None
+    client = None
     try:
         client = google.cloud.logging.Client()
     except google.auth.exceptions.GoogleAuthError as e:
@@ -91,4 +107,62 @@ def setup_gcp_logging(log_id_prefix: str):
                 "log_id_prefix is None. GCP logging will not be set up."
             )
         else:
-            client.setup_logging(labels={"log_id": log_id})
+            labels = {"log_id": log_id}
+            if cycle_label is not None:
+                labels["cycle_label"] = cycle_label
+            client.setup_logging(log_level=logging.DEBUG, labels=labels)
+            handler = google.cloud.logging.handlers.CloudLoggingHandler(client)
+            # handler = google.cloud.logging.handlers.StructuredLogHandler()
+            setup_logging(handler)
+            logging.getLogger().addHandler(handler)
+            logging.getLogger().setLevel(logging.DEBUG)
+
+    return handler, client
+
+
+def close_gcp_logging(handler, client):
+    """
+    Flushes and closes the GCP logging handler and client to ensure all logs are sent.
+    Call this before process shutdown.
+    """
+    if handler is not None:
+        try:
+            handler.flush()
+        except Exception as e:
+            bt.logging.warning(f"Error flushing GCP log handler: {e}")
+        try:
+            handler.close()
+        except Exception as e:
+            bt.logging.warning(f"Error closing GCP log handler: {e}")
+    if client is not None:
+        try:
+            client.close()
+        except Exception as e:
+            bt.logging.warning(f"Error closing GCP log client: {e}")
+
+
+def print_execution_time(func):
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        start = time.time()
+        result = await func(*args, **kwargs)
+        end = time.time()
+        bt.logging.info(
+            f"Execution time for {func.__name__}: {end - start:.4f} seconds"
+        )
+        return result
+
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        bt.logging.info(
+            f"Execution time for {func.__name__}: {end - start:.4f} seconds"
+        )
+        return result
+
+    if asyncio.iscoroutinefunction(func):
+        return async_wrapper
+    else:
+        return sync_wrapper

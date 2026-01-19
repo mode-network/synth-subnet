@@ -4,7 +4,6 @@ from synth.simulation_input import SimulationInput
 from synth.utils.helpers import get_current_time, round_time_to_minutes
 from synth.validator.response_validation_v2 import validate_responses
 
-
 # python synth/miner/run.py
 
 

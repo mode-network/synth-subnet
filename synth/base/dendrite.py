@@ -22,7 +22,6 @@ from tenacity import (
 
 from synth.protocol import Simulation
 
-
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 _ERROR_MAPPINGS: List[Tuple[Type[Exception], Tuple[Union[str, None], str]]] = [
@@ -174,6 +173,8 @@ class SynthDendrite(bt.Dendrite):
         )
 
         try:
+            self._log_outgoing_request(synapse)
+
             # Make the HTTP POST request
             response = await client.post(
                 url=url,
@@ -198,6 +199,8 @@ class SynthDendrite(bt.Dendrite):
             synapse = self.process_error_message(synapse, request_name, e)
 
         finally:
+            self._log_incoming_response(synapse)
+
             # Return the updated synapse object after deserializing if requested
             return synapse
 

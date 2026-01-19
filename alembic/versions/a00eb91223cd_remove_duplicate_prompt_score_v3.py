@@ -11,7 +11,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision: str = "a00eb91223cd"
 down_revision: Union[str, None] = "d45ce8e801b8"
@@ -23,9 +22,7 @@ def upgrade() -> None:
     conn = op.get_bind()
 
     # delete miner scores duplicate on MINER_PREDICTIONS_ID by PROMPT_SCORE_V3, keeping the newer
-    conn.execute(
-        sa.text(
-            """
+    conn.execute(sa.text("""
             DELETE FROM MINER_SCORES
             WHERE
                 (MINER_PREDICTIONS_ID, PROMPT_SCORE_V3, ID) IN (
@@ -49,14 +46,10 @@ def upgrade() -> None:
                     WHERE
                         T.RN > 1
                 )
-            """
-        )
-    )
+            """))
 
     # delete miner scores duplicate on (MINER_PREDICTIONS_ID, PROMPT_SCORE_V3), keeping the older
-    conn.execute(
-        sa.text(
-            """
+    conn.execute(sa.text("""
             DELETE FROM MINER_SCORES
             WHERE
                 (MINER_PREDICTIONS_ID, PROMPT_SCORE_V3, ID) IN (
@@ -81,14 +74,10 @@ def upgrade() -> None:
                     WHERE
                         T.RN > 1
                 )
-            """
-        )
-    )
+            """))
 
     # delete miner scores duplicate on MINER_PREDICTIONS_ID keeping prompt score v3
-    conn.execute(
-        sa.text(
-            """
+    conn.execute(sa.text("""
             delete
             FROM
                 MINER_SCORES
@@ -111,9 +100,7 @@ def upgrade() -> None:
                         ) T
                     WHERE T.RN > 1
             );
-            """
-        )
-    )
+            """))
 
 
 def downgrade() -> None:

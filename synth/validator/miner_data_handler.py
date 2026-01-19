@@ -39,6 +39,7 @@ from synth.db.models import (
     WeightsUpdateHistory,
 )
 from synth.simulation_input import SimulationInput
+from synth.utils.logging import print_execution_time
 from synth.validator import prompt_config, response_validation_v2
 
 
@@ -109,6 +110,7 @@ class MinerDataHandler:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
+    @print_execution_time
     def save_responses(
         self,
         miner_predictions: dict,
@@ -334,6 +336,41 @@ class MinerDataHandler:
             )
             return None
 
+    @print_execution_time
+    def get_predictions_by_request(
+        self, validator_request_id: int
+    ) -> typing.Optional[MinerPrediction]:
+        """Retrieve the record with the longest valid interval for the given miner_id."""
+        try:
+            with self.engine.connect() as connection:
+                query = (
+                    select(
+                        Miner.miner_uid,
+                        MinerPrediction.id,
+                        MinerPrediction.prediction,
+                        MinerPrediction.format_validation,
+                        MinerPrediction.process_time,
+                    )
+                    .select_from(MinerPrediction)
+                    .join(
+                        Miner,
+                        Miner.id == MinerPrediction.miner_id,
+                    )
+                    .where(
+                        MinerPrediction.validator_requests_id
+                        == validator_request_id,
+                    )
+                )
+
+                row = connection.execute(query).fetchall()
+
+            return row
+        except Exception as e:
+            bt.logging.exception(
+                f"in get_miner_prediction (got an exception): {e}"
+            )
+            return None
+
     def get_validator_requests_to_score(
         self,
         scored_time: datetime,
@@ -467,6 +504,7 @@ class MinerDataHandler:
                 f"in update_metagraph_history (got an exception): {e}"
             )
 
+    @print_execution_time
     def get_miner_scores(
         self,
         scored_time: datetime,
@@ -539,6 +577,7 @@ class MinerDataHandler:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
+    @print_execution_time
     def update_miner_rewards(self, miner_rewards_data: list[dict]):
         try:
             with self.engine.connect() as connection:

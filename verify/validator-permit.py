@@ -1,7 +1,6 @@
 import bittensor as bt
 from substrateinterface import SubstrateInterface  # type: ignore
 
-
 netuid = 50
 
 try:

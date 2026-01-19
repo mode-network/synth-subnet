@@ -2,6 +2,7 @@
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
 from datetime import datetime
+import time
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -28,7 +29,7 @@ from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
 )
-from synth.utils.logging import setup_gcp_logging
+from synth.utils.logging import print_execution_time, setup_gcp_logging
 from synth.utils.thread_scheduler import ThreadScheduler
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
@@ -44,7 +45,6 @@ from synth.validator.prompt_config import (
     LOW_FREQUENCY,
     HIGH_FREQUENCY,
 )
-
 
 load_dotenv()
 
@@ -63,17 +63,21 @@ class Validator(BaseValidatorNeuron):
 
         setup_gcp_logging(self.config.gcp.log_id_prefix)
 
-        bt.logging.info("load_state()")
+        bt.logging.info("load_state()", "__init__")
         self.load_state()
 
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
 
         self.scheduler_low = ThreadScheduler(
-            LOW_FREQUENCY, self.cycle_low_frequency, self.miner_data_handler
+            LOW_FREQUENCY,
+            self.cycle_low_frequency,
+            self.miner_data_handler,
         )
         self.scheduler_high = ThreadScheduler(
-            HIGH_FREQUENCY, self.cycle_high_frequency, self.miner_data_handler
+            HIGH_FREQUENCY,
+            self.cycle_high_frequency,
+            self.miner_data_handler,
         )
         self.miner_uids: list[int] = []
 
@@ -93,11 +97,23 @@ class Validator(BaseValidatorNeuron):
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
         )
-        self.scheduler_low.schedule_cycle(get_current_time(), True)
-        self.scheduler_high.schedule_cycle(get_current_time(), True)
+        self.scheduler_low.schedule_cycle(get_current_time())
+        self.scheduler_high.schedule_cycle(get_current_time())
 
+        while True:
+            self.forward_score()
+            delay = 10
+            bt.logging.info(
+                f"Sleeping for {delay} seconds before next score calculation",
+                "forward_validator",
+            )
+            time.sleep(delay)
+
+    @print_execution_time
     async def cycle_low_frequency(self, asset: str):
-        bt.logging.info("starting the low frequency cycle")
+        bt.logging.info(
+            "starting the low frequency cycle", "cycle_low_frequency"
+        )
 
         # update the miners, also for the high frequency prompt that will use the same list
         self.miner_uids = get_available_miners_and_update_metagraph_history(
@@ -105,17 +121,19 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
         )
         await self.forward_prompt(asset, LOW_FREQUENCY)
-        self.forward_score()
-        # self.cleanup_history()
-        self.sync()
 
+    @print_execution_time
     async def cycle_high_frequency(self, asset: str):
-        bt.logging.info("starting the high frequency cycle")
+        bt.logging.info(
+            "starting the high frequency cycle", "cycle_high_frequency"
+        )
         await self.forward_prompt(asset, HIGH_FREQUENCY)
 
+    @print_execution_time
     async def forward_prompt(self, asset: str, prompt_config: PromptConfig):
         bt.logging.info(
-            f"forward prompt for {asset} in {prompt_config.label} frequency"
+            f"forward prompt for {asset} in {prompt_config.label} frequency",
+            "forward_prompt",
         )
         if len(self.miner_uids) == 0:
             bt.logging.error(
@@ -145,6 +163,7 @@ class Validator(BaseValidatorNeuron):
             request_time=request_time,
         )
 
+    @print_execution_time
     def forward_score(self):
         # ================= Step 3 ================= #
         # Calculate rewards based on historical predictions data
@@ -154,32 +173,32 @@ class Validator(BaseValidatorNeuron):
         # with predictions and calculate the rewards,
         # we store the rewards in the miner_scores table
         # ========================================== #
-
-        bt.logging.info(f"forward score {LOW_FREQUENCY.label} frequency")
+        bt.logging.info(
+            f"forward score {LOW_FREQUENCY.label} frequency", "forward_score"
+        )
         current_time = get_current_time()
         scored_time: datetime = round_time_to_minutes(current_time)
 
-        success = calculate_scores(
+        success_low = calculate_scores(
             self.miner_data_handler,
             self.price_data_provider,
             scored_time,
             LOW_FREQUENCY,
         )
 
-        if not success:
-            return
-
         scored_time: datetime = round_time_to_minutes(current_time)
         current_time = get_current_time()
-        bt.logging.info(f"forward score {HIGH_FREQUENCY.label} frequency")
-        success = calculate_scores(
+        bt.logging.info(
+            f"forward score {HIGH_FREQUENCY.label} frequency", "forward_score"
+        )
+        success_high = calculate_scores(
             self.miner_data_handler,
             self.price_data_provider,
             scored_time,
             HIGH_FREQUENCY,
         )
 
-        if not success:
+        if not success_low and not success_high:
             return
 
         # ================= Step 4 ================= #
@@ -216,7 +235,8 @@ class Validator(BaseValidatorNeuron):
         )
 
         bt.logging.info(
-            f"Moving averages data for owner: {moving_averages_data[-1]}"
+            f"Moving averages data for owner: {moving_averages_data[-1]}",
+            "forward_score",
         )
 
         send_weights_to_bittensor_and_update_weights_history(
@@ -225,6 +245,8 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
             scored_time=scored_time,
         )
+
+        # self.cleanup_history()
 
     async def forward_miner(self, _: bt.Synapse) -> bt.Synapse:
         pass

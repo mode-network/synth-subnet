@@ -7,7 +7,6 @@ import numpy as np
 from synth.db.models import ValidatorRequest
 from synth.validator.price_data_provider import PriceDataProvider
 
-
 validator_request = ValidatorRequest(
     asset="BTC",
     start_time=datetime.fromisoformat("2025-02-19T14:12:00+00:00"),
