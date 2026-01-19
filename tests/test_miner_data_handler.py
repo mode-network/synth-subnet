@@ -62,14 +62,13 @@ def test_get_values_within_range(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 1
 
-    result = handler.get_predictions_by_request(
-        miner_uid, int(validator_requests[0].id)
-    )
+    result = handler.get_predictions_by_request(int(validator_requests[0].id))
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
     assert result is not None
-    prediction = result.prediction
+    pred = result[0]
+    prediction = pred.prediction
 
     assert len(prediction) == 1
     assert len(prediction[0]) == 288
