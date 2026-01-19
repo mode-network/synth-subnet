@@ -8,21 +8,6 @@ from synth.validator.prompt_config import HIGH_FREQUENCY, LOW_FREQUENCY
 
 
 class TestValidator(unittest.TestCase):
-    def test_select_delay_immediate(self):
-        cycle_start_time = datetime(2025, 12, 3, 12, 0, 0)
-
-        # Test high frequency
-        delay = ThreadScheduler.select_delay(
-            HIGH_FREQUENCY.asset_list, cycle_start_time, HIGH_FREQUENCY, True
-        )
-        self.assertEqual(delay, 0)
-
-        # Test low frequency
-        delay = ThreadScheduler.select_delay(
-            LOW_FREQUENCY.asset_list, cycle_start_time, LOW_FREQUENCY, True
-        )
-        self.assertEqual(delay, 60)
-
     def test_select_delay(self):
         cycle_start_time = datetime(
             2025, 12, 3, 12, 34, 56, 998, tzinfo=timezone.utc
@@ -39,7 +24,6 @@ class TestValidator(unittest.TestCase):
                 HIGH_FREQUENCY.asset_list,
                 cycle_start_time,
                 HIGH_FREQUENCY,
-                False,
             )
             self.assertEqual(delay, 30)
 
@@ -47,7 +31,6 @@ class TestValidator(unittest.TestCase):
                 LOW_FREQUENCY.asset_list,
                 cycle_start_time,
                 LOW_FREQUENCY,
-                False,
             )
             self.assertEqual(delay, 270)
 

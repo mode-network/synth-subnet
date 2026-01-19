@@ -62,7 +62,6 @@ class ThreadScheduler:
     def schedule_cycle(
         self,
         cycle_start_time: datetime,
-        immediately: bool = False,
         latest_asset: str = None,
     ):
         prompt_config = self.prompt_config
@@ -75,7 +74,6 @@ class ThreadScheduler:
             asset_list,
             cycle_start_time,
             prompt_config,
-            immediately,
         )
         if latest_asset is None:
             latest_asset = self.miner_data_handler.get_latest_asset(
@@ -99,23 +97,21 @@ class ThreadScheduler:
         asset_list: list[str],
         cycle_start_time: datetime,
         prompt_config: PromptConfig,
-        immediately: bool,
     ) -> int:
         delay = prompt_config.initial_delay
-        if not immediately:
-            next_cycle = cycle_start_time + timedelta(
-                minutes=prompt_config.total_cycle_minutes / len(asset_list)
-            )
-            next_cycle = round_time_to_minutes(
-                next_cycle
-            )  # round to the next minutes
-            next_cycle = next_cycle - timedelta(
-                minutes=1
-            )  # subtract 1 minute to align with the desired frequency
-            next_cycle_diff = next_cycle - get_current_time()
-            delay = int(next_cycle_diff.total_seconds())
-            if delay < 0:
-                delay = 0
+        next_cycle = cycle_start_time + timedelta(
+            minutes=prompt_config.total_cycle_minutes / len(asset_list)
+        )
+        next_cycle = round_time_to_minutes(
+            next_cycle
+        )  # round to the next minutes
+        next_cycle = next_cycle - timedelta(
+            minutes=1
+        )  # subtract 1 minute to align with the desired frequency
+        next_cycle_diff = next_cycle - get_current_time()
+        delay = int(next_cycle_diff.total_seconds())
+        if delay < 0:
+            delay = 0
 
         return delay
 

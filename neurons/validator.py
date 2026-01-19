@@ -97,8 +97,8 @@ class Validator(BaseValidatorNeuron):
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
         )
-        self.scheduler_low.schedule_cycle(get_current_time(), True)
-        self.scheduler_high.schedule_cycle(get_current_time(), True)
+        self.scheduler_low.schedule_cycle(get_current_time())
+        self.scheduler_high.schedule_cycle(get_current_time())
 
         while True:
             self.forward_score()
