@@ -32,7 +32,7 @@ class ThreadScheduler:
         self.schedule_cycle(cycle_start_time, False, asset)
         loop = asyncio.new_event_loop()
 
-        target_timeout = 300  # seconds
+        target_timeout = 60 * 10  # seconds
 
         try:
             asyncio.set_event_loop(loop)
@@ -41,7 +41,7 @@ class ThreadScheduler:
             )
         except asyncio.TimeoutError:
             bt.logging.warning(
-                f"Target timed out after {target_timeout}s for asset {asset}"
+                f"Target timed out after {target_timeout}s for asset {asset} {self.prompt_config.label}"
             )
         except Exception:
             bt.logging.exception(f"Error in cycle for asset {asset}")
