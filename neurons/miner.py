@@ -51,7 +51,6 @@ class Miner(BaseMinerNeuron):
             time_increment=simulation_input.time_increment,
             time_length=simulation_input.time_length,
             num_simulations=simulation_input.num_simulations,
-            sigma=self.config.simulation.sigma,  # Standard deviation of the simulated price path
         )
 
         return synapse
