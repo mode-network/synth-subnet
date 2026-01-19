@@ -29,7 +29,7 @@ class ThreadScheduler:
     def enter(self, *args):
         (asset,) = args
         cycle_start_time = get_current_time()
-        self.schedule_cycle(cycle_start_time, False, asset)
+        self.schedule_cycle(cycle_start_time, asset)
         loop = asyncio.new_event_loop()
 
         target_timeout = 60 * 10  # seconds
