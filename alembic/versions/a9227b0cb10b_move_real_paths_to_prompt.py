@@ -11,7 +11,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision: str = "a9227b0cb10b"
 down_revision: Union[str, None] = "4f05e794f2b2"
@@ -25,15 +24,13 @@ def upgrade() -> None:
         sa.Column("real_prices", sa.JSON(), nullable=True),
     )
     # Migrate data from miner_scores to validator_requests
-    op.execute(
-        """
+    op.execute("""
         UPDATE validator_requests vr
         SET real_prices = ms.real_prices
         FROM miner_scores ms
         JOIN miner_predictions mp ON ms.miner_predictions_id = mp.id
         WHERE vr.id = mp.validator_requests_id
-        """
-    )
+        """)
     # op.drop_column("miner_scores", "real_prices")
 
 

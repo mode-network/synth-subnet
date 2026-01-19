@@ -46,7 +46,6 @@ from synth.validator.prompt_config import (
     HIGH_FREQUENCY,
 )
 
-
 load_dotenv()
 
 

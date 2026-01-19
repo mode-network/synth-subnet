@@ -11,7 +11,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-
 # revision identifiers, used by Alembic.
 revision: str = "70f4a9879daf"
 down_revision: Union[str, None] = "9a64d1298abc"
@@ -58,8 +57,7 @@ def upgrade() -> None:
     )
 
     # populate the miner table based on the metagraph_history
-    op.execute(
-        """
+    op.execute("""
         INSERT INTO miners (miner_uid, coldkey, hotkey)
         with ranked_neurons as (
             SELECT neuron_uid, coldkey, hotkey, updated_at, ROW_NUMBER () OVER (PARTITION by neuron_uid ORDER BY updated_at desc) as rn
@@ -68,26 +66,21 @@ def upgrade() -> None:
         select neuron_uid as miner_uid, coldkey, hotkey
         from ranked_neurons
         where rn = 1
-        """
-    )
+        """)
 
     # populate other tables
-    op.execute(
-        """
+    op.execute("""
         UPDATE miner_predictions
         SET miner_id = miners.id
         FROM miners
         WHERE miner_predictions.miner_uid = miners.miner_uid
-        """
-    )
-    op.execute(
-        """
+        """)
+    op.execute("""
         UPDATE miner_rewards
         SET miner_id = miners.id
         FROM miners
         WHERE miner_rewards.miner_uid = miners.miner_uid
-        """
-    )
+        """)
 
     # create the foreign key constraints
     op.create_foreign_key(

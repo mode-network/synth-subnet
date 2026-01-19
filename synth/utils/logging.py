@@ -10,7 +10,6 @@ import google.cloud.logging
 from google.cloud.logging_v2.handlers import setup_logging
 import google.auth.exceptions
 
-
 EVENTS_LEVEL_NUM = 38
 DEFAULT_LOG_BACKUP_COUNT = 10
 

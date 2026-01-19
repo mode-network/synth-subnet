@@ -6,7 +6,6 @@ from synth.utils.helpers import (
     convert_prices_to_time_format,
 )
 
-
 SIGMA_MAP = {
     "BTC": 0.00472,
     "ETH": 0.00695,

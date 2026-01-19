@@ -8,7 +8,6 @@ from tenacity import (
     wait_random_exponential,
 )
 
-
 # Hermes Pyth API documentation: https://hermes.pyth.network/docs/
 
 TOKEN_MAP = {

@@ -22,7 +22,6 @@ from tenacity import (
 
 from synth.protocol import Simulation
 
-
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
 _ERROR_MAPPINGS: List[Tuple[Type[Exception], Tuple[Union[str, None], str]]] = [
