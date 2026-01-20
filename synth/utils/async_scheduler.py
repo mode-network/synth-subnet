@@ -28,6 +28,7 @@ class AsyncScheduler:
         self.prompt_config = prompt_config
         self.target = target
         self.miner_data_handler = miner_data_handler
+        self.first_run = True
 
     async def start(self):
         """Start the scheduling loop - fires cycles without waiting"""
@@ -51,7 +52,10 @@ class AsyncScheduler:
                 latest_asset = asset
 
                 delay = self.select_delay(
-                    asset_list, cycle_start_time, self.prompt_config
+                    asset_list,
+                    cycle_start_time,
+                    self.prompt_config,
+                    self.first_run,
                 )
 
                 bt.logging.info(
@@ -67,6 +71,8 @@ class AsyncScheduler:
                     self._run_cycle(asset),
                     name=f"{self.prompt_config.label}_{asset}_{int(time.time())}",
                 )
+
+                self.first_run = False
 
                 # Immediately continue loop to schedule next
 
@@ -122,12 +128,15 @@ class AsyncScheduler:
         asset_list: list[str],
         cycle_start_time: datetime,
         prompt_config: PromptConfig,
+        first_run: bool = False,
     ) -> int:
-        next_cycle = cycle_start_time + timedelta(
-            minutes=prompt_config.total_cycle_minutes / len(asset_list)
-        )
+        next_cycle = cycle_start_time
         next_cycle = round_time_to_minutes(next_cycle)
-        next_cycle = next_cycle - timedelta(minutes=1)
+        if not first_run:
+            next_cycle += timedelta(
+                minutes=prompt_config.total_cycle_minutes / len(asset_list)
+            )
+            next_cycle = next_cycle - timedelta(minutes=1)
         next_cycle_diff = next_cycle - get_current_time()
         delay = int(next_cycle_diff.total_seconds())
         return max(0, delay)
