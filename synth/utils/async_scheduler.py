@@ -1,7 +1,7 @@
 import asyncio
 import time
 from datetime import datetime, timedelta
-from typing import Callable, Awaitable, Set
+from typing import Callable, Awaitable
 import bittensor as bt
 
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -28,19 +28,16 @@ class AsyncScheduler:
         self.prompt_config = prompt_config
         self.target = target
         self.miner_data_handler = miner_data_handler
-        self._running = False
-        self._active_tasks: Set[asyncio.Task] = set()
 
     async def start(self):
         """Start the scheduling loop - fires cycles without waiting"""
-        self._running = True
         latest_asset = None
 
         bt.logging.info(
             f"AsyncScheduler started for {self.prompt_config.label}"
         )
 
-        while self._running:
+        while True:
             try:
                 cycle_start_time = get_current_time()
                 asset_list = self._get_asset_list()
@@ -59,45 +56,29 @@ class AsyncScheduler:
 
                 bt.logging.info(
                     f"Scheduling {self.prompt_config.label} cycle for {asset} "
-                    f"in {delay}s | Active cycles: {len(self._active_tasks)}"
+                    f"in {delay}s"
                 )
 
                 if delay > 0:
                     await asyncio.sleep(delay)
 
                 # FIRE AND FORGET - don't await!
-                task = asyncio.create_task(
+                asyncio.create_task(
                     self._run_cycle(asset),
                     name=f"{self.prompt_config.label}_{asset}_{int(time.time())}",
                 )
 
-                # Track active tasks
-                self._active_tasks.add(task)
-                task.add_done_callback(self._active_tasks.discard)
-
                 # Immediately continue loop to schedule next
 
             except asyncio.CancelledError:
-                bt.logging.info(
+                bt.logging.error(
                     f"Scheduler {self.prompt_config.label} cancelled"
                 )
-                break
             except Exception:
                 bt.logging.exception(
                     f"Error in scheduler {self.prompt_config.label}"
                 )
                 await asyncio.sleep(5)
-
-        # Wait for active cycles to complete on shutdown
-        if self._active_tasks:
-            bt.logging.info(
-                f"Waiting for {len(self._active_tasks)} active cycles to complete..."
-            )
-            await asyncio.gather(*self._active_tasks, return_exceptions=True)
-
-        bt.logging.info(
-            f"AsyncScheduler stopped for {self.prompt_config.label}"
-        )
 
     async def _run_cycle(self, asset: str):
         """Run a single cycle with timeout and error handling"""
