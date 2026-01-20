@@ -16,12 +16,9 @@ def test_validate_responses_process_time_none():
         time_increment=time_increment,
     )
     response: list = []
-    request_time = start_time
     process_time_str = None
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert result == "time out or internal server error (process time is None)"
 
 
@@ -33,12 +30,9 @@ def test_validate_responses_empty_response():
         time_increment=time_increment,
     )
     response = ()
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert result == "Response is empty"
 
 
@@ -54,12 +48,9 @@ def test_validate_responses_incorrect_type():
         "increment": time_increment,
         "paths": [[123.45] * 11],
     }
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert (
         result
         == "Response format is incorrect: expected tuple or list, got <class 'dict'>"
@@ -74,21 +65,15 @@ def test_validate_responses_incorrect_number_of_paths():
         time_increment=time_increment,
     )
     response = (int(start_time.timestamp()), time_increment)
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert result == "Number of paths is incorrect: expected 2, got 0"
 
     response2 = (int(start_time.timestamp()), time_increment, [123.45])
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response2, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response2, simulation_input, process_time_str)
     assert result == "Number of paths is incorrect: expected 2, got 1"
 
 
@@ -105,12 +90,9 @@ def test_validate_responses_incorrect_path_type():
         {"price": 123.45},
         {"price": 123.45},
     )
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert (
         result == "Path format is incorrect: expected list, got <class 'dict'>"
     )
@@ -124,12 +106,9 @@ def test_validate_responses_incorrect_number_of_time_points():
         time_increment=time_increment,
     )
     response = (int(start_time.timestamp()), time_increment, [123.45])
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert result == "Number of time points is incorrect: expected 11, got 1"
 
 
@@ -142,24 +121,18 @@ def test_validate_responses_incorrect_start_time():
     )
 
     response = (start_time.isoformat(), time_increment, [123.45] * 11)
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert (
         result
         == "Start time format is incorrect: expected int, got <class 'str'>"
     )
 
     response2 = (start_time.timestamp(), time_increment, [123.45] * 11)
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response2, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response2, simulation_input, process_time_str)
     assert (
         result
         == "Start time format is incorrect: expected int, got <class 'float'>"
@@ -170,12 +143,9 @@ def test_validate_responses_incorrect_start_time():
         time_increment,
         [123.45] * 11,
     )
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response3, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response3, simulation_input, process_time_str)
     assert (
         result
         == "Start time timestamp is incorrect: expected 1672531200, got 1672531201"
@@ -190,12 +160,9 @@ def test_validate_responses_incorrect_time_increment():
         time_increment=time_increment,
     )
     response = (int(start_time.timestamp()), "", [123.45] * 11)
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert (
         result
         == "Time increment format is incorrect: expected int, got <class 'str'>"
@@ -206,12 +173,9 @@ def test_validate_responses_incorrect_time_increment():
         time_increment + 1,
         [123.45] * 11,
     )
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response2, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response2, simulation_input, process_time_str)
     assert result == "Time increment is incorrect: expected 1, got 2"
 
 
@@ -227,12 +191,9 @@ def test_validate_responses_incorrect_price_format():
         time_increment,
         ["123.45"] * 11,
     )
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert (
         result
         == "Price format is incorrect: expected int or float, got <class 'str'>"
@@ -251,12 +212,9 @@ def test_validate_responses_incorrect_price_digits():
         time_increment,
         [123.456789] * 11,
     )
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert result == "Price format is incorrect: too many digits 123.456789"
 
 
@@ -272,12 +230,9 @@ def test_validate_responses_correct():
         time_increment,
         [123.45678] * 4,
     )
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert result == CORRECT
 
 
@@ -293,10 +248,7 @@ def test_validate_responses_correct_2():
         time_increment,
         [123.45678] * 4,
     ]
-    request_time = start_time
     process_time_str = "0"
 
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
+    result = validate_responses(response, simulation_input, process_time_str)
     assert result == CORRECT

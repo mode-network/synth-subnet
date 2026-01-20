@@ -51,7 +51,6 @@ def validate_response_type(response) -> typing.Optional[str]:
 def validate_responses(
     response,
     simulation_input: SimulationInput,
-    request_time: datetime,
     process_time_str: typing.Optional[str],
 ) -> str:
     """

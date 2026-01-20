@@ -181,9 +181,7 @@ async def query_available_miners_and_save_responses(
     simulation_input: SimulationInput,
     request_time: datetime,
 ):
-    timeout = timeout_from_start_time(
-        base_neuron.config.neuron.timeout, simulation_input.start_time
-    )
+    timeout = timeout_from_start_time(simulation_input.start_time)
 
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
@@ -221,7 +219,7 @@ async def query_available_miners_and_save_responses(
         process_time = synapse.dendrite.process_time
         try:
             format_validation = validate_responses_v2(
-                response, simulation_input, request_time, process_time
+                response, simulation_input, process_time
             )
         except Exception:
             format_validation = "error during validation"

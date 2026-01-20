@@ -1,4 +1,3 @@
-from typing import Optional
 from datetime import datetime, timedelta, timezone
 
 new_equities_launch = datetime(2026, 1, 20, 14, 0, 0, tzinfo=timezone.utc)
@@ -120,18 +119,13 @@ def from_iso_to_unix_time(iso_time: str):
     return int(dt.timestamp())
 
 
-def timeout_from_start_time(
-    config_timeout: Optional[float], start_time_str: str
-) -> float:
+def timeout_from_start_time(start_time_str: str) -> float:
     """
     Calculate the timeout duration from the start_time to the current time.
 
     :param start_time: ISO 8601 string representing the start time.
     :return: Timeout duration in seconds.
     """
-    if config_timeout is not None:
-        return config_timeout
-
     # Convert start_time to a datetime object
     start_time = datetime.fromisoformat(start_time_str)
 
