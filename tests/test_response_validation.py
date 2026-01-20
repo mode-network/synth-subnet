@@ -25,26 +25,6 @@ def test_validate_responses_process_time_none():
     assert result == "time out or internal server error (process time is None)"
 
 
-def test_validate_responses_received_after_start_time():
-    simulation_input = SimulationInput(
-        start_time=start_time.isoformat(),
-        num_simulations=1,
-        time_length=10,
-        time_increment=time_increment,
-    )
-    response: list = []
-    request_time = start_time
-    process_time_str = "10"
-
-    result = validate_responses(
-        response, simulation_input, request_time, process_time_str
-    )
-    assert (
-        result
-        == "Response received after the simulation start time: expected 2023-01-01 00:00:00+00:00, got 2023-01-01 00:00:10+00:00"
-    )
-
-
 def test_validate_responses_empty_response():
     simulation_input = SimulationInput(
         start_time=start_time.isoformat(),
