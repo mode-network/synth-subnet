@@ -1,8 +1,9 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
+import asyncio
 from datetime import datetime
-import time
+from typing import Optional
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -20,17 +21,18 @@ import time
 
 
 from dotenv import load_dotenv
+import httpx
 import bittensor as bt
 
 from synth.base.validator import BaseValidatorNeuron
 
 from synth.simulation_input import SimulationInput
+from synth.utils.async_scheduler import AsyncScheduler
 from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
 )
 from synth.utils.logging import print_execution_time, setup_gcp_logging
-from synth.utils.thread_scheduler import ThreadScheduler
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_scores,
@@ -69,45 +71,107 @@ class Validator(BaseValidatorNeuron):
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
 
-        self.scheduler_low = ThreadScheduler(
-            LOW_FREQUENCY,
-            self.cycle_low_frequency,
-            self.miner_data_handler,
-        )
-        self.scheduler_high = ThreadScheduler(
-            HIGH_FREQUENCY,
-            self.cycle_high_frequency,
-            self.miner_data_handler,
-        )
+        # Will be initialized in async context
+        self._client: Optional[httpx.AsyncClient] = None
+        self._schedulers: list[AsyncScheduler] = []
+
         self.miner_uids: list[int] = []
 
         PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
         PriceDataProvider.assert_assets_supported(LOW_FREQUENCY.asset_list)
 
-    def forward_validator(self):
-        """
-        Validator forward pass. Consists of:
-        - Generating the query
-        - Querying the miners
-        - Getting the responses
-        - Rewarding the miners
-        - Updating the scores
-        """
-        self.miner_uids = get_available_miners_and_update_metagraph_history(
-            base_neuron=self,
-            miner_data_handler=self.miner_data_handler,
-        )
-        self.scheduler_low.schedule_cycle(get_current_time())
-        self.scheduler_high.schedule_cycle(get_current_time())
+    @property
+    def client(self) -> httpx.AsyncClient:
+        """Get the shared HTTP client"""
+        if self._client is None:
+            raise RuntimeError(
+                "HTTP client not initialized. Call run() or initialize_async() first."
+            )
+        return self._client
 
+    async def initialize_async(self):
+        """Initialize async resources - call this before using async methods"""
+        self._client = httpx.AsyncClient(
+            http2=True,
+            limits=httpx.Limits(
+                max_connections=600,
+                max_keepalive_connections=200,
+            ),
+            timeout=httpx.Timeout(60.0, connect=10.0),
+        )
+
+        # Create schedulers with async targets
+        self._schedulers = [
+            AsyncScheduler(
+                LOW_FREQUENCY,
+                self.cycle_low_frequency,
+                self.miner_data_handler,
+            ),
+            AsyncScheduler(
+                HIGH_FREQUENCY,
+                self.cycle_high_frequency,
+                self.miner_data_handler,
+            ),
+        ]
+
+        bt.logging.info("Async resources initialized")
+
+    async def forward_validator_async(self):
+        """
+        Async validator forward pass - all tasks run forever.
+        """
+        await self.initialize_async()
+
+        try:
+            self.miner_uids = (
+                get_available_miners_and_update_metagraph_history(
+                    base_neuron=self,
+                    miner_data_handler=self.miner_data_handler,
+                )
+            )
+
+            bt.logging.info(
+                f"Starting {len(self._schedulers)} schedulers + scoring loop"
+            )
+
+            # All three run forever concurrently
+            await asyncio.gather(
+                self._schedulers[0].start(),  # Low frequency
+                self._schedulers[1].start(),  # High frequency
+                self._scoring_loop(),  # Scoring
+            )
+        except asyncio.CancelledError:
+            bt.logging.exception("Validator cancelled")
+            raise
+
+    async def _scoring_loop(self):
+        """Async scoring loop"""
         while True:
-            self.forward_score()
+            try:
+                await self.forward_score_async()
+            except asyncio.CancelledError:
+                bt.logging.info("Scoring loop cancelled")
+                break
+            except Exception:
+                bt.logging.exception("Error in scoring loop")
+
             delay = 10
             bt.logging.info(
                 f"Sleeping for {delay} seconds before next score calculation",
-                "forward_validator",
+                "forward_validator_async",
             )
-            time.sleep(delay)
+            await asyncio.sleep(delay)
+
+    async def forward_score_async(self):
+        """Async version of forward_score - implement your scoring logic here"""
+        # Convert your existing forward_score to async
+        # If it does blocking I/O, wrap with asyncio.to_thread()
+        await asyncio.to_thread(self.forward_score)
+
+    # Keep sync method for backward compatibility if needed
+    def forward_validator(self):
+        """Sync entry point - runs the async version"""
+        asyncio.run(self.forward_validator_async())
 
     @print_execution_time
     async def cycle_low_frequency(self, asset: str):
@@ -157,6 +221,7 @@ class Validator(BaseValidatorNeuron):
 
         await query_available_miners_and_save_responses(
             base_neuron=self,
+            client=self.client,
             miner_data_handler=self.miner_data_handler,
             miner_uids=self.miner_uids,
             simulation_input=simulation_input,

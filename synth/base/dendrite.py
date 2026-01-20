@@ -104,48 +104,154 @@ class SynthDendrite(bt.Dendrite):
 
     async def forward(
         self,
-        axons: Union[
-            list[Union[bt.AxonInfo, bt.Axon]], Union[bt.AxonInfo, bt.Axon]
-        ],
+        axons: list[Union[bt.AxonInfo, bt.Axon]],
         synapse: Simulation,
+        client: httpx.AsyncClient,
         timeout: float = 12,
     ) -> list[Simulation]:
-        is_list = True
-        # If a single axon is provided, wrap it in a list for uniform processing
-        if not isinstance(axons, list):
-            is_list = False
-            axons = [axons]
+        # Pre-process all requests before any async work
+        prepared_requests = self._prepare_all_requests(axons, synapse, timeout)
 
-        async def query_all_axons(
-            client: httpx.AsyncClient,
-        ) -> list[Simulation]:
-            async def single_axon_response(
-                target_axon: Union[bt.AxonInfo, bt.Axon],
-            ) -> Simulation:
-                return await self.call_http2_with_retry(
-                    client=client,
-                    target_axon=target_axon,
-                    synapse=synapse.model_copy(),
-                    timeout=timeout,
-                )
+        # Fire all HTTP requests concurrently
+        responses = await self._execute_all_requests(
+            client, prepared_requests, timeout
+        )
 
-            return await asyncio.gather(
-                *(single_axon_response(target_axon) for target_axon in axons)
+        return responses
+
+    def _prepare_all_requests(
+        self,
+        axons: list[Union[bt.AxonInfo, bt.Axon]],
+        synapse: Simulation,
+        timeout: float,
+    ) -> list[dict]:
+        """Pre-process all synapses and serialize everything before async dispatch"""
+        prepared = []
+
+        # Get synapse body once - same for all requests
+        synapse_body = synapse.model_dump()
+        request_name = synapse.__class__.__name__
+
+        for axon in axons:
+            target_axon = axon.info() if isinstance(axon, bt.Axon) else axon
+
+            # Build request endpoint from the synapse class
+            url = self._get_endpoint_url(
+                target_axon, request_name=request_name
             )
 
-        # Get responses for all axons.
-        async with httpx.AsyncClient(
-            http2=True,
-            limits=httpx.Limits(
-                max_connections=255, max_keepalive_connections=255
-            ),
-            timeout=timeout,
-        ) as client:
-            responses = await query_all_axons(client)
+            # Create a copy and preprocess for this specific axon
+            synapse_copy = synapse.model_copy()
 
-        # Return the single response if only one axon was targeted, else return all responses
-        return (
-            responses[0] if len(responses) == 1 and not is_list else responses
+            # Preprocess synapse for making a request
+            synapse_copy = self.preprocess_synapse_for_request(
+                target_axon, synapse_copy, timeout
+            )
+
+            # Serialize headers now (this is per-axon due to signatures)
+            headers = synapse_copy.to_headers()
+
+            prepared.append(
+                {
+                    "url": url,
+                    "headers": headers,
+                    "body": synapse_body,
+                    "synapse": synapse_copy,
+                    "target_axon": target_axon,
+                    "request_name": request_name,
+                }
+            )
+
+        return prepared
+
+    async def _execute_all_requests(
+        self,
+        client: httpx.AsyncClient,
+        prepared_requests: list[dict],
+        timeout: float,
+    ) -> list[Simulation]:
+        """Execute all prepared requests concurrently"""
+
+        async def execute_single(prepared: dict) -> Simulation:
+            return await self._call_http2_prepared(
+                client=client,
+                prepared=prepared,
+                timeout=timeout,
+            )
+
+        return await asyncio.gather(
+            *(execute_single(p) for p in prepared_requests)
+        )
+
+    async def _call_http2_prepared(
+        self,
+        client: httpx.AsyncClient,
+        prepared: dict,
+        timeout: float,
+    ) -> Simulation:
+        """Execute a pre-prepared HTTP request"""
+        # Record start time
+        start_time = time.time()
+
+        synapse = prepared["synapse"]
+        url = prepared["url"]
+        headers = prepared["headers"]
+        body = prepared["body"]
+        request_name = prepared["request_name"]
+
+        try:
+            self._log_outgoing_request(synapse)
+
+            # Make the HTTP POST request
+            response = await client.post(
+                url=url,
+                headers=headers,
+                json=body,
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            # Extract the JSON response from the server
+            json_response = response.json()
+            # Process the server response and fill synapse
+            status = response.status_code
+            resp_headers = response.headers
+            self.process_server_response(
+                status, resp_headers, json_response, synapse
+            )
+
+            # Set process time and log the response
+            synapse.dendrite.process_time = str(time.time() - start_time)
+
+        except Exception as e:
+            synapse = self.process_error_message(synapse, request_name, e)
+
+        finally:
+            self._log_incoming_response(synapse)
+
+            # Return the updated synapse object after deserializing if requested
+            return synapse
+
+    async def _query_all_axons(
+        self,
+        client: httpx.AsyncClient,
+        axons: list,
+        synapse: Simulation,
+        timeout: float,
+    ) -> list[Simulation]:
+        """Query all axons concurrently"""
+
+        async def single_axon_response(
+            target_axon: Union[bt.AxonInfo, bt.Axon],
+        ) -> Simulation:
+            return await self.call_http2(
+                client=client,
+                target_axon=target_axon,
+                synapse=synapse.model_copy(),
+                timeout=timeout,
+            )
+
+        return await asyncio.gather(
+            *(single_axon_response(target_axon) for target_axon in axons)
         )
 
     async def call_http2(
