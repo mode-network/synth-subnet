@@ -21,6 +21,7 @@ from tenacity import (
 
 
 from synth.protocol import Simulation
+from synth.validator.shared_async import shared_runtime
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 
@@ -101,6 +102,8 @@ def process_error_message(
 class SynthDendrite(bt.Dendrite):
     def __init__(self, wallet: Optional[Union[Wallet, Keypair]] = None):
         super().__init__(wallet=wallet)
+        # Ensure runtime is started
+        shared_runtime.start()
 
     async def forward(
         self,
@@ -111,39 +114,27 @@ class SynthDendrite(bt.Dendrite):
         timeout: float = 12,
     ) -> list[Simulation]:
         is_list = True
-        # If a single axon is provided, wrap it in a list for uniform processing
         if not isinstance(axons, list):
             is_list = False
             axons = [axons]
 
-        async def query_all_axons(
-            client: httpx.AsyncClient,
-        ) -> list[Simulation]:
-            async def single_axon_response(
-                target_axon: Union[bt.AxonInfo, bt.Axon],
-            ) -> Simulation:
-                return await self.call_http2_with_retry(
-                    client=client,
-                    target_axon=target_axon,
-                    synapse=synapse.model_copy(),
-                    timeout=timeout,
-                )
+        # Use the SHARED client - no `async with` needed
+        client = shared_runtime.client
 
-            return await asyncio.gather(
-                *(single_axon_response(target_axon) for target_axon in axons)
+        async def single_axon_response(
+            target_axon: Union[bt.AxonInfo, bt.Axon],
+        ) -> Simulation:
+            return await self.call_http2_with_retry(
+                client=client,
+                target_axon=target_axon,
+                synapse=synapse.model_copy(),
+                timeout=timeout,
             )
 
-        # Get responses for all axons.
-        async with httpx.AsyncClient(
-            http2=True,
-            limits=httpx.Limits(
-                max_connections=255, max_keepalive_connections=255
-            ),
-            timeout=timeout,
-        ) as client:
-            responses = await query_all_axons(client)
+        responses = await asyncio.gather(
+            *(single_axon_response(target_axon) for target_axon in axons)
+        )
 
-        # Return the single response if only one axon was targeted, else return all responses
         return (
             responses[0] if len(responses) == 1 and not is_list else responses
         )

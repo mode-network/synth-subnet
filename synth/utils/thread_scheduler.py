@@ -2,12 +2,11 @@ from datetime import datetime, timedelta
 from threading import Timer
 import asyncio
 
-
 import bittensor as bt
-
 
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.prompt_config import PromptConfig
+from synth.validator.shared_async import shared_runtime
 from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
@@ -26,38 +25,30 @@ class ThreadScheduler:
         self.target = target
         self.miner_data_handler = miner_data_handler
 
+        # Start shared runtime on init
+        shared_runtime.start()
+
     def enter(self, *args):
         (asset,) = args
         cycle_start_time = get_current_time()
         self.schedule_cycle(cycle_start_time, asset)
-        loop = asyncio.new_event_loop()
 
         target_timeout = 60 * 10  # seconds
 
         try:
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(
-                asyncio.wait_for(self.target(asset), timeout=target_timeout)
+            # This runs self.target(asset) in the SHARED event loop
+            # which will use the SHARED httpx client
+            shared_runtime.run_coroutine(
+                asyncio.wait_for(self.target(asset), timeout=target_timeout),
+                timeout=target_timeout,
             )
         except asyncio.TimeoutError:
             bt.logging.warning(
-                f"Target timed out after {target_timeout}s for asset {asset} {self.prompt_config.label}"
+                f"Target timed out after {target_timeout}s for asset {asset} "
+                f"{self.prompt_config.label}"
             )
         except Exception:
             bt.logging.exception(f"Error in cycle for asset {asset}")
-        finally:
-            try:
-                # Cancel any remaining tasks
-                pending = asyncio.all_tasks(loop)
-                for task in pending:
-                    task.cancel()
-                if pending:
-                    loop.run_until_complete(
-                        asyncio.gather(*pending, return_exceptions=True)
-                    )
-                loop.close()
-            except Exception:
-                bt.logging.exception("Error closing event loop")
 
     def schedule_cycle(
         self,
