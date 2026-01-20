@@ -1,6 +1,7 @@
 import asyncio
+import time
 from datetime import datetime, timedelta
-from typing import Callable, Awaitable, Optional
+from typing import Callable, Awaitable, Set
 import bittensor as bt
 
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -13,7 +14,10 @@ from synth.utils.helpers import (
 
 
 class AsyncScheduler:
-    """Pure async scheduler - replaces ThreadScheduler"""
+    """
+    Pure async scheduler that fires cycles without waiting for completion.
+    Multiple cycles can run concurrently.
+    """
 
     def __init__(
         self,
@@ -25,78 +29,106 @@ class AsyncScheduler:
         self.target = target
         self.miner_data_handler = miner_data_handler
         self._running = False
-        self._task: Optional[asyncio.Task] = None
+        self._active_tasks: Set[asyncio.Task] = set()
 
     async def start(self):
-        """Start the scheduling loop"""
+        """Start the scheduling loop - fires cycles without waiting"""
+        self._running = True
         latest_asset = None
 
         bt.logging.info(
             f"AsyncScheduler started for {self.prompt_config.label}"
         )
 
-        while True:
+        while self._running:
             try:
                 cycle_start_time = get_current_time()
-
-                # Get asset list
                 asset_list = self._get_asset_list()
 
-                # Select next asset
                 if latest_asset is None:
                     latest_asset = self.miner_data_handler.get_latest_asset(
                         self.prompt_config.time_length
                     )
 
                 asset = self.select_asset(latest_asset, asset_list)
-                latest_asset = asset  # For next iteration
+                latest_asset = asset
 
-                # Calculate delay until next cycle
                 delay = self.select_delay(
                     asset_list, cycle_start_time, self.prompt_config
                 )
 
                 bt.logging.info(
-                    f"Scheduling next {self.prompt_config.label} cycle "
-                    f"for asset {asset} in {delay} seconds"
+                    f"Scheduling {self.prompt_config.label} cycle for {asset} "
+                    f"in {delay}s | Active cycles: {len(self._active_tasks)}"
                 )
 
-                # Wait until next cycle
                 if delay > 0:
                     await asyncio.sleep(delay)
 
-                # Run the target with timeout
-                target_timeout = 60 * 10  # 10 minutes
-                try:
-                    bt.logging.info(
-                        f"Starting {self.prompt_config.label} cycle for {asset}"
-                    )
-                    await asyncio.wait_for(
-                        self.target(asset),
-                        timeout=target_timeout,
-                    )
-                except asyncio.TimeoutError:
-                    bt.logging.error(
-                        f"Target timed out after {target_timeout}s for asset {asset} "
-                        f"{self.prompt_config.label}"
-                    )
-                except asyncio.CancelledError:
-                    bt.logging.error(f"Cycle cancelled for {asset}")
+                # FIRE AND FORGET - don't await!
+                task = asyncio.create_task(
+                    self._run_cycle(asset),
+                    name=f"{self.prompt_config.label}_{asset}_{int(time.time())}",
+                )
+
+                # Track active tasks
+                self._active_tasks.add(task)
+                task.add_done_callback(self._active_tasks.discard)
+
+                # Immediately continue loop to schedule next
 
             except asyncio.CancelledError:
-                bt.logging.error(
+                bt.logging.info(
                     f"Scheduler {self.prompt_config.label} cancelled"
                 )
+                break
             except Exception:
                 bt.logging.exception(
-                    f"Error in {self.prompt_config.label} cycle for asset {asset}"
+                    f"Error in scheduler {self.prompt_config.label}"
                 )
-                # Brief pause before retry to avoid tight error loops
                 await asyncio.sleep(5)
+
+        # Wait for active cycles to complete on shutdown
+        if self._active_tasks:
+            bt.logging.info(
+                f"Waiting for {len(self._active_tasks)} active cycles to complete..."
+            )
+            await asyncio.gather(*self._active_tasks, return_exceptions=True)
 
         bt.logging.info(
             f"AsyncScheduler stopped for {self.prompt_config.label}"
         )
+
+    async def _run_cycle(self, asset: str):
+        """Run a single cycle with timeout and error handling"""
+        target_timeout = 60 * 10  # 10 minutes
+
+        try:
+            bt.logging.info(
+                f"Starting {self.prompt_config.label} cycle for {asset}"
+            )
+
+            await asyncio.wait_for(
+                self.target(asset),
+                timeout=target_timeout,
+            )
+
+            bt.logging.info(
+                f"Completed {self.prompt_config.label} cycle for {asset}"
+            )
+
+        except asyncio.TimeoutError:
+            bt.logging.error(
+                f"Cycle timed out after {target_timeout}s for {asset} "
+                f"{self.prompt_config.label}"
+            )
+        except asyncio.CancelledError:
+            bt.logging.error(f"Cycle cancelled for {asset}")
+            raise
+        except Exception:
+            bt.logging.exception(
+                f"Error in {self.prompt_config.label} cycle for {asset}"
+            )
 
     def _get_asset_list(self) -> list[str]:
         asset_list = self.prompt_config.asset_list[:6]
@@ -110,7 +142,6 @@ class AsyncScheduler:
         cycle_start_time: datetime,
         prompt_config: PromptConfig,
     ) -> int:
-        delay = prompt_config.initial_delay
         next_cycle = cycle_start_time + timedelta(
             minutes=prompt_config.total_cycle_minutes / len(asset_list)
         )
@@ -118,14 +149,11 @@ class AsyncScheduler:
         next_cycle = next_cycle - timedelta(minutes=1)
         next_cycle_diff = next_cycle - get_current_time()
         delay = int(next_cycle_diff.total_seconds())
-        if delay < 0:
-            delay = 0
-        return delay
+        return max(0, delay)
 
     @staticmethod
     def select_asset(latest_asset: str | None, asset_list: list[str]) -> str:
-        asset = asset_list[0]
-        if latest_asset is not None and latest_asset in asset_list:
-            latest_index = asset_list.index(latest_asset)
-            asset = asset_list[(latest_index + 1) % len(asset_list)]
-        return asset
+        if latest_asset is None or latest_asset not in asset_list:
+            return asset_list[0]
+        latest_index = asset_list.index(latest_asset)
+        return asset_list[(latest_index + 1) % len(asset_list)]
