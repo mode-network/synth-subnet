@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import typing
 
 
@@ -65,10 +65,7 @@ def validate_responses(
     if process_time_str is None:
         return "time out or internal server error (process time is None)"
 
-    received_at = request_time + timedelta(seconds=float(process_time_str))
     start_time = datetime.fromisoformat(simulation_input.start_time)
-    if received_at > start_time:
-        return f"Response received after the simulation start time: expected {start_time}, got {received_at}"
 
     error_message = validate_response_type(response)
     if error_message:
