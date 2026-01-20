@@ -101,7 +101,7 @@ class AsyncScheduler:
 
     async def _run_cycle(self, asset: str):
         """Run a single cycle with timeout and error handling"""
-        target_timeout = 60 * 10  # 10 minutes
+        target_timeout = 60 * 10 * 3  # seconds
 
         try:
             bt.logging.info(
