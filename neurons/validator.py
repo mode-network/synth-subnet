@@ -51,6 +51,10 @@ from synth.validator.prompt_config import (
 
 load_dotenv()
 
+MODE_LOW_FREQUENCY = "low_frequency"
+MODE_HIGH_FREQUENCY = "high_frequency"
+MODE_SCORING = "scoring"
+
 
 class Validator(BaseValidatorNeuron):
     """
@@ -61,8 +65,9 @@ class Validator(BaseValidatorNeuron):
     This class provides reasonable default behavior for a validator such as keeping a moving average of the scores of the miners and using them to set weights at the end of each epoch. Additionally, the scores are reset for new hotkeys at the end of each epoch.
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, mode: str = MODE_LOW_FREQUENCY):
         super(Validator, self).__init__(config=config)
+        self.mode = mode
 
         setup_gcp_logging(self.config.gcp.log_id_prefix)
 
@@ -135,12 +140,13 @@ class Validator(BaseValidatorNeuron):
                 f"Starting {len(self._schedulers)} schedulers + scoring loop"
             )
 
-            # All three run forever concurrently
-            await asyncio.gather(
-                self._schedulers[0].start(),  # Low frequency
-                self._schedulers[1].start(),  # High frequency
-                self._scoring_loop(),  # Scoring
-            )
+            if self.mode == MODE_LOW_FREQUENCY:
+                await self._schedulers[0].start()
+            elif self.mode == MODE_HIGH_FREQUENCY:
+                await self._schedulers[1].start()
+            elif self.mode == MODE_SCORING:
+                await self._scoring_loop()
+
         except asyncio.CancelledError:
             bt.logging.exception("Validator cancelled")
             raise
@@ -186,6 +192,7 @@ class Validator(BaseValidatorNeuron):
             miner_data_handler=self.miner_data_handler,
         )
         await self.forward_prompt(asset, LOW_FREQUENCY)
+        self.forward_score()
 
     @print_execution_time
     async def cycle_high_frequency(self, asset: str):
@@ -318,7 +325,19 @@ class Validator(BaseValidatorNeuron):
         pass
 
 
+mp.set_start_method("spawn", force=True)
+
+
+def spawn_validator(mode: str):
+    Validator(mode=mode).run()
+
+
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
-    mp.set_start_method("spawn", force=True)
-    Validator().run()
+    processes = [
+        mp.Process(target=spawn_validator, args=(MODE_HIGH_FREQUENCY,)),
+        mp.Process(target=spawn_validator, args=(MODE_LOW_FREQUENCY,)),
+        mp.Process(target=spawn_validator, args=(MODE_SCORING,)),
+    ]
+    for p in processes:
+        p.start()
