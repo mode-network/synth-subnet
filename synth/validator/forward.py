@@ -24,7 +24,6 @@ import traceback
 
 import bittensor as bt
 import numpy as np
-import httpx
 
 
 from synth.base.dendrite_multiprocess import sync_forward_multiprocess
@@ -174,9 +173,8 @@ def calculate_scores(
 
 
 @print_execution_time
-async def query_available_miners_and_save_responses(
+def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
-    client: httpx.AsyncClient,
     miner_data_handler: MinerDataHandler,
     miner_uids: list,
     simulation_input: SimulationInput,
