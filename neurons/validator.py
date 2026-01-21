@@ -140,7 +140,7 @@ class Validator(BaseValidatorNeuron):
             raise ValueError(f"Unknown cycle name: {self.cycle_name}")
 
     @print_execution_time
-    async def cycle_low_frequency(self, asset: str):
+    def cycle_low_frequency(self, asset: str):
         bt.logging.info(
             "starting the low frequency cycle", "cycle_low_frequency"
         )
@@ -150,7 +150,7 @@ class Validator(BaseValidatorNeuron):
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
         )
-        await self.forward_prompt(asset, LOW_FREQUENCY)
+        self.forward_prompt(asset, LOW_FREQUENCY)
 
     @print_execution_time
     def cycle_scoring(self):
@@ -221,6 +221,7 @@ class Validator(BaseValidatorNeuron):
             self.price_data_provider,
             scored_time,
             LOW_FREQUENCY,
+            self.config.neuron.nprocs,
         )
 
         scored_time: datetime = round_time_to_minutes(current_time)
@@ -233,6 +234,7 @@ class Validator(BaseValidatorNeuron):
             self.price_data_provider,
             scored_time,
             HIGH_FREQUENCY,
+            self.config.neuron.nprocs,
         )
 
         if not success_low and not success_high:

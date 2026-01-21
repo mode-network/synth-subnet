@@ -128,6 +128,7 @@ def calculate_scores(
     price_data_provider: PriceDataProvider,
     scored_time: datetime,
     prompt: prompt_config.PromptConfig,
+    nprocs: int = 2,
 ) -> bool:
     # get latest prediction request from validator
     validator_requests = miner_data_handler.get_validator_requests_to_score(
@@ -148,6 +149,7 @@ def calculate_scores(
             miner_data_handler=miner_data_handler,
             price_data_provider=price_data_provider,
             validator_request=validator_request,
+            nprocs=nprocs,
         )
 
         print_scores_df(prompt_scores, detailed_info)

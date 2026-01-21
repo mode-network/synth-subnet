@@ -131,11 +131,11 @@ def _crps_worker(args):
 _PROCESS_EXECUTOR = None
 
 
-def get_process_executor():
+def get_process_executor(nprocs: int = 2) -> ProcessPoolExecutor:
     global _PROCESS_EXECUTOR
     if _PROCESS_EXECUTOR is None:
         # Use more workers for 255 miners
-        _PROCESS_EXECUTOR = ProcessPoolExecutor(max_workers=8)
+        _PROCESS_EXECUTOR = ProcessPoolExecutor(max_workers=nprocs)
     return _PROCESS_EXECUTOR
 
 
@@ -144,6 +144,7 @@ def get_rewards_multiprocess(
     miner_data_handler: MinerDataHandler,
     price_data_provider: PriceDataProvider,
     validator_request: ValidatorRequest,
+    nprocs: int = 2,
 ) -> tuple[typing.Optional[np.ndarray], list, list[dict]]:
     """
     Returns an array of rewards for the given query and responses.
@@ -214,7 +215,7 @@ def get_rewards_multiprocess(
     bt.logging.info(f"Starting CRPS calculation for {len(work_items)} miners")
     t0 = time.time()
 
-    executor = get_process_executor()
+    executor = get_process_executor(nprocs)
     results = list(executor.map(_crps_worker, work_items))
 
     bt.logging.info(f"CRPS done in {time.time() - t0:.2f}s")
