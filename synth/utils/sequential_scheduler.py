@@ -85,7 +85,7 @@ class SequentialScheduler:
         if delay <= 0:
             bt.warning("Calculated delay is non-positive")
             current_time = get_current_time()
-            diff = round_time_to_minutes(current_time()) - current_time
+            diff = round_time_to_minutes(current_time) - current_time
             delay = int(diff.total_seconds())
 
         return delay
