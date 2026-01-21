@@ -20,7 +20,7 @@ exclude = '''
 
 [tool.mypy]
 disable_error_code = ["type-arg", "import-untyped", "no-untyped-def", "no-untyped-call"]
-python_version = "3.10"
+python_version = "3.11"
 strict = true
 show_error_codes = true
 warn_unused_ignores = true
