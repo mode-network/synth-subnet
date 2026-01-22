@@ -21,7 +21,6 @@ import multiprocessing as mp
 
 
 from dotenv import load_dotenv
-import httpx
 import bittensor as bt
 
 from synth.base.validator import BaseValidatorNeuron
