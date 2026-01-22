@@ -10,7 +10,7 @@ from synth.validator.prompt_config import PromptConfig
 from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
-    new_equities_launch,
+    new_equities_launch2,
 )
 
 
@@ -41,9 +41,9 @@ class SequentialScheduler:
     ):
         prompt_config = self.prompt_config
 
-        asset_list = prompt_config.asset_list[:6]
-        if get_current_time() <= new_equities_launch:
-            asset_list = asset_list[:4]
+        asset_list = prompt_config.asset_list
+        if get_current_time() <= new_equities_launch2:
+            asset_list = prompt_config.asset_list[:6]
 
         delay = self.select_delay(
             asset_list,
