@@ -69,7 +69,7 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 ```shell
 sudo apt update && \
-  sudo apt install nodejs npm python3.10 pkg-config
+  sudo apt install nodejs npm python3.11 pkg-config
 ```
 
 **Step 6: Install [PM2](https://pm2.io/)**
@@ -81,13 +81,13 @@ sudo npm install pm2 -g
 **Step 7: Install the Python environment**
 
 ```shell
-sudo apt install python3.10-venv
+sudo apt install python3.11-venv
 ```
 
 **Step 8: Create a new Python environment**
 
 ```shell
-python3.10 -m venv bt_venv
+python3.11 -m venv bt_venv
 ```
 
 **Step 9: Activate and switch to the newly created Python virtual environment**

@@ -11,7 +11,7 @@ validator_hotkey_name=default
 
 log_id_prefix=my_validator_name
 
-python3.10 ./neurons/validator.py \
+python3.11 ./neurons/validator.py \
 		--wallet.name $validator_coldkey_name \
 		--wallet.hotkey $validator_hotkey_name \
 		--subtensor.network $network \

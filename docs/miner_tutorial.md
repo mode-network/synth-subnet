@@ -2,8 +2,8 @@
 
 ### Table of contents
 
-* [1. Requirements](#1-requirements)
-* [2. TL;DR](#2-tldr)
+- [1. Requirements](#1-requirements)
+- [2. TL;DR](#2-tldr)
   - [2.1. Clone the code and implement your model](#21-clone-the-code-and-implement-your-model)
   - [2.2. Check that your model generates a valid response](#22-check-that-your-model-generates-a-valid-response)
   - [2.3. Get a VM and open port `8091`](#23-get-a-vm-and-open-port-8091)
@@ -13,7 +13,7 @@
   - [2.7. Track your miner performance](#27-track-your-miner-performance)
   - [2.8. Check your prediction validation](#28-check-your-prediction-validation)
   - [2.9. More information](#29-more-information)
-* [3. Getting started](#3-getting-started)
+- [3. Getting started](#3-getting-started)
   - [3.1. Open ports](#31-open-ports)
     - [3.1.1. Check open ports](#311-check-open-ports)
     - [3.1.2. Open using `ufw`](#312-open-using-ufw)
@@ -33,24 +33,25 @@
 
 ### 1. Requirements
 
-* [Ubuntu v20.04+](https://ubuntu.com/download)
+- [Ubuntu v20.04+](https://ubuntu.com/download)
 
 ## 2. TL;DR
 
 ### 2.1. Clone the code and implement your model
 
-* Clone the Synth subnet repository.
-* Modify the implementation of this function to run your own model: [simulations.py#L10](https://github.com/mode-network/synth-subnet/blob/13642c4c3287da52c602ac8c629b26a7cdc66628/synth/miner/simulations.py#L10)
-* Use all parameters from the prompt **except** `sigma`, which you may ignore.
+- Clone the Synth subnet repository.
+- Modify the implementation of this function to run your own model: [simulations.py#L10](https://github.com/mode-network/synth-subnet/blob/13642c4c3287da52c602ac8c629b26a7cdc66628/synth/miner/simulations.py#L10)
+- Use all parameters from the prompt **except** `sigma`, which you may ignore.
 
 ### 2.2. Check that your model generates a valid response
 
-* Run this command to test your model locally:
+- Run this command to test your model locally:
+
 ```shell
 python synth/miner/run.py
 ```
 
-* If your format is correct, you’ll see the output:
+- If your format is correct, you’ll see the output:
 
 ```text
 $ CORRECT
@@ -58,41 +59,42 @@ $ CORRECT
 
 ### 2.3. Get a VM and open port `8091`
 
-* Ensure port **8091** is open in your cloud provider's **ingress rules**.
-* Configure your VM's **firewall** to allow inbound traffic on this port.
+- Ensure port **8091** is open in your cloud provider's **ingress rules**.
+- Configure your VM's **firewall** to allow inbound traffic on this port.
 
 ### 2.4. Create or import a Bittensor wallet
 
-* Use `btcli` to:
-  - Create or import a wallet. 
-  - Add funds. 
+- Use `btcli` to:
+  - Create or import a wallet.
+  - Add funds.
   - Register your hotkey (this will purchase a UID).
 
 ### 2.5. Launch your miner with PM2
 
-* Create a new file called `miner.local.config.js` using the config from this link: [miner.config.js#L1](https://github.com/mode-network/synth-subnet/blob/f231c7b9151de6382d11e8102ae70c6b3f1b1fc7/miner.config.js#L1)
-* Modify the wallet name and hotkey name as needed. 
-* Start the miner with PM2:
+- Create a new file called `miner.local.config.js` using the config from this link: [miner.config.js#L1](https://github.com/mode-network/synth-subnet/blob/f231c7b9151de6382d11e8102ae70c6b3f1b1fc7/miner.config.js#L1)
+- Modify the wallet name and hotkey name as needed.
+- Start the miner with PM2:
+
 ```shell
 pm2 start miner.local.config.js
 ```
 
 ### 2.6. Verify the port is open
 
-* Your port will only be accessible if:
+- Your port will only be accessible if:
   - The miner is actively running.
   - Port 8091 is open on the VM and network level.
-* You can verify using this tool: [https://www.yougetsignal.com/tools/open-ports](https://www.yougetsignal.com/tools/open-ports).
+- You can verify using this tool: [https://www.yougetsignal.com/tools/open-ports](https://www.yougetsignal.com/tools/open-ports).
 
 ### 2.7. Track your miner performance
 
-* View miner performance and stats on:
+- View miner performance and stats on:
   - [Taostats (Subnet 50)](https://taostats.io/subnets/50/chart)
   - [Synth Miner Dashboard](https://miners.synthdata.co/)
 
 ### 2.8. Check your prediction validation
 
-* View validation status of your last submission:
+- View validation status of your last submission:
 
 ```text
 https://api.synthdata.co/validation/miner?uid=<your UID>
@@ -100,7 +102,7 @@ https://api.synthdata.co/validation/miner?uid=<your UID>
 
 ### 2.9. More information
 
-* Explore the full Synth API documentation: [https://api.synthdata.co](https://api.synthdata.co)
+- Explore the full Synth API documentation: [https://api.synthdata.co](https://api.synthdata.co)
 
 ## 3. Getting started
 
@@ -141,7 +143,7 @@ Nmap done: 1 IP address (1 host up) scanned in 0.04 seconds
 
 #### 3.1.2. Open using `ufw`
 
-It is **RECOMMENDED** that `ufw` (Uncomplicated Firewall) is used to handle port connections. 
+It is **RECOMMENDED** that `ufw` (Uncomplicated Firewall) is used to handle port connections.
 
 `ufw` is a minimal front-end for managing iptables rules. It allows you to easily open ports with simple commands
 
@@ -172,8 +174,8 @@ Status: active
 
 To                         Action      From
 --                         ------      ----
-8091                       ALLOW       Anywhere                  
-8091 (v6)                  ALLOW       Anywhere (v6) 
+8091                       ALLOW       Anywhere
+8091 (v6)                  ALLOW       Anywhere (v6)
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -229,12 +231,11 @@ sudo add-apt-repository ppa:deadsnakes/ppa
 
 > ⚠️ **NOTE:** The [deadsnakes](https://github.com/deadsnakes) repository, while unofficial, it is hugely popular and used by many Python projects.
 
-
 Install Python and Node/npm:
 
 ```shell
 sudo apt update && \
-  sudo apt install nodejs npm python3.10 python3.10-venv pkg-config
+  sudo apt install nodejs npm python3.11 python3.11-venv pkg-config
 ```
 
 Install [PM2](https://pm2.io/) via npm:
@@ -266,7 +267,7 @@ cd ./synth-subnet
 Create a new Python virtual environment:
 
 ```shell
-python3.10 -m venv bt_venv
+python3.11 -m venv bt_venv
 ```
 
 Activate and switch to the newly created Python virtual environment:
@@ -306,6 +307,7 @@ btcli wallet create \
 ### 3.4.2. Register the wallet
 
 Next, register the wallets by acquiring a slot on the Bittensor subnet:
+
 ```shell
 btcli subnet register \
   --wallet.name miner \
@@ -314,6 +316,7 @@ btcli subnet register \
 ```
 
 if you want to try it on testnet first, run the following command:
+
 ```shell
 btcli subnet register \
   --wallet.name miner \
@@ -327,6 +330,7 @@ btcli subnet register \
 ### 3.4.3. Verify the wallet registration (optional)
 
 You can verify the wallet registration by running:
+
 ```shell
 btcli wallet overview \
   --wallet.name miner \
@@ -334,12 +338,14 @@ btcli wallet overview \
 ```
 
 And, you can also check the network metagraph:
+
 ```shell
 btcli subnet metagraph \
   --netuid 50
 ```
 
 for testnet it's:
+
 ```shell
 btcli subnet metagraph \
   --network test \
@@ -359,6 +365,7 @@ pm2 start miner.config.js
 ```
 
 for testnet use:
+
 ```shell
 pm2 start miner.test.config.js
 ```
@@ -376,4 +383,5 @@ pm2 list
 <sup>[Back to top ^][table-of-contents]</sup>
 
 <!-- links -->
+
 [table-of-contents]: #table-of-contents
