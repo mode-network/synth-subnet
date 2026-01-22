@@ -3,7 +3,6 @@
 # Copyright © 2023 Mode Labs
 import time
 from datetime import datetime
-from typing import Optional
 import multiprocessing as mp
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
@@ -28,7 +27,6 @@ import bittensor as bt
 from synth.base.validator import BaseValidatorNeuron
 
 from synth.simulation_input import SimulationInput
-from synth.utils.async_scheduler import AsyncScheduler
 from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
@@ -79,10 +77,6 @@ class Validator(BaseValidatorNeuron):
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
 
-        # Will be initialized in async context
-        self._client: Optional[httpx.AsyncClient] = None
-        self._schedulers: list[AsyncScheduler] = []
-
         self.miner_uids: list[int] = []
 
         PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
@@ -94,22 +88,9 @@ class Validator(BaseValidatorNeuron):
             )
             self.cycle_name = self.config.validator.cycle_name
 
-    @property
-    def client(self) -> httpx.AsyncClient:
-        """Get the shared HTTP client"""
-        if self._client is None:
-            raise RuntimeError(
-                "HTTP client not initialized. Call run() or initialize_async() first."
-            )
-        return self._client
-
     # Keep sync method for backward compatibility if needed
     def forward_validator(self):
         """Sync entry point - runs the async version"""
-        self.miner_uids = get_available_miners_and_update_metagraph_history(
-            base_neuron=self,
-            miner_data_handler=self.miner_data_handler,
-        )
         if self.cycle_name == CYCLE_LOW_FREQUENCY:
             SequentialScheduler(
                 prompt_config=LOW_FREQUENCY,
@@ -124,18 +105,6 @@ class Validator(BaseValidatorNeuron):
             ).start()
         elif self.cycle_name == CYCLE_SCORING:
             self.cycle_scoring()
-        elif self.cycle_name == CYCLE_FULL:
-            SequentialScheduler(
-                prompt_config=LOW_FREQUENCY,
-                target=self.cycle_low_frequency,
-                miner_data_handler=self.miner_data_handler,
-            ).start()
-            SequentialScheduler(
-                prompt_config=HIGH_FREQUENCY,
-                target=self.cycle_high_frequency,
-                miner_data_handler=self.miner_data_handler,
-            ).start()
-            self.cycle_scoring()
         else:
             raise ValueError(f"Unknown cycle name: {self.cycle_name}")
 
@@ -146,11 +115,11 @@ class Validator(BaseValidatorNeuron):
         )
 
         # update the miners, also for the high frequency prompt that will use the same list
+        self.forward_prompt(asset, LOW_FREQUENCY)
         self.miner_uids = get_available_miners_and_update_metagraph_history(
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
         )
-        self.forward_prompt(asset, LOW_FREQUENCY)
 
     @print_execution_time
     def cycle_scoring(self):
@@ -165,6 +134,10 @@ class Validator(BaseValidatorNeuron):
             "starting the high frequency cycle", "cycle_high_frequency"
         )
         self.forward_prompt(asset, HIGH_FREQUENCY)
+        self.miner_uids = get_available_miners_and_update_metagraph_history(
+            base_neuron=self,
+            miner_data_handler=self.miner_data_handler,
+        )
 
     @print_execution_time
     def forward_prompt(self, asset: str, prompt_config: PromptConfig):
