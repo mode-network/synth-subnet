@@ -90,6 +90,10 @@ class Validator(BaseValidatorNeuron):
     # Keep sync method for backward compatibility if needed
     def forward_validator(self):
         """Sync entry point - runs the async version"""
+        self.miner_uids = get_available_miners_and_update_metagraph_history(
+            base_neuron=self,
+            miner_data_handler=self.miner_data_handler,
+        )
         if self.cycle_name == CYCLE_LOW_FREQUENCY:
             SequentialScheduler(
                 prompt_config=LOW_FREQUENCY,
