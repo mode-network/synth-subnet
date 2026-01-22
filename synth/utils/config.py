@@ -217,6 +217,27 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
         help="The GCP log ID prefix.",
     )
 
+    parser.add_argument(
+        "--neuron.nprocs",
+        type=int,
+        help="The number of processes to run for the validator dendrite.",
+        default=2,
+    )
+
+    parser.add_argument(
+        "--validator.cycle_name",
+        type=str,
+        help="Low or high frequency or scoring cycle, start separate processes for each.",
+        default="scoring",
+    )
+
+    parser.add_argument(
+        "--validator.mode",
+        type=str,
+        help="Full mode will keep all history, light mode will prune old predictions.",
+        default="full",
+    )
+
 
 def config(cls):
     """

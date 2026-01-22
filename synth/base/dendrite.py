@@ -10,6 +10,7 @@ import bittensor as bt
 from bittensor_wallet import Keypair, Wallet
 import httpx
 from pydantic import ValidationError
+from synth.utils.logging import print_execution_time
 import uvloop
 from tenacity import (
     retry,
@@ -119,6 +120,7 @@ class SynthDendrite(bt.Dendrite):
 
         return responses
 
+    @print_execution_time
     def _prepare_all_requests(
         self,
         axons: list[Union[bt.AxonInfo, bt.Axon]],
@@ -164,6 +166,7 @@ class SynthDendrite(bt.Dendrite):
 
         return prepared
 
+    @print_execution_time
     async def _execute_all_requests(
         self,
         client: httpx.AsyncClient,

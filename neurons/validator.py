@@ -1,9 +1,9 @@
 # The MIT License (MIT)
 # Copyright © 2023 Yuma Rao
 # Copyright © 2023 Mode Labs
-import asyncio
+import time
 from datetime import datetime
-from typing import Optional
+import multiprocessing as mp
 
 # Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
 # documentation files (the “Software”), to deal in the Software without restriction, including without limitation
@@ -21,18 +21,17 @@ from typing import Optional
 
 
 from dotenv import load_dotenv
-import httpx
 import bittensor as bt
 
 from synth.base.validator import BaseValidatorNeuron
 
 from synth.simulation_input import SimulationInput
-from synth.utils.async_scheduler import AsyncScheduler
 from synth.utils.helpers import (
     get_current_time,
     round_time_to_minutes,
 )
 from synth.utils.logging import print_execution_time, setup_gcp_logging
+from synth.utils.sequential_scheduler import SequentialScheduler
 from synth.validator.forward import (
     calculate_moving_average_and_update_rewards,
     calculate_scores,
@@ -50,6 +49,11 @@ from synth.validator.prompt_config import (
 
 load_dotenv()
 
+CYCLE_LOW_FREQUENCY = "low_frequency"
+CYCLE_HIGH_FREQUENCY = "high_frequency"
+CYCLE_SCORING = "scoring"
+CYCLE_FULL = "full"
+
 
 class Validator(BaseValidatorNeuron):
     """
@@ -60,8 +64,9 @@ class Validator(BaseValidatorNeuron):
     This class provides reasonable default behavior for a validator such as keeping a moving average of the scores of the miners and using them to set weights at the end of each epoch. Additionally, the scores are reset for new hotkeys at the end of each epoch.
     """
 
-    def __init__(self, config=None):
+    def __init__(self, config=None, cycle_name: str = CYCLE_LOW_FREQUENCY):
         super(Validator, self).__init__(config=config)
+        self.cycle_name = cycle_name
 
         setup_gcp_logging(self.config.gcp.log_id_prefix)
 
@@ -71,130 +76,74 @@ class Validator(BaseValidatorNeuron):
         self.miner_data_handler = MinerDataHandler()
         self.price_data_provider = PriceDataProvider()
 
-        # Will be initialized in async context
-        self._client: Optional[httpx.AsyncClient] = None
-        self._schedulers: list[AsyncScheduler] = []
-
         self.miner_uids: list[int] = []
 
         PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
         PriceDataProvider.assert_assets_supported(LOW_FREQUENCY.asset_list)
 
-    @property
-    def client(self) -> httpx.AsyncClient:
-        """Get the shared HTTP client"""
-        if self._client is None:
-            raise RuntimeError(
-                "HTTP client not initialized. Call run() or initialize_async() first."
-            )
-        return self._client
-
-    async def initialize_async(self):
-        """Initialize async resources - call this before using async methods"""
-        self._client = httpx.AsyncClient(
-            http2=True,
-            limits=httpx.Limits(
-                max_connections=600,
-                max_keepalive_connections=200,
-            ),
-            timeout=httpx.Timeout(60.0, connect=10.0),
-        )
-
-        # Create schedulers with async targets
-        self._schedulers = [
-            AsyncScheduler(
-                LOW_FREQUENCY,
-                self.cycle_low_frequency,
-                self.miner_data_handler,
-            ),
-            AsyncScheduler(
-                HIGH_FREQUENCY,
-                self.cycle_high_frequency,
-                self.miner_data_handler,
-            ),
-        ]
-
-        bt.logging.info("Async resources initialized")
-
-    async def forward_validator_async(self):
-        """
-        Async validator forward pass - all tasks run forever.
-        """
-        await self.initialize_async()
-
-        try:
-            self.miner_uids = (
-                get_available_miners_and_update_metagraph_history(
-                    base_neuron=self,
-                    miner_data_handler=self.miner_data_handler,
-                )
-            )
-
+        if self.config.validator.cycle_name != "":
             bt.logging.info(
-                f"Starting {len(self._schedulers)} schedulers + scoring loop"
+                f"Overriding cycle_name from config: {self.config.validator.cycle_name}"
             )
-
-            # All three run forever concurrently
-            await asyncio.gather(
-                self._schedulers[0].start(),  # Low frequency
-                self._schedulers[1].start(),  # High frequency
-                self._scoring_loop(),  # Scoring
-            )
-        except asyncio.CancelledError:
-            bt.logging.exception("Validator cancelled")
-            raise
-
-    async def _scoring_loop(self):
-        """Async scoring loop"""
-        while True:
-            try:
-                await self.forward_score_async()
-            except asyncio.CancelledError:
-                bt.logging.info("Scoring loop cancelled")
-                break
-            except Exception:
-                bt.logging.exception("Error in scoring loop")
-
-            delay = 10
-            bt.logging.info(
-                f"Sleeping for {delay} seconds before next score calculation",
-                "forward_validator_async",
-            )
-            await asyncio.sleep(delay)
-
-    async def forward_score_async(self):
-        """Async version of forward_score - implement your scoring logic here"""
-        # Convert your existing forward_score to async
-        # If it does blocking I/O, wrap with asyncio.to_thread()
-        await asyncio.to_thread(self.forward_score)
+            self.cycle_name = self.config.validator.cycle_name
 
     # Keep sync method for backward compatibility if needed
     def forward_validator(self):
         """Sync entry point - runs the async version"""
-        asyncio.run(self.forward_validator_async())
+        self.miner_uids = get_available_miners_and_update_metagraph_history(
+            base_neuron=self,
+            miner_data_handler=self.miner_data_handler,
+        )
+        if self.cycle_name == CYCLE_LOW_FREQUENCY:
+            SequentialScheduler(
+                prompt_config=LOW_FREQUENCY,
+                target=self.cycle_low_frequency,
+                miner_data_handler=self.miner_data_handler,
+            ).start()
+        elif self.cycle_name == CYCLE_HIGH_FREQUENCY:
+            SequentialScheduler(
+                prompt_config=HIGH_FREQUENCY,
+                target=self.cycle_high_frequency,
+                miner_data_handler=self.miner_data_handler,
+            ).start()
+        elif self.cycle_name == CYCLE_SCORING:
+            self.cycle_scoring()
+        else:
+            raise ValueError(f"Unknown cycle name: {self.cycle_name}")
 
     @print_execution_time
-    async def cycle_low_frequency(self, asset: str):
+    def cycle_low_frequency(self, asset: str):
         bt.logging.info(
             "starting the low frequency cycle", "cycle_low_frequency"
         )
 
         # update the miners, also for the high frequency prompt that will use the same list
+        self.forward_prompt(asset, LOW_FREQUENCY)
         self.miner_uids = get_available_miners_and_update_metagraph_history(
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
         )
-        await self.forward_prompt(asset, LOW_FREQUENCY)
 
     @print_execution_time
-    async def cycle_high_frequency(self, asset: str):
+    def cycle_scoring(self):
+        bt.logging.info("starting the scoring cycle", "cycle_scoring")
+        while True:
+            self.forward_score()
+            time.sleep(30)
+
+    @print_execution_time
+    def cycle_high_frequency(self, asset: str):
         bt.logging.info(
             "starting the high frequency cycle", "cycle_high_frequency"
         )
-        await self.forward_prompt(asset, HIGH_FREQUENCY)
+        self.forward_prompt(asset, HIGH_FREQUENCY)
+        self.miner_uids = get_available_miners_and_update_metagraph_history(
+            base_neuron=self,
+            miner_data_handler=self.miner_data_handler,
+        )
 
     @print_execution_time
-    async def forward_prompt(self, asset: str, prompt_config: PromptConfig):
+    def forward_prompt(self, asset: str, prompt_config: PromptConfig):
         bt.logging.info(
             f"forward prompt for {asset} in {prompt_config.label} frequency",
             "forward_prompt",
@@ -219,9 +168,8 @@ class Validator(BaseValidatorNeuron):
             num_simulations=prompt_config.num_simulations,
         )
 
-        await query_available_miners_and_save_responses(
+        query_available_miners_and_save_responses(
             base_neuron=self,
-            client=self.client,
             miner_data_handler=self.miner_data_handler,
             miner_uids=self.miner_uids,
             simulation_input=simulation_input,
@@ -249,6 +197,7 @@ class Validator(BaseValidatorNeuron):
             self.price_data_provider,
             scored_time,
             LOW_FREQUENCY,
+            self.config.neuron.nprocs,
         )
 
         scored_time: datetime = round_time_to_minutes(current_time)
@@ -261,6 +210,7 @@ class Validator(BaseValidatorNeuron):
             self.price_data_provider,
             scored_time,
             HIGH_FREQUENCY,
+            self.config.neuron.nprocs,
         )
 
         if not success_low and not success_high:
@@ -317,6 +267,23 @@ class Validator(BaseValidatorNeuron):
         pass
 
 
+mp.set_start_method("spawn", force=True)
+
+
+def spawn_validator(mode: str = ""):
+    Validator(cycle_name=mode).run()
+
+
 # The main function parses the configuration and runs the validator.
 if __name__ == "__main__":
-    Validator().run()
+    spawn_validator()
+
+    # processes = [
+    #     mp.Process(target=spawn_validator, args=(CYCLE_HIGH_FREQUENCY,)),
+    #     mp.Process(target=spawn_validator, args=(CYCLE_LOW_FREQUENCY,)),
+    #     mp.Process(target=spawn_validator, args=(CYCLE_SCORING,)),
+    # ]
+    # for p in processes:
+    #     p.start()
+    # for p in processes:
+    #     p.join()

@@ -24,9 +24,9 @@ import traceback
 
 import bittensor as bt
 import numpy as np
-import httpx
 
 
+from synth.base.dendrite_multiprocess import sync_forward_multiprocess
 from synth.base.validator import BaseValidatorNeuron
 from synth.protocol import Simulation
 from synth.simulation_input import SimulationInput
@@ -128,6 +128,7 @@ def calculate_scores(
     price_data_provider: PriceDataProvider,
     scored_time: datetime,
     prompt: prompt_config.PromptConfig,
+    nprocs: int = 2,
 ) -> bool:
     # get latest prediction request from validator
     validator_requests = miner_data_handler.get_validator_requests_to_score(
@@ -148,6 +149,7 @@ def calculate_scores(
             miner_data_handler=miner_data_handler,
             price_data_provider=price_data_provider,
             validator_request=validator_request,
+            nprocs=nprocs,
         )
 
         print_scores_df(prompt_scores, detailed_info)
@@ -173,17 +175,14 @@ def calculate_scores(
 
 
 @print_execution_time
-async def query_available_miners_and_save_responses(
+def query_available_miners_and_save_responses(
     base_neuron: BaseValidatorNeuron,
-    client: httpx.AsyncClient,
     miner_data_handler: MinerDataHandler,
     miner_uids: list,
     simulation_input: SimulationInput,
     request_time: datetime,
 ):
-    timeout = timeout_from_start_time(
-        base_neuron.config.neuron.timeout, simulation_input.start_time
-    )
+    timeout = timeout_from_start_time(simulation_input.start_time)
 
     # synapse - is a message that validator sends to miner to get results, i.e. simulation_input in our case
     # Simulation - is our protocol, i.e. input and output message of a miner (application that returns prediction of
@@ -202,11 +201,21 @@ async def query_available_miners_and_save_responses(
 
     start_time = time.time()
 
-    synapses = await base_neuron.dendrite.forward(
-        axons=axons,
-        synapse=synapse,
-        client=client,
-        timeout=timeout,
+    # synapses = await base_neuron.dendrite.forward(
+    #     axons=axons,
+    #     synapse=synapse,
+    #     client=client,
+    #     timeout=timeout,
+    # )
+
+    synapses = sync_forward_multiprocess(
+        base_neuron.dendrite.keypair,
+        base_neuron.dendrite.uuid,
+        base_neuron.dendrite.external_ip,
+        axons,
+        synapse,
+        timeout,
+        base_neuron.config.neuron.nprocs,
     )
 
     total_process_time = str(time.time() - start_time)
@@ -221,7 +230,7 @@ async def query_available_miners_and_save_responses(
         process_time = synapse.dendrite.process_time
         try:
             format_validation = validate_responses_v2(
-                response, simulation_input, request_time, process_time
+                response, simulation_input, process_time
             )
         except Exception:
             format_validation = "error during validation"
