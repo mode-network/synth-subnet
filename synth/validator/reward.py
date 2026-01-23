@@ -13,6 +13,7 @@
 
 import typing
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from multiprocessing import shared_memory
 import time
 
 # THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
@@ -37,11 +38,14 @@ from synth.validator import prompt_config
 
 # Module level - must be picklable
 def _crps_worker(args):
-    """Standalone worker - no database, no complex objects"""
+    """Standalone worker - no database, no complex objects.
+    Uses shared memory for real_prices to reduce memory duplication across processes.
+    """
     (
         miner_uid,
         prediction_array,
-        real_prices,
+        shm_name,
+        prices_shape,
         time_increment,
         scoring_intervals,
         format_validation,
@@ -72,7 +76,7 @@ def _crps_worker(args):
             process_time,
         )
 
-    if len(real_prices) == 0:
+    if prices_shape[0] == 0:
         return (
             miner_uid,
             -1,
@@ -83,48 +87,55 @@ def _crps_worker(args):
             process_time,
         )
 
-    prediction_array = adjust_predictions(list(prediction_array))
-
+    # Attach to shared memory for real_prices
+    existing_shm = shared_memory.SharedMemory(name=shm_name)
     try:
-        simulation_runs = np.array(prediction_array).astype(float)
-        score, detailed_crps_data = calculate_crps_for_miner(
-            simulation_runs,
-            np.array(real_prices),
-            int(time_increment),
-            scoring_intervals,
-        )
+        real_prices = np.ndarray(prices_shape, dtype=np.float64, buffer=existing_shm.buf)
 
-        if np.isnan(score):
+        prediction_array = adjust_predictions(list(prediction_array))
+
+        try:
+            simulation_runs = np.array(prediction_array).astype(float)
+            score, detailed_crps_data = calculate_crps_for_miner(
+                simulation_runs,
+                real_prices,  # Already a numpy array from shared memory
+                int(time_increment),
+                scoring_intervals,
+            )
+
+            if np.isnan(score):
+                return (
+                    miner_uid,
+                    -1,
+                    detailed_crps_data,
+                    f"Error calculating CRPS for miner {miner_uid}",
+                    format_validation,
+                    prediction_id,
+                    process_time,
+                )
+
             return (
                 miner_uid,
-                -1,
+                score,
                 detailed_crps_data,
-                f"Error calculating CRPS for miner {miner_uid}",
+                None,
                 format_validation,
                 prediction_id,
                 process_time,
             )
 
-        return (
-            miner_uid,
-            score,
-            detailed_crps_data,
-            None,
-            format_validation,
-            prediction_id,
-            process_time,
-        )
-
-    except Exception as e:
-        return (
-            miner_uid,
-            -1,
-            [],
-            str(e),
-            format_validation,
-            prediction_id,
-            process_time,
-        )
+        except Exception as e:
+            return (
+                miner_uid,
+                -1,
+                [],
+                str(e),
+                format_validation,
+                prediction_id,
+                process_time,
+            )
+    finally:
+        existing_shm.close()
 
 
 # Global executor - create once
@@ -148,6 +159,7 @@ def get_rewards_multiprocess(
 ) -> tuple[typing.Optional[np.ndarray], list, list[dict]]:
     """
     Returns an array of rewards for the given query and responses.
+    Uses shared memory for real_prices to reduce memory duplication across worker processes.
 
     Args:
     - query (int): The query sent to the miner.
@@ -172,6 +184,12 @@ def get_rewards_multiprocess(
     predictions = miner_data_handler.get_predictions_by_request(
         int(validator_request.id)
     )
+
+    # Create shared memory for real_prices to avoid duplicating across workers
+    prices_array = np.array(real_prices, dtype=np.float64)
+    shm = shared_memory.SharedMemory(create=True, size=prices_array.nbytes)
+    shared_prices = np.ndarray(prices_array.shape, dtype=np.float64, buffer=shm.buf)
+    shared_prices[:] = prices_array[:]
 
     # Prepare picklable work items
     scoring_intervals = (
@@ -198,7 +216,8 @@ def get_rewards_multiprocess(
             (
                 pred.miner_uid,
                 list(pred.prediction),
-                real_prices,
+                shm.name,  # Pass shared memory name instead of data
+                prices_array.shape,  # Pass shape for reconstruction
                 int(validator_request.time_increment),
                 scoring_intervals,
                 format_val,
@@ -215,8 +234,13 @@ def get_rewards_multiprocess(
     bt.logging.info(f"Starting CRPS calculation for {len(work_items)} miners")
     t0 = time.time()
 
-    executor = get_process_executor(nprocs)
-    results = list(executor.map(_crps_worker, work_items))
+    try:
+        executor = get_process_executor(nprocs)
+        results = list(executor.map(_crps_worker, work_items))
+    finally:
+        # Clean up shared memory
+        shm.close()
+        shm.unlink()
 
     bt.logging.info(f"CRPS done in {time.time() - t0:.2f}s")
 
