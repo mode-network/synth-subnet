@@ -186,7 +186,6 @@ class Miner(BaseMinerNeuron):
             f"Step:{self.step} | "
             f"UID:{self.uid} | "
             f"Stake:{metagraph.S[self.uid]} | "
-            f"Trust:{metagraph.T[self.uid]:.4f} | "
             f"Incentive:{metagraph.I[self.uid]:.4f} | "
             f"Emission:{metagraph.E[self.uid]:.4f}"
         )
