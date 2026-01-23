@@ -255,6 +255,9 @@ def get_available_miners_and_update_metagraph_history(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
 ):
+    # Sync metagraph to get latest miner addresses
+    base_neuron.metagraph.sync(subtensor=base_neuron.subtensor)
+
     start_time = get_current_time()
     miner_uids = []
     miners = []
