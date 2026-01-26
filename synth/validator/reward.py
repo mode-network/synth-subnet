@@ -303,9 +303,7 @@ def get_rewards_multiprocess(
     )
 
     # Process in parallel (CPU bound - use ProcessPool)
-    bt.logging.info(
-        f"Starting CRPS calculation for {len(work_items)} miners"
-    )
+    bt.logging.info(f"Starting CRPS calculation for {len(work_items)} miners")
     t0 = time.time()
 
     try:
@@ -383,10 +381,7 @@ def reward(
     if miner_prediction is None:
         return -1, [], None
 
-    if (
-        miner_prediction.format_validation
-        != response_validation_v2.CORRECT
-    ):
+    if miner_prediction.format_validation != response_validation_v2.CORRECT:
         return -1, [], miner_prediction
 
     if len(real_prices) == 0:
