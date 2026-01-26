@@ -90,7 +90,9 @@ def _crps_worker(args):
     # Attach to shared memory for real_prices
     existing_shm = shared_memory.SharedMemory(name=shm_name)
     try:
-        real_prices = np.ndarray(prices_shape, dtype=np.float64, buffer=existing_shm.buf)
+        real_prices = np.ndarray(
+            prices_shape, dtype=np.float64, buffer=existing_shm.buf
+        )
 
         prediction_array = adjust_predictions(list(prediction_array))
 
@@ -152,7 +154,11 @@ def get_process_executor(nprocs: int = 2) -> ProcessPoolExecutor:
 
 def _get_scoring_intervals(validator_request: ValidatorRequest) -> dict:
     """Determine scoring intervals based on time length."""
-    if validator_request.time_length == prompt_config.HIGH_FREQUENCY.time_length:
+    is_high_freq = (
+        validator_request.time_length
+        == prompt_config.HIGH_FREQUENCY.time_length
+    )
+    if is_high_freq:
         return prompt_config.HIGH_FREQUENCY.scoring_intervals
     return prompt_config.LOW_FREQUENCY.scoring_intervals
 
@@ -223,7 +229,15 @@ def _build_detailed_info(
             "total_crps": float(score),
             "crps_data": clean_numpy_in_crps_data(crps_data),
         }
-        for pred, score, crps_data, prompt_score, format, prediction_id, process_time in zip(
+        for (
+            pred,
+            score,
+            crps_data,
+            prompt_score,
+            format,
+            prediction_id,
+            process_time,
+        ) in zip(
             predictions,
             scores,
             detailed_crps_data_list,
@@ -273,7 +287,9 @@ def get_rewards_multiprocess(
     # Create shared memory for real_prices to avoid duplicating across workers
     prices_array = np.array(real_prices, dtype=np.float64)
     shm = shared_memory.SharedMemory(create=True, size=prices_array.nbytes)
-    shared_prices = np.ndarray(prices_array.shape, dtype=np.float64, buffer=shm.buf)
+    shared_prices = np.ndarray(
+        prices_array.shape, dtype=np.float64, buffer=shm.buf
+    )
     shared_prices[:] = prices_array[:]
 
     # Prepare work items
@@ -287,7 +303,9 @@ def get_rewards_multiprocess(
     )
 
     # Process in parallel (CPU bound - use ProcessPool)
-    bt.logging.info(f"Starting CRPS calculation for {len(work_items)} miners")
+    bt.logging.info(
+        f"Starting CRPS calculation for {len(work_items)} miners"
+    )
     t0 = time.time()
 
     try:
@@ -365,7 +383,10 @@ def reward(
     if miner_prediction is None:
         return -1, [], None
 
-    if miner_prediction.format_validation != response_validation_v2.CORRECT:
+    if (
+        miner_prediction.format_validation
+        != response_validation_v2.CORRECT
+    ):
         return -1, [], miner_prediction
 
     if len(real_prices) == 0:
@@ -393,7 +414,8 @@ def reward(
         t3 = time.time()
     except Exception:
         bt.logging.exception(
-            f"Error calculating CRPS for miner {miner_uid} with prediction_id {miner_prediction.id}"
+            f"Error calculating CRPS for miner {miner_uid} "
+            f"with prediction_id {miner_prediction.id}"
         )
         return -1, [], miner_prediction
 
@@ -405,7 +427,8 @@ def reward(
 
     if np.isnan(score):
         bt.logger.warning(
-            f"CRPS calculation returned NaN for miner {miner_uid} with prediction_id {miner_prediction.id}"
+            f"CRPS calculation returned NaN for miner {miner_uid} "
+            f"with prediction_id {miner_prediction.id}"
         )
         return -1, detailed_crps_data, miner_prediction
 
@@ -438,7 +461,8 @@ def get_rewards(
         real_prices = price_data_provider.fetch_data(validator_request)
     except Exception as e:
         bt.logging.warning(
-            f"Error fetching data for validator request {validator_request.id}: {e}"
+            f"Error fetching data for validator request "
+            f"{validator_request.id}: {e}"
         )
         return None, [], []
 
@@ -528,7 +552,8 @@ def get_rewards_threading(
         real_prices = price_data_provider.fetch_data(validator_request)
     except Exception as e:
         bt.logging.warning(
-            f"Error fetching data for validator request {validator_request.id}: {e}"
+            f"Error fetching data for validator request "
+            f"{validator_request.id}: {e}"
         )
         return None, [], []
 
