@@ -150,6 +150,91 @@ def get_process_executor(nprocs: int = 2) -> ProcessPoolExecutor:
     return _PROCESS_EXECUTOR
 
 
+def _get_scoring_intervals(validator_request: ValidatorRequest) -> dict:
+    """Determine scoring intervals based on time length."""
+    if validator_request.time_length == prompt_config.HIGH_FREQUENCY.time_length:
+        return prompt_config.HIGH_FREQUENCY.scoring_intervals
+    return prompt_config.LOW_FREQUENCY.scoring_intervals
+
+
+def _prepare_work_items(
+    predictions: list[MinerPrediction],
+    shm_name: str,
+    prices_shape: tuple,
+    validator_request: ValidatorRequest,
+    scoring_intervals: dict,
+) -> list[tuple]:
+    """Prepare picklable work items for multiprocess CRPS calculation."""
+    work_items = []
+
+    for pred in predictions:
+        # Convert to picklable types
+        format_val = pred.format_validation
+        # Convert enum to string if needed
+        if hasattr(format_val, "value"):
+            format_val = format_val.value
+        elif format_val == response_validation_v2.CORRECT:
+            format_val = "CORRECT"
+        else:
+            format_val = str(format_val)
+
+        work_items.append(
+            (
+                pred.miner_uid,
+                list(pred.prediction),
+                shm_name,
+                prices_shape,
+                int(validator_request.time_increment),
+                scoring_intervals,
+                format_val,
+                int(pred.id),
+                (
+                    float(pred.process_time)
+                    if pred.process_time is not None
+                    else 0.0
+                ),
+            )
+        )
+
+    return work_items
+
+
+def _build_detailed_info(
+    predictions: list[MinerPrediction],
+    scores: list,
+    detailed_crps_data_list: list,
+    prompt_scores: np.ndarray,
+    miner_prediction_format_list: list,
+    miner_prediction_id_list: list,
+    miner_prediction_process_time: list,
+    percentile90: float,
+    lowest_score: float,
+) -> list[dict]:
+    """Build detailed information dict from processing results."""
+    return [
+        {
+            "miner_uid": pred.miner_uid,
+            "prompt_score_v3": float(prompt_score),
+            "percentile90": float(percentile90),
+            "lowest_score": float(lowest_score),
+            "miner_prediction_id": prediction_id,
+            "format_validation": format,
+            "process_time": process_time,
+            "total_crps": float(score),
+            "crps_data": clean_numpy_in_crps_data(crps_data),
+        }
+        for pred, score, crps_data, prompt_score, format, prediction_id, process_time in zip(
+            predictions,
+            scores,
+            detailed_crps_data_list,
+            prompt_scores,
+            miner_prediction_format_list,
+            miner_prediction_id_list,
+            miner_prediction_process_time,
+        )
+    ]
+
+
 @print_execution_time
 def get_rewards_multiprocess(
     miner_data_handler: MinerDataHandler,
@@ -191,44 +276,15 @@ def get_rewards_multiprocess(
     shared_prices = np.ndarray(prices_array.shape, dtype=np.float64, buffer=shm.buf)
     shared_prices[:] = prices_array[:]
 
-    # Prepare picklable work items
-    scoring_intervals = (
-        prompt_config.HIGH_FREQUENCY.scoring_intervals
-        if validator_request.time_length
-        == prompt_config.HIGH_FREQUENCY.time_length
-        else prompt_config.LOW_FREQUENCY.scoring_intervals
+    # Prepare work items
+    scoring_intervals = _get_scoring_intervals(validator_request)
+    work_items = _prepare_work_items(
+        predictions,
+        shm.name,
+        prices_array.shape,
+        validator_request,
+        scoring_intervals,
     )
-
-    work_items = []
-
-    for pred in predictions:
-        # Convert to picklable types
-        format_val = pred.format_validation
-        # Convert enum to string if needed
-        if hasattr(format_val, "value"):
-            format_val = format_val.value
-        elif format_val == response_validation_v2.CORRECT:
-            format_val = "CORRECT"
-        else:
-            format_val = str(format_val)
-
-        work_items.append(
-            (
-                pred.miner_uid,
-                list(pred.prediction),
-                shm.name,  # Pass shared memory name instead of data
-                prices_array.shape,  # Pass shape for reconstruction
-                int(validator_request.time_increment),
-                scoring_intervals,
-                format_val,
-                int(pred.id),
-                (
-                    float(pred.process_time)
-                    if pred.process_time is not None
-                    else 0.0
-                ),
-            )
-        )
 
     # Process in parallel (CPU bound - use ProcessPool)
     bt.logging.info(f"Starting CRPS calculation for {len(work_items)} miners")
@@ -251,7 +307,6 @@ def get_rewards_multiprocess(
     miner_prediction_id_list = []
     miner_prediction_process_time = []
 
-    # Create lookup for original prediction objects
     for (
         miner_uid,
         score,
@@ -278,28 +333,17 @@ def get_rewards_multiprocess(
     if prompt_scores is None:
         return None, [], []
 
-    detailed_info = [
-        {
-            "miner_uid": pred.miner_uid,
-            "prompt_score_v3": float(prompt_score),
-            "percentile90": float(percentile90),
-            "lowest_score": float(lowest_score),
-            "miner_prediction_id": prediction_id,
-            "format_validation": format,
-            "process_time": process_time,
-            "total_crps": float(score),
-            "crps_data": clean_numpy_in_crps_data(crps_data),
-        }
-        for pred, score, crps_data, prompt_score, format, prediction_id, process_time in zip(
-            predictions,
-            scores,
-            detailed_crps_data_list,
-            prompt_scores,
-            miner_prediction_format_list,
-            miner_prediction_id_list,
-            miner_prediction_process_time,
-        )
-    ]
+    detailed_info = _build_detailed_info(
+        predictions,
+        scores,
+        detailed_crps_data_list,
+        prompt_scores,
+        miner_prediction_format_list,
+        miner_prediction_id_list,
+        miner_prediction_process_time,
+        percentile90,
+        lowest_score,
+    )
 
     return prompt_scores, detailed_info, real_prices
 
