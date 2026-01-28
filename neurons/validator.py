@@ -140,6 +140,7 @@ class Validator(BaseValidatorNeuron):
         self.miner_uids = get_available_miners_and_update_metagraph_history(
             base_neuron=self,
             miner_data_handler=self.miner_data_handler,
+            save=False,
         )
 
     @print_execution_time
