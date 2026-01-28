@@ -100,6 +100,9 @@ class MinerPrediction(Base):
     miner = relationship("Miner", back_populates="predictions")
     scores = relationship("MinerScore", back_populates="prediction")
 
+    created_at = Column(DateTime(timezone=True), nullable=False)
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
+
 
 class MinerScore(Base):
     __tablename__ = "miner_scores"

@@ -254,6 +254,7 @@ def query_available_miners_and_save_responses(
 def get_available_miners_and_update_metagraph_history(
     base_neuron: BaseValidatorNeuron,
     miner_data_handler: MinerDataHandler,
+    save: bool = True,
 ):
     # Sync metagraph to get latest miner addresses
     base_neuron.metagraph.sync(subtensor=base_neuron.subtensor)
@@ -295,10 +296,10 @@ def get_available_miners_and_update_metagraph_history(
             }
             metagraph_info.append(metagraph_item)
 
-    if len(miners) > 0:
+    if len(miners) > 0 and save:
         miner_data_handler.insert_new_miners(miners)
 
-    if len(metagraph_info) > 0:
+    if len(metagraph_info) > 0 and save:
         miner_data_handler.update_metagraph_history(metagraph_info)
 
     random.shuffle(miner_uids)
