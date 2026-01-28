@@ -214,6 +214,8 @@ class Validator(BaseValidatorNeuron):
             self.config.neuron.nprocs,
         )
 
+        self.cleanup_history()
+
         if not success_low and not success_high:
             return
 
@@ -262,7 +264,11 @@ class Validator(BaseValidatorNeuron):
             scored_time=scored_time,
         )
 
-        # self.cleanup_history()
+    def cleanup_history(self):
+        """Cleans up old history from the miner data handler."""
+        if self.config.validator.mode == "light":
+            self.miner_data_handler.cleanup_old_history(HIGH_FREQUENCY)
+            self.miner_data_handler.cleanup_old_history(LOW_FREQUENCY)
 
     async def forward_miner(self, _: bt.Synapse) -> bt.Synapse:
         pass

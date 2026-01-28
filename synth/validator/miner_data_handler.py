@@ -18,6 +18,7 @@ from sqlalchemy import (
     desc,
     not_,
     update,
+    delete,
 )
 from sqlalchemy.dialects.postgresql import insert
 from tenacity import (
@@ -619,4 +620,60 @@ class MinerDataHandler:
         except Exception as e:
             bt.logging.exception(
                 f"in update_weights_history (got an exception): {e}"
+            )
+
+    @print_execution_time
+    def cleanup_old_history(self, prompt_config: prompt_config.PromptConfig):
+        """Cleanup old history from the database."""
+        cutoff_date = datetime.now() - timedelta(
+            days=prompt_config.data_retention_days
+        )
+        cutoff_date_double = datetime.now() - timedelta(
+            days=prompt_config.data_retention_days * 2
+        )
+
+        try:
+            with self.engine.connect() as connection:
+                with connection.begin():
+                    erase_predictions_statement = (
+                        update(MinerPrediction)
+                        .where(
+                            MinerPrediction.created_at < cutoff_date,
+                            MinerPrediction.deleted_at.is_(None),
+                            MinerPrediction.validator_requests_id
+                            == ValidatorRequest.id,
+                            ValidatorRequest.time_length
+                            == prompt_config.time_length,
+                        )
+                        .values(
+                            deleted_at=datetime.now(),
+                            prediction={"deleted": True},
+                        )
+                    )
+                    connection.execute(erase_predictions_statement)
+
+                    delete_scores_statement = delete(MinerScore).where(
+                        MinerScore.scored_time < cutoff_date_double,
+                        MinerScore.miner_predictions_id == MinerPrediction.id,
+                        MinerPrediction.validator_requests_id
+                        == ValidatorRequest.id,
+                        ValidatorRequest.time_length
+                        == prompt_config.time_length,
+                    )
+                    connection.execute(delete_scores_statement)
+
+                    erase_validator_requests_statement = (
+                        update(ValidatorRequest)
+                        .where(
+                            ValidatorRequest.start_time < cutoff_date_double,
+                            ValidatorRequest.time_length
+                            == prompt_config.time_length,
+                        )
+                        .values(real_prices=[])
+                    )
+                    connection.execute(erase_validator_requests_statement)
+
+        except Exception as e:
+            bt.logging.exception(
+                f"in cleanup_old_history (got an exception): {e}"
             )
