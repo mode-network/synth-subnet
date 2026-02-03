@@ -647,7 +647,7 @@ class MinerDataHandler:
                         )
                         .values(
                             deleted_at=datetime.now(),
-                            prediction={"deleted": True},
+                            prediction={"deleted": True, "reason": "light mode"},
                         )
                     )
                     connection.execute(erase_predictions_statement)
