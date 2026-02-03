@@ -15,6 +15,7 @@ class PromptConfig:
     softmax_beta: float
     smoothed_score_coefficient: float
     num_simulations: int = 1000
+    data_retention_days: int = 30
 
 
 LOW_FREQUENCY = PromptConfig(
@@ -44,6 +45,7 @@ LOW_FREQUENCY = PromptConfig(
     window_days=10,
     softmax_beta=-0.1,
     smoothed_score_coefficient=0.5,
+    data_retention_days=12,
 )
 
 HIGH_FREQUENCY = PromptConfig(
@@ -77,4 +79,5 @@ HIGH_FREQUENCY = PromptConfig(
     window_days=3,
     softmax_beta=-0.2,
     smoothed_score_coefficient=0.5,
+    data_retention_days=4,
 )
