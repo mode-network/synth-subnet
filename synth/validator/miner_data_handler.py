@@ -245,27 +245,22 @@ class MinerDataHandler:
                                 ],
                             }
                         )
-                    insert_stmt_miner_scores = (
-                        insert(MinerScore)
-                        .values(rows_to_insert)
-                        .on_conflict_do_update(
-                            constraint="uq_miner_scores_miner_predictions_id",
-                            set_={
-                                f"score_details_{prompt_score_version}": {
-                                    "total_crps": row["total_crps"],
-                                    "percentile90": row["percentile90"],
-                                    "lowest_score": row["lowest_score"],
-                                    f"prompt_score_{prompt_score_version}": row[
-                                        f"prompt_score_{prompt_score_version}"
-                                    ],
-                                    "crps_data": row["crps_data"],
-                                },
-                                f"prompt_score_{prompt_score_version}": row[
-                                    f"prompt_score_{prompt_score_version}"
-                                ],
-                            },
-                        )
+                    insert_stmt = insert(MinerScore).values(rows_to_insert)
+
+                    insert_stmt_miner_scores = insert_stmt.on_conflict_do_update(
+                        constraint="uq_miner_scores_miner_predictions_id",
+                        set_={
+                            f"score_details_{prompt_score_version}": getattr(
+                                insert_stmt.excluded,
+                                f"score_details_{prompt_score_version}",
+                            ),
+                            f"prompt_score_{prompt_score_version}": getattr(
+                                insert_stmt.excluded,
+                                f"prompt_score_{prompt_score_version}",
+                            ),
+                        },
                     )
+
                     connection.execute(insert_stmt_miner_scores)
         except Exception as e:
             bt.logging.exception(
