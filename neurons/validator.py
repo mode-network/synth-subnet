@@ -187,22 +187,23 @@ class Validator(BaseValidatorNeuron):
         # with predictions and calculate the rewards,
         # we store the rewards in the miner_scores table
         # ========================================== #
-        bt.logging.info(
-            f"forward score {LOW_FREQUENCY.label} frequency", "forward_score"
-        )
+
+        # bt.logging.info(
+        #     f"forward score {LOW_FREQUENCY.label} frequency", "forward_score"
+        # )
+        # current_time = get_current_time()
+        # scored_time: datetime = round_time_to_minutes(current_time)
+
+        # success_low = calculate_scores(
+        #     self.miner_data_handler,
+        #     self.price_data_provider,
+        #     scored_time,
+        #     LOW_FREQUENCY,
+        #     self.config.neuron.nprocs,
+        # )
+
         current_time = get_current_time()
         scored_time: datetime = round_time_to_minutes(current_time)
-
-        success_low = calculate_scores(
-            self.miner_data_handler,
-            self.price_data_provider,
-            scored_time,
-            LOW_FREQUENCY,
-            self.config.neuron.nprocs,
-        )
-
-        scored_time: datetime = round_time_to_minutes(current_time)
-        current_time = get_current_time()
         bt.logging.info(
             f"forward score {HIGH_FREQUENCY.label} frequency", "forward_score"
         )
@@ -213,6 +214,7 @@ class Validator(BaseValidatorNeuron):
             HIGH_FREQUENCY,
             self.config.neuron.nprocs,
         )
+        return
 
         self.cleanup_history()
 

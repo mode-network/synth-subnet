@@ -194,6 +194,7 @@ class MinerDataHandler:
         validator_requests_id: int,
         reward_details: list[dict],
         scored_time: datetime,
+        prompt_score_version: str = "v3",
     ):
         try:
             with self.engine.connect() as connection:
@@ -230,14 +231,18 @@ class MinerDataHandler:
                                 "miner_predictions_id": row[
                                     "miner_prediction_id"
                                 ],
-                                "score_details_v3": {
+                                f"score_details_{prompt_score_version}": {
                                     "total_crps": row["total_crps"],
                                     "percentile90": row["percentile90"],
                                     "lowest_score": row["lowest_score"],
-                                    "prompt_score_v3": row["prompt_score_v3"],
+                                    f"prompt_score_{prompt_score_version}": row[
+                                        f"prompt_score_{prompt_score_version}"
+                                    ],
                                     "crps_data": row["crps_data"],
                                 },
-                                "prompt_score_v3": row["prompt_score_v3"],
+                                f"prompt_score_{prompt_score_version}": row[
+                                    f"prompt_score_{prompt_score_version}"
+                                ],
                             }
                         )
                     insert_stmt_miner_scores = (
@@ -246,14 +251,18 @@ class MinerDataHandler:
                         .on_conflict_do_update(
                             constraint="uq_miner_scores_miner_predictions_id",
                             set_={
-                                "score_details_v3": {
+                                f"score_details_{prompt_score_version}": {
                                     "total_crps": row["total_crps"],
                                     "percentile90": row["percentile90"],
                                     "lowest_score": row["lowest_score"],
-                                    "prompt_score_v3": row["prompt_score_v3"],
+                                    f"prompt_score_{prompt_score_version}": row[
+                                        f"prompt_score_{prompt_score_version}"
+                                    ],
                                     "crps_data": row["crps_data"],
                                 },
-                                "prompt_score_v3": row["prompt_score_v3"],
+                                f"prompt_score_{prompt_score_version}": row[
+                                    f"prompt_score_{prompt_score_version}"
+                                ],
                             },
                         )
                     )
@@ -403,7 +412,8 @@ class MinerDataHandler:
                         and_(
                             MinerPrediction.validator_requests_id
                             == ValidatorRequest.id,
-                            MinerScore.prompt_score_v3.isnot(None),
+                            # MinerScore.prompt_score_v3.isnot(None),
+                            MinerScore.prompt_score_v4.isnot(None),
                         )
                     )
                 )
