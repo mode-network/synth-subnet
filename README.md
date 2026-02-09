@@ -100,7 +100,7 @@ sequenceDiagram
     end
 ```
 
-Miners are tasked with providing probabilistic forecasts of a cryptocurrency's future price movements. Specifically, each miner is required to generate multiple simulated price paths for an asset, from the current time over specified time increments and time horizon. Initially all checking prompts will be to produce 100 simulated paths for the future price of bitcoin at 5-minute time increments for the next 24 hours. As of November 13, 2025, the network has been upgraded to request that miners produce 1000 simulated paths for the future price of BTC, ETH, SOL, and XAU for the next 24 hours. This upgrade reflects Synth’s commitment to developing high frequency trading capabilities.
+Miners are tasked with providing probabilistic forecasts of a cryptocurrency's future price movements. Specifically, each miner is required to generate multiple simulated price paths for an asset, from the current time over specified time increments and time horizon. Initially all checking prompts will be to produce 100 simulated paths for the future price of bitcoin at 5-minute time increments for the next 24 hours. As of November 13, 2025, the network has been upgraded to request that miners produce 1000 simulated paths for the future price of BTC, ETH, SOL, and XAU for the next 24 hours. This upgrade reflects Synth’s commitment to developing high frequency trading capabilities. January 2026, further assets were added to Synth predictions. 5 tokenized equity asset, SPYX, NVDAX, TSLAX, AAPLX, and GOOGLX are now included in the 24-Hour predictions.
 
 Whereas other subnets ask miners to predict single values for future prices, we’re interested in the miners correctly quantifying uncertainty. We want their price paths to represent their view of the probability distribution of the future price, and we want their paths to encapsulate realistic price dynamics, such as volatility clustering and skewed fat tailed price change distributions. Subsequently we’ll expand to requesting forecasts for multiple assets, where modelling the correlations between the asset prices will be essential.
 
@@ -112,10 +112,21 @@ The checking prompts sent to the miners will have the format:
 Initially prompt parameters will always have the following values:
 
 - **Start Time ($t_0$)**: 1 minute from the time of the request.
-- **Asset**: BTC, ETH, XAU, SOL (note that CRPS for each asset contributes equally to final miner weights).
+- **Asset**: BTC, ETH, XAU, SOL, SPYX, NVDAX, TSLAX, AAPLX, and GOOGLX (note that CRPS for each asset contributes equally to final miner weights).
 - **Time Increment ($\Delta t$)**: 5 minutes.
 - **Time Horizon ($T$)**: 24 hours.
 - **Number of Simulations ($N_{\text{sim}}$)**: 1000.
+
+**Asset Weights**
+BTC	1.0
+ETH	0.6715516528608204
+XAU	2.262003561659039
+SOL	0.5883682889710361
+SPYX	2.9914378891824693
+NVDAX	1.3885444209082594
+TSLAX	1.420016421725336
+AAPLX	1.864976360560554
+GOOGLX	1.4310534797250312
 
 Validators will alternate between sending out requests for BTC and ETH predictions, at 30min intervals. The miner has until the start time to return ($N_{\text{sim}}$) paths, each containing price predictions at times given by:
 
@@ -130,6 +141,15 @@ where:
 We recommend the miner sends a request to the Pyth Oracle to acquire the price of the asset at the start_time.
 
 If they fail to return predictions by the start_time or the predictions are in the wrong format, they will be scored 0 for that prompt.
+
+In addition to 24-Hour predictions, Synth has introduced a second competition focused on short-horizon, high-frequency forecasting.
+**Task Overview**
+Time Horizon: 1 hour
+Assets: BTC, ETH, SOL, XAU
+
+**Emissions Split**
+24-Hour Predictions: 50% of total emissions
+1-Hour HFT Predictions: 50% of total emissions
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
