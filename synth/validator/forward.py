@@ -150,6 +150,7 @@ def calculate_scores(
             price_data_provider=price_data_provider,
             validator_request=validator_request,
             nprocs=nprocs,
+            prompt_score_version="v4",
         )
 
         print_scores_df(prompt_scores, detailed_info)
@@ -168,6 +169,7 @@ def calculate_scores(
             int(validator_request.id),
             detailed_info,
             miner_score_time,
+            "v4",
         )
 
     # Success if at least one request succeed
