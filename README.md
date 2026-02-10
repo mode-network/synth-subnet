@@ -118,15 +118,15 @@ Initially prompt parameters will always have the following values:
 - **Number of Simulations ($N_{\text{sim}}$)**: 1000.
 
 **Asset Weights**
-BTC	1.0
-ETH	0.6715516528608204
-XAU	2.262003561659039
-SOL	0.5883682889710361
-SPYX	2.9914378891824693
-NVDAX	1.3885444209082594
-TSLAX	1.420016421725336
-AAPLX	1.864976360560554
-GOOGLX	1.4310534797250312
+BTC 1.0
+ETH 0.6715516528608204
+XAU 2.262003561659039
+SOL 0.5883682889710361
+SPYX 2.9914378891824693
+NVDAX 1.3885444209082594
+TSLAX 1.420016421725336
+AAPLX 1.864976360560554
+GOOGLX 1.4310534797250312
 
 Validators will alternate between sending out requests for BTC and ETH predictions, at 30min intervals. The miner has until the start time to return ($N_{\text{sim}}$) paths, each containing price predictions at times given by:
 
@@ -258,19 +258,15 @@ where $\beta=-0.1$ and $E(t)$ the emission at time $t$.
 The system creates a competitive environment through:
 
 1. **Implementing CRPS Scoring**
-
    - Objectively measures forecast quality across multiple time increments
 
 2. **Using Ensemble Forecasts**
-
    - Calculates CRPS from finite ensemble of simulations
 
 3. **Applying CRPS to Different Time Increments**
-
    - Evaluates both short-term and long-term predictions
 
 4. **Applying Moving Average to Scores**
-
    - Rewards consistent performance and encourages competition
 
 5. **Calculating Softmax Scores and Allocating Emissions**
