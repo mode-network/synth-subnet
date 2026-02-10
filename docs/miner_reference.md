@@ -774,8 +774,6 @@ Synth regularly publishes detailed miner performance reviews highlighting the st
 
 Explore them here: [https://mirror.xyz/synthdata.eth](https://mirror.xyz/synthdata.eth)
 
-Continued updates are now published on X: https://x.com/SynthdataCo/articles
-
 #### 9. Do I need to run multiple miners?
 
 If you're using the same model per asset, no — rewards will be the same. If you're using different models, then yes, it's encouraged to experiment and find what works best.
