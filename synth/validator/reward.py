@@ -147,7 +147,6 @@ _PROCESS_EXECUTOR = None
 def get_process_executor(nprocs: int = 2) -> ProcessPoolExecutor:
     global _PROCESS_EXECUTOR
     if _PROCESS_EXECUTOR is None:
-        # Use more workers for 255 miners
         _PROCESS_EXECUTOR = ProcessPoolExecutor(max_workers=nprocs)
     return _PROCESS_EXECUTOR
 
