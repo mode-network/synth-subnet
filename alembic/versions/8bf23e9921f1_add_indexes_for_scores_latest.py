@@ -18,6 +18,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # CREATE INDEX CONCURRENTLY cannot run inside a transaction
+    op.execute("COMMIT")
+
     query = """CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_mp_vr_id
   ON miner_predictions (validator_requests_id);"""
 
@@ -30,6 +33,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # DROP INDEX CONCURRENTLY cannot run inside a transaction
+    op.execute("COMMIT")
+
     query = """DROP INDEX CONCURRENTLY IF EXISTS idx_mp_vr_id;"""
     op.execute(query)
 
