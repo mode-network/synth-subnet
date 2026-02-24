@@ -692,7 +692,7 @@ Visit the Synth Miner Dashboard: [https://miners.synthdata.co](https://miners.sy
 
 Assuming your setup is correct, and you're submitting predictions, it takes approximately 25–27 hours for your first score to appear. This is because the CRPS is calculated based on the actual price 24 hours after the prediction.
 
-#### 3. What does it mean when I check [https://synth.mode.network/validation/miner?uid=](https://synth.mode.network/validation/miner?uid=) and see: `{"validated":false,"reason":"Number of time points is incorrect: expected 289, got 288","response_time":"4.07"}`?
+#### 3. What does it mean when I check [https://api.synthdata.co/validation/miner?uid=](https://api.synthdata.co/validation/miner?uid=) and see: `{"validated":false,"reason":"Number of time points is incorrect: expected 289, got 288","response_time":"4.07"}`?
 
 It means your submission has the wrong number of time points. You should be submitting exactly 289 points for that prompt.
 
