@@ -7,11 +7,7 @@ import bittensor as bt
 
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.prompt_config import PromptConfig
-from synth.utils.helpers import (
-    get_current_time,
-    round_time_to_minutes,
-    new_equities_launch2,
-)
+from synth.utils.helpers import get_current_time, round_time_to_minutes
 
 
 class SequentialScheduler:
@@ -42,8 +38,6 @@ class SequentialScheduler:
         prompt_config = self.prompt_config
 
         asset_list = prompt_config.asset_list
-        if get_current_time() <= new_equities_launch2:
-            asset_list = prompt_config.asset_list[:6]
 
         delay = self.select_delay(
             asset_list,

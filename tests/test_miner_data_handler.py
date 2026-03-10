@@ -9,7 +9,7 @@ from synth.validator import response_validation_v2
 from synth.simulation_input import SimulationInput
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
-from synth.validator.reward import get_rewards
+from synth.validator.reward import get_rewards_multiprocess
 from tests.utils import generate_values, prepare_random_predictions
 
 
@@ -370,7 +370,7 @@ def test_set_get_scores(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 1
 
-    prompt_scores, detailed_info, real_prices = get_rewards(
+    prompt_scores, detailed_info, real_prices = get_rewards_multiprocess(
         handler,
         price_data_provider,
         validator_requests[0],
