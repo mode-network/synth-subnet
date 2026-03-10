@@ -95,9 +95,10 @@ def calculate_crps_for_miner(
             )
 
             if absolute_price:
-                crps_values_block = (
-                    crps_values_block / real_price_path[-1] * 10_000
-                )
+                last_price = real_price_path[-1]
+                if last_price == 0 or not np.isfinite(last_price):
+                    continue
+                crps_values_block = crps_values_block / last_price * 10_000
 
             crps_values += crps_values_block.sum()
 
