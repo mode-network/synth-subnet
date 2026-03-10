@@ -1,4 +1,5 @@
 from datetime import datetime
+import math
 import typing
 
 
@@ -21,6 +22,11 @@ def validate_path(
         # check the price format
         if not isinstance(point, (int, float)):
             return f"Price format is incorrect: expected int or float, got {type(point)}"
+
+        if isinstance(point, float) and (
+            math.isnan(point) or math.isinf(point)
+        ):
+            return f"Price format is incorrect: non-finite value {point}"
 
         if len(str(point).replace(".", "")) > 8:
             return f"Price format is incorrect: too many digits {point}"
