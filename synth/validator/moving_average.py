@@ -167,6 +167,20 @@ def compute_smoothed_score(
             {"miner_id": miner_id, "rolling_avg": rolling_avg}
         )
 
+    # Replace inf with the worst finite rolling average so that
+    # compute_softmax receives only finite values. Inf causes NaN
+    # weights when all miners have inf (inf - inf = nan in softmax).
+    finite_avgs = [
+        r["rolling_avg"]
+        for r in rolling_avg_data
+        if np.isfinite(r["rolling_avg"])
+    ]
+    if finite_avgs:
+        worst_finite = max(finite_avgs)
+        for r in rolling_avg_data:
+            if not np.isfinite(r["rolling_avg"]):
+                r["rolling_avg"] = worst_finite
+
     # Add the miner UID to the results
     moving_averages_data = miner_data_handler.populate_miner_uid_in_miner_data(
         rolling_avg_data

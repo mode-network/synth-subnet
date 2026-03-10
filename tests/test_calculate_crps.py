@@ -481,3 +481,31 @@ class TestCalculateCrps(unittest.TestCase):
         self.assertEqual(len(gap_increments), 1)  # gap: 1 evaluation
         self.assertEqual(len(reg_increments), 6)  # regular: 6 evaluations
         self.assertNotEqual(score_gap, score_reg)
+
+
+class TestSoftmaxWithInf(unittest.TestCase):
+    """Tests for compute_softmax handling of inf values."""
+
+    def test_softmax_single_inf_gives_zero_weight(self):
+        """A single inf score should get 0 weight."""
+        scores = np.array([50, 60, 70, np.inf])
+        weights = compute_softmax(scores, -0.2)
+        self.assertTrue(np.all(np.isfinite(weights)))
+        self.assertAlmostEqual(weights.sum(), 1.0, places=6)
+        self.assertEqual(weights[-1], 0.0)
+
+    def test_softmax_all_inf_produces_nan(self):
+        """All-inf input produces NaN weights (the bug)."""
+        scores = np.array([np.inf, np.inf, np.inf])
+        weights = compute_softmax(scores, -0.2)
+        # This proves the bug: all NaN weights
+        self.assertTrue(np.all(np.isnan(weights)))
+
+    def test_softmax_all_finite_works(self):
+        """Normal finite scores produce valid weights."""
+        scores = np.array([50, 60, 70, 80])
+        weights = compute_softmax(scores, -0.2)
+        self.assertTrue(np.all(np.isfinite(weights)))
+        self.assertAlmostEqual(weights.sum(), 1.0, places=6)
+        # Lower score = better = higher weight (beta < 0)
+        self.assertGreater(weights[0], weights[-1])
