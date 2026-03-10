@@ -238,6 +238,20 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
         default="full",
     )
 
+    parser.add_argument(
+        "--softmax.low.beta",
+        type=float,
+        help="Negative beta to give higher weight to lower scores for the low frequency prompt.",
+        default=-0.1,
+    )
+
+    parser.add_argument(
+        "--softmax.high.beta",
+        type=float,
+        help="Negative beta to give higher weight to lower scores for the high frequency prompt.",
+        default=-0.2,
+    )
+
 
 def config(cls):
     """

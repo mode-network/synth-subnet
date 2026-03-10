@@ -6,13 +6,16 @@ mainnet_netuid=50
 netuid=${NETUID:-$mainnet_netuid}
 
 vpermit_tao_limit=999999
+default_softmax_beta_low=-0.1
+softmax_beta_low="${SOFTMAX_BETA_LOW:-$default_softmax_beta_low}"
+default_softmax_beta_high=-0.2
+softmax_beta_high="${SOFTMAX_BETA_HIGH:-$default_softmax_beta_high}"
 
 default_validator_coldkey_name=validator
 validator_coldkey_name="${VALIDATOR_COLDKEY_NAME:-$default_validator_coldkey_name}"
 
 default_validator_hotkey_name=default
 validator_hotkey_name="${VALIDATOR_HOTKEY_NAME:-$default_validator_hotkey_name}"
-
 
 default_log_id_prefix=my_validator_name
 log_id_prefix="${LOG_ID_PREFIX:-$default_log_id_prefix}"
@@ -24,6 +27,8 @@ python3.11 ./neurons/validator.py \
 		--netuid $netuid \
 		--logging.debug \
 		--neuron.axon_off true \
+		--softmax.low.beta $softmax_beta_low \
+		--softmax.high.beta $softmax_beta_high \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
 		--gcp.log_id_prefix $log_id_prefix \
 		--neuron.nprocs 8 \
@@ -37,6 +42,8 @@ python3.11 ./neurons/validator.py \
 		--netuid $netuid \
 		--logging.debug \
 		--neuron.axon_off true \
+		--softmax.low.beta $softmax_beta_low \
+		--softmax.high.beta $softmax_beta_high \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
 		--gcp.log_id_prefix $log_id_prefix \
 		--neuron.nprocs 8 \
@@ -50,6 +57,8 @@ python3.11 ./neurons/validator.py \
 		--netuid $netuid \
 		--logging.debug \
 		--neuron.axon_off true \
+		--softmax.low.beta $softmax_beta_low \
+		--softmax.high.beta $softmax_beta_high \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
 		--gcp.log_id_prefix $log_id_prefix \
 		--neuron.nprocs 8 \
