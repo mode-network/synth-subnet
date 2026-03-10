@@ -420,7 +420,7 @@ def reward(
     )
 
     if np.isnan(score):
-        bt.logger.warning(
+        bt.logging.warning(
             f"CRPS calculation returned NaN for miner {miner_uid} "
             f"with prediction_id {miner_prediction.id}"
         )
