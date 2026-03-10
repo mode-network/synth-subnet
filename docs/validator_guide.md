@@ -9,6 +9,8 @@
 - [5. Options](#5-options)
   - [5.1. Common Options](#51-common-options)
     - [`--axon.port INTEGER`](#--axonport-integer)
+    - [`--softmax.low.beta FLOAT`](#--softmaxlowbeta-float)
+    - [`--softmax.high.beta FLOAT`](#--softmaxhighbeta-float)
     - [`--logging.debug`](#--loggingdebug)
     - [`--logging.info`](#--logginginfo)
     - [`--logging.trace`](#--loggingtrace)
@@ -22,6 +24,7 @@
     - [`--neuron.name TEXT`](#--neuronname-text)
     - [`--neuron.sample_size INTEGER`](#--neuronsample_size-integer)
     - [`--neuron.timeout INTEGER`](#--neurontimeout-integer)
+    - [`--neuron.nprocs INTEGER`](#--neuronnprocs-integer)
     - [`--neuron.vpermit_tao_limit INTEGER`](#--neuronvpermit_tao_limit-integer)
     - [`--wallet.hotkey TEXT`](#--wallethotkey-text)
     - [`--wallet.name TEXT`](#--walletname-text)
@@ -276,6 +279,72 @@ for testnet it's:
 
 ```shell
 pm2 start validator.test.config.js -- --axon.port 8091
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### `--softmax.low.beta FLOAT`
+
+Negative beta to give higher weight to lower scores for the 24h prompt
+
+Default: `-0.1`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--softmax.low.beta -0.1",
+      env: {
+        PYTHONPATH: ".",
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+
+```shell
+pm2 start validator.config.js -- --softmax.low.beta -0.1
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### `--softmax.high.beta FLOAT`
+
+Negative beta to give higher weight to lower scores for the 1h prompt
+
+Default: `-0.2`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--softmax.high.beta -0.2",
+      env: {
+        PYTHONPATH: ".",
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+
+```shell
+pm2 start validator.config.js -- --softmax.high.beta -0.2
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
@@ -693,6 +762,39 @@ Alternatively, you can add the args directly to the command:
 
 ```shell
 pm2 start validator.config.js -- --neuron.timeout 120
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### `--neuron.nprocs INTEGER`
+
+The number of processes to run for the validator dendrite, (e.g. 2).
+
+Default: `2`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--neuron.nprocs 2",
+      env: {
+        PYTHONPATH: ".",
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+
+```shell
+pm2 start validator.config.js -- --neuron.nprocs 2
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>

@@ -1,4 +1,4 @@
-import asyncio
+import inspect
 import functools
 import os
 import logging
@@ -162,7 +162,7 @@ def print_execution_time(func):
         )
         return result
 
-    if asyncio.iscoroutinefunction(func):
+    if inspect.iscoroutinefunction(func):
         return async_wrapper
     else:
         return sync_wrapper

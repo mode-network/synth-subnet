@@ -77,6 +77,8 @@ class Validator(BaseValidatorNeuron):
         self.price_data_provider = PriceDataProvider()
 
         self.miner_uids: list[int] = []
+        LOW_FREQUENCY.softmax_beta = self.config.softmax.low.beta
+        HIGH_FREQUENCY.softmax_beta = self.config.softmax.high.beta
 
         PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
         PriceDataProvider.assert_assets_supported(LOW_FREQUENCY.asset_list)
