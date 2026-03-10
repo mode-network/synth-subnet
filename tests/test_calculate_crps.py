@@ -5,6 +5,7 @@ import numpy as np
 from synth.validator import prompt_config
 from synth.validator.crps_calculation import (
     calculate_crps_for_miner,
+    calculate_price_changes_over_intervals,
     label_observed_blocks,
 )
 from synth.validator.reward import compute_softmax
@@ -384,3 +385,90 @@ class TestCalculateCrps(unittest.TestCase):
         arr = np.array([])
         result = label_observed_blocks(arr)
         np.testing.assert_array_equal(result, [])
+
+    def test_gap_suffix_is_detected(self):
+        """Verify that interval names ending with '_gaps' trigger gap logic."""
+        scoring_intervals = {"0_5min_gaps": 300}
+        time_increment = 60
+        # 61 price points (1-hour at 1-min intervals)
+        real_price_path = np.linspace(100, 110, 61)
+        sims = np.array([np.linspace(100, 112, 61)] * 3)
+
+        score, detailed = calculate_crps_for_miner(
+            sims, real_price_path, time_increment, scoring_intervals
+        )
+
+        # With gap fix: only 1 CRPS evaluation (start to 5-min)
+        # Filter out the "Total" entries
+        increment_entries = [d for d in detailed if d["Increment"] != "Total"]
+        self.assertEqual(len(increment_entries), 1)
+        self.assertEqual(increment_entries[0]["Interval"], "0_5min_gaps")
+        self.assertEqual(increment_entries[0]["Increment"], 1)
+
+    def test_gap_produces_single_change(self):
+        """Gap intervals should compute only 1 price change (start to gap endpoint),
+        not all rolling changes."""
+        # 7 price points, interval_steps=2 -> sampled [p0, p2, p4, p6]
+        prices = np.array([[100, 102, 105, 103, 108, 107, 112]])
+
+        # Without gap: 3 changes (p0->p2, p2->p4, p4->p6)
+        regular = calculate_price_changes_over_intervals(prices, 2, is_gap=False)
+        self.assertEqual(regular.shape[1], 3)
+
+        # With gap: 1 change (p0->p2 only)
+        gap = calculate_price_changes_over_intervals(prices, 2, is_gap=True)
+        self.assertEqual(gap.shape[1], 1)
+
+        # The single gap change should match the first regular change
+        np.testing.assert_array_almost_equal(gap[0, 0], regular[0, 0])
+
+    def test_gap_preserves_all_simulations(self):
+        """Gap slicing should keep all simulation paths, not just the first."""
+        sims = np.array([
+            [100, 102, 105, 108, 112],
+            [100, 103, 107, 109, 115],
+            [100, 101, 104, 106, 110],
+        ])
+
+        result = calculate_price_changes_over_intervals(sims, 2, is_gap=True)
+
+        # Should have all 3 sims, 1 change each
+        self.assertEqual(result.shape, (3, 1))
+
+    def test_gap_vs_regular_not_identical(self):
+        """With the fix, gap intervals must NOT produce the same result as regular
+        intervals with the same step size (they were identical before the fix)."""
+        prices = np.array([[100, 102, 105, 103, 108, 107, 112]])
+
+        regular = calculate_price_changes_over_intervals(prices, 2, is_gap=False)
+        gap = calculate_price_changes_over_intervals(prices, 2, is_gap=True)
+
+        # Regular has 3 changes, gap has 1 — they cannot be identical
+        self.assertNotEqual(regular.shape, gap.shape)
+
+    def test_high_freq_gap_intervals_produce_different_scores(self):
+        """Full integration test: gap intervals in HIGH_FREQUENCY config should
+        produce different CRPS than if they were treated as regular intervals."""
+        time_increment = 60
+        np.random.seed(123)
+        real = np.cumsum(np.random.randn(61) * 5) + 80000
+        sims = np.array([np.cumsum(np.random.randn(61) * 5) + 80000 for _ in range(10)])
+
+        # Score with only gap intervals
+        gap_intervals = {"0_10min_gaps": 600}
+        score_gap, details_gap = calculate_crps_for_miner(
+            sims, real, time_increment, gap_intervals
+        )
+
+        # Score with equivalent regular interval
+        reg_intervals = {"10min": 600}
+        score_reg, details_reg = calculate_crps_for_miner(
+            sims, real, time_increment, reg_intervals
+        )
+
+        # Gap should produce fewer CRPS evaluations and a different total
+        gap_increments = [d for d in details_gap if d["Increment"] != "Total"]
+        reg_increments = [d for d in details_reg if d["Increment"] != "Total"]
+        self.assertEqual(len(gap_increments), 1)   # gap: 1 evaluation
+        self.assertEqual(len(reg_increments), 6)    # regular: 6 evaluations
+        self.assertNotEqual(score_gap, score_reg)
