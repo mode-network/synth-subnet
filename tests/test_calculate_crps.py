@@ -406,13 +406,15 @@ class TestCalculateCrps(unittest.TestCase):
         self.assertEqual(increment_entries[0]["Increment"], 1)
 
     def test_gap_produces_single_change(self):
-        """Gap intervals should compute only 1 price change (start to gap endpoint),
-        not all rolling changes."""
+        """Gap intervals should compute only 1 price change
+        (start to gap endpoint), not all rolling changes."""
         # 7 price points, interval_steps=2 -> sampled [p0, p2, p4, p6]
         prices = np.array([[100, 102, 105, 103, 108, 107, 112]])
 
         # Without gap: 3 changes (p0->p2, p2->p4, p4->p6)
-        regular = calculate_price_changes_over_intervals(prices, 2, is_gap=False)
+        regular = calculate_price_changes_over_intervals(
+            prices, 2, is_gap=False
+        )
         self.assertEqual(regular.shape[1], 3)
 
         # With gap: 1 change (p0->p2 only)
@@ -424,11 +426,13 @@ class TestCalculateCrps(unittest.TestCase):
 
     def test_gap_preserves_all_simulations(self):
         """Gap slicing should keep all simulation paths, not just the first."""
-        sims = np.array([
-            [100, 102, 105, 108, 112],
-            [100, 103, 107, 109, 115],
-            [100, 101, 104, 106, 110],
-        ])
+        sims = np.array(
+            [
+                [100, 102, 105, 108, 112],
+                [100, 103, 107, 109, 115],
+                [100, 101, 104, 106, 110],
+            ]
+        )
 
         result = calculate_price_changes_over_intervals(sims, 2, is_gap=True)
 
@@ -436,11 +440,13 @@ class TestCalculateCrps(unittest.TestCase):
         self.assertEqual(result.shape, (3, 1))
 
     def test_gap_vs_regular_not_identical(self):
-        """With the fix, gap intervals must NOT produce the same result as regular
-        intervals with the same step size (they were identical before the fix)."""
+        """With the fix, gap and regular intervals must differ
+        for the same step size (were identical before fix)."""
         prices = np.array([[100, 102, 105, 103, 108, 107, 112]])
 
-        regular = calculate_price_changes_over_intervals(prices, 2, is_gap=False)
+        regular = calculate_price_changes_over_intervals(
+            prices, 2, is_gap=False
+        )
         gap = calculate_price_changes_over_intervals(prices, 2, is_gap=True)
 
         # Regular has 3 changes, gap has 1 — they cannot be identical
@@ -448,11 +454,14 @@ class TestCalculateCrps(unittest.TestCase):
 
     def test_high_freq_gap_intervals_produce_different_scores(self):
         """Full integration test: gap intervals in HIGH_FREQUENCY config should
-        produce different CRPS than if they were treated as regular intervals."""
+        produce different CRPS than if they were treated as regular intervals.
+        """
         time_increment = 60
         np.random.seed(123)
         real = np.cumsum(np.random.randn(61) * 5) + 80000
-        sims = np.array([np.cumsum(np.random.randn(61) * 5) + 80000 for _ in range(10)])
+        sims = np.array(
+            [np.cumsum(np.random.randn(61) * 5) + 80000 for _ in range(10)]
+        )
 
         # Score with only gap intervals
         gap_intervals = {"0_10min_gaps": 600}
@@ -469,6 +478,6 @@ class TestCalculateCrps(unittest.TestCase):
         # Gap should produce fewer CRPS evaluations and a different total
         gap_increments = [d for d in details_gap if d["Increment"] != "Total"]
         reg_increments = [d for d in details_reg if d["Increment"] != "Total"]
-        self.assertEqual(len(gap_increments), 1)   # gap: 1 evaluation
-        self.assertEqual(len(reg_increments), 6)    # regular: 6 evaluations
+        self.assertEqual(len(gap_increments), 1)  # gap: 1 evaluation
+        self.assertEqual(len(reg_increments), 6)  # regular: 6 evaluations
         self.assertNotEqual(score_gap, score_reg)
