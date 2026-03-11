@@ -10,7 +10,7 @@ from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.reward import (
     compute_prompt_scores,
     compute_softmax,
-    get_rewards,
+    get_rewards_multiprocess,
 )
 from tests.utils import prepare_random_predictions
 
@@ -82,7 +82,7 @@ def test_get_rewards(db_engine):
         scored_time, 7
     )
 
-    prompt_scores, detailed_info, real_prices = get_rewards(
+    prompt_scores, detailed_info, real_prices = get_rewards_multiprocess(
         handler,
         price_data_provider,
         validator_requests[0],
