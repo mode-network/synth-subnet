@@ -4,10 +4,10 @@ from synth.validator.moving_average import apply_per_asset_coefficients
 
 
 def test_zero_coefficients_no_nan():
-    """When all assets have coefficient 0, scores should be 0, not NaN."""
+    """When all assets have coefficient 0 (unknown assets), scores should be 0, not NaN."""
     df = pd.DataFrame(
         {
-            "asset": ["SPYX", "NVDAX", "SPYX"],
+            "asset": ["UNKNOWN_A", "UNKNOWN_B", "UNKNOWN_A"],
             "prompt_score_v3": [0.5, 0.3, 0.7],
         }
     )
@@ -30,10 +30,10 @@ def test_normal_coefficients_unchanged():
 
 
 def test_mixed_zero_and_nonzero_coefficients():
-    """Mix of zero-coef and nonzero-coef assets."""
+    """Mix of zero-coef (unknown) and nonzero-coef assets."""
     df = pd.DataFrame(
         {
-            "asset": ["BTC", "SPYX"],
+            "asset": ["BTC", "UNKNOWN_X"],
             "prompt_score_v3": [0.5, 0.3],
         }
     )
