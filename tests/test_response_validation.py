@@ -252,3 +252,79 @@ def test_validate_responses_correct_2():
 
     result = validate_responses(response, simulation_input, process_time_str)
     assert result == CORRECT
+
+
+def test_validate_responses_nan_in_path():
+    """NaN values in price paths must be rejected."""
+    simulation_input = SimulationInput(
+        start_time=start_time.isoformat(),
+        num_simulations=1,
+        time_length=3,
+        time_increment=time_increment,
+    )
+    response = (
+        int(start_time.timestamp()),
+        time_increment,
+        [100.0, float("nan"), 102.0, 103.0],
+    )
+    process_time_str = "0"
+
+    result = validate_responses(response, simulation_input, process_time_str)
+    assert "non-finite" in result
+
+
+def test_validate_responses_inf_in_path():
+    """Inf values in price paths must be rejected."""
+    simulation_input = SimulationInput(
+        start_time=start_time.isoformat(),
+        num_simulations=1,
+        time_length=3,
+        time_increment=time_increment,
+    )
+    response = (
+        int(start_time.timestamp()),
+        time_increment,
+        [100.0, float("inf"), 102.0, 103.0],
+    )
+    process_time_str = "0"
+
+    result = validate_responses(response, simulation_input, process_time_str)
+    assert "non-finite" in result
+
+
+def test_validate_responses_negative_inf_in_path():
+    """Negative inf values in price paths must be rejected."""
+    simulation_input = SimulationInput(
+        start_time=start_time.isoformat(),
+        num_simulations=1,
+        time_length=3,
+        time_increment=time_increment,
+    )
+    response = (
+        int(start_time.timestamp()),
+        time_increment,
+        [100.0, float("-inf"), 102.0, 103.0],
+    )
+    process_time_str = "0"
+
+    result = validate_responses(response, simulation_input, process_time_str)
+    assert "non-finite" in result
+
+
+def test_validate_responses_normal_floats_still_pass():
+    """Normal float values must still pass validation."""
+    simulation_input = SimulationInput(
+        start_time=start_time.isoformat(),
+        num_simulations=1,
+        time_length=3,
+        time_increment=time_increment,
+    )
+    response = (
+        int(start_time.timestamp()),
+        time_increment,
+        [100.0, 101.5, 102.0, 103.0],
+    )
+    process_time_str = "0"
+
+    result = validate_responses(response, simulation_input, process_time_str)
+    assert result == CORRECT
