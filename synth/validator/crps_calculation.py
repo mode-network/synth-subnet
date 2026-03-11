@@ -9,6 +9,40 @@ def get_interval_steps(scoring_interval: int, time_increment: int) -> int:
     return int(scoring_interval / time_increment)
 
 
+def _compute_block_crps(
+    simulated_changes, real_changes, data_blocks, absolute_price, last_price
+):
+    """Compute CRPS for observed blocks, returns (total, details list)."""
+    crps_values = 0.0
+    details = []
+    total_increment = 0
+    for block in np.unique(data_blocks):
+        if block == -1:
+            continue
+        mask = data_blocks == block
+        sim_block = simulated_changes[:, mask]
+        real_block = real_changes[0, mask]
+        n = sim_block.shape[1]
+
+        crps_block = np.array(
+            [crps_ensemble(real_block[t], sim_block[:, t]) for t in range(n)]
+        )
+
+        if absolute_price:
+            if last_price == 0 or not np.isfinite(last_price):
+                continue
+            crps_block = crps_block / last_price * 10_000
+
+        crps_values += crps_block.sum()
+        for t in range(n):
+            details.append(
+                {"Increment": total_increment + 1, "CRPS": crps_block[t]}
+            )
+            total_increment += 1
+
+    return crps_values, details, total_increment
+
+
 def calculate_crps_for_miner(
     simulation_runs: np.ndarray,
     real_price_path: np.ndarray,
@@ -72,45 +106,16 @@ def calculate_crps_for_miner(
             continue
 
         # Calculate CRPS over intervals
-        total_increment = 0
-        crps_values = 0.0
-        for block in np.unique(data_blocks):
-            # skip missing value blocks
-            if block == -1:
-                continue
-
-            mask = data_blocks == block
-            simulated_changes_block = simulated_changes[:, mask]
-            real_changes_block = real_changes[0, mask]  # 1D array now
-            num_intervals = simulated_changes_block.shape[1]
-
-            # Calculate all CRPS values at once
-            crps_values_block = np.array(
-                [
-                    crps_ensemble(
-                        real_changes_block[t], simulated_changes_block[:, t]
-                    )
-                    for t in range(num_intervals)
-                ]
-            )
-
-            if absolute_price:
-                crps_values_block = (
-                    crps_values_block / real_price_path[-1] * 10_000
-                )
-
-            crps_values += crps_values_block.sum()
-
-            # Build detailed data in bulk
-            for t in range(num_intervals):
-                detailed_crps_data.append(
-                    {
-                        "Interval": interval_name,
-                        "Increment": total_increment + 1,
-                        "CRPS": crps_values_block[t],
-                    }
-                )
-                total_increment += 1
+        crps_values, block_details, total_increment = _compute_block_crps(
+            simulated_changes,
+            real_changes,
+            data_blocks,
+            absolute_price,
+            real_price_path[-1],
+        )
+        for d in block_details:
+            d["Interval"] = interval_name
+            detailed_crps_data.append(d)
 
         # Total CRPS for this interval
         total_crps_interval = crps_values

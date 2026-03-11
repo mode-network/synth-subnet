@@ -481,3 +481,81 @@ class TestCalculateCrps(unittest.TestCase):
         self.assertEqual(len(gap_increments), 1)  # gap: 1 evaluation
         self.assertEqual(len(reg_increments), 6)  # regular: 6 evaluations
         self.assertNotEqual(score_gap, score_reg)
+
+
+class TestInfScoreFromAbsPriceDivZero(unittest.TestCase):
+    """Tests for inf score caused by division by zero in
+    absolute price scaling (real_price_path[-1] == 0)."""
+
+    def test_abs_price_last_real_zero_no_inf(self):
+        """When real_price_path[-1] is 0, absolute price
+        scaling must not produce inf."""
+        real = np.array([100, 105, 110, 115, 0.0])
+        sims = np.array([[100, 106, 112, 117, 5]] * 5)
+        score, _ = calculate_crps_for_miner(
+            sims, real, 60, {"60min_abs": 3600}
+        )
+        self.assertTrue(
+            np.isfinite(score),
+            f"Score should be finite, got {score}",
+        )
+
+    def test_abs_price_last_real_nan_no_nan(self):
+        """When real_price_path[-1] is NaN, absolute price
+        scaling must not produce NaN."""
+        real = np.array([100, 105, 110, 115, np.nan])
+        sims = np.array([[100, 106, 112, 117, 123]] * 5)
+        score, _ = calculate_crps_for_miner(
+            sims, real, 60, {"60min_abs": 3600}
+        )
+        self.assertTrue(
+            np.isfinite(score),
+            f"Score should be finite, got {score}",
+        )
+
+    def test_abs_price_normal_still_works(self):
+        """Normal absolute price scoring still works correctly
+        after the guard."""
+        real = np.array([100, 105, 110, 115, 120])
+        sims = np.array([[100, 106, 112, 117, 123]] * 10)
+        score, details = calculate_crps_for_miner(
+            sims, real, 60, {"60min_abs": 3600}
+        )
+        self.assertTrue(np.isfinite(score))
+        self.assertGreater(score, 0)
+
+    def test_inf_not_passed_to_prompt_scores(self):
+        """An inf score must not poison percentile90 in
+        compute_prompt_scores."""
+        from synth.validator.reward import compute_prompt_scores
+
+        # 10 normal scores + 1 that would be inf without fix
+        scores = np.array([50, 60, 70, 80, 90, 100, 110, 120, 130, 150])
+        prompt_scores, p90, lowest = compute_prompt_scores(scores)
+        self.assertTrue(np.all(np.isfinite(prompt_scores)))
+        self.assertTrue(np.isfinite(p90))
+
+        # With inf injected (simulating old bug)
+        scores_with_inf = np.array(
+            [50, 60, 70, 80, 90, 100, 110, 120, np.inf, 150]
+        )
+        ps_inf, p90_inf, _ = compute_prompt_scores(scores_with_inf)
+        # p90 with inf is itself inf, destroying capping
+        self.assertFalse(
+            np.isfinite(p90_inf),
+            "This proves inf poisons percentile90",
+        )
+
+    def test_mixed_intervals_abs_with_zero_last_price(self):
+        """When mixing regular and absolute intervals, a zero
+        last price must not corrupt the total score."""
+        real = np.array([100, 105, 110, 115, 0.0])
+        sims = np.array([[100, 106, 112, 117, 5]] * 5)
+        intervals = {"1min": 60, "60min_abs": 3600}
+        score, _ = calculate_crps_for_miner(sims, real, 60, intervals)
+        self.assertTrue(
+            np.isfinite(score),
+            f"Mixed score should be finite, got {score}",
+        )
+        # Regular interval should still contribute
+        self.assertGreater(score, 0)
