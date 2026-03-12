@@ -10,6 +10,10 @@ default_softmax_beta_low=-0.1
 softmax_beta_low="${SOFTMAX_BETA_LOW:-$default_softmax_beta_low}"
 default_softmax_beta_high=-0.2
 softmax_beta_high="${SOFTMAX_BETA_HIGH:-$default_softmax_beta_high}"
+default_sma_days_low=10
+sma_days_low="${SMA_DAYS_LOW:-$default_sma_days_low}"
+default_sma_days_high=3
+sma_days_high="${SMA_DAYS_HIGH:-$default_sma_days_high}"
 
 default_validator_coldkey_name=validator
 validator_coldkey_name="${VALIDATOR_COLDKEY_NAME:-$default_validator_coldkey_name}"
@@ -27,6 +31,8 @@ python3.11 ./neurons/validator.py \
 		--netuid $netuid \
 		--logging.debug \
 		--neuron.axon_off true \
+		--sma.low.days $sma_days_low \
+		--sma.high.days $sma_days_high \
 		--softmax.low.beta $softmax_beta_low \
 		--softmax.high.beta $softmax_beta_high \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
@@ -42,6 +48,8 @@ python3.11 ./neurons/validator.py \
 		--netuid $netuid \
 		--logging.debug \
 		--neuron.axon_off true \
+		--sma.low.days $sma_days_low \
+		--sma.high.days $sma_days_high \
 		--softmax.low.beta $softmax_beta_low \
 		--softmax.high.beta $softmax_beta_high \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \
@@ -57,6 +65,8 @@ python3.11 ./neurons/validator.py \
 		--netuid $netuid \
 		--logging.debug \
 		--neuron.axon_off true \
+		--sma.low.days $sma_days_low \
+		--sma.high.days $sma_days_high \
 		--softmax.low.beta $softmax_beta_low \
 		--softmax.high.beta $softmax_beta_high \
 		--neuron.vpermit_tao_limit $vpermit_tao_limit \

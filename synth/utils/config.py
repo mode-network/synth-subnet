@@ -239,6 +239,20 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
+        "--sma.low.days",
+        type=int,
+        help="Window for the simple moving average (SMA) of the validator scores for the low frequency prompt.",
+        default=10,
+    )
+
+    parser.add_argument(
+        "--sma.high.days",
+        type=int,
+        help="Window for the simple moving average (SMA) of the validator scores for the high frequency prompt.",
+        default=3,
+    )
+
+    parser.add_argument(
         "--softmax.low.beta",
         type=float,
         help="Negative beta to give higher weight to lower scores for the low frequency prompt.",
