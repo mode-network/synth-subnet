@@ -10,8 +10,12 @@ def get_interval_steps(scoring_interval: int, time_increment: int) -> int:
 
 
 def _compute_block_crps(
-    simulated_changes, real_changes, data_blocks, absolute_price, last_price
-):
+    simulated_changes: np.ndarray,
+    real_changes: np.ndarray,
+    data_blocks: np.ndarray,
+    absolute_price: bool,
+    last_price: float | np.floating,
+) -> tuple[float, list[dict], int]:
     """Compute CRPS for observed blocks, returns (total, details list)."""
     crps_values = 0.0
     details = []
@@ -152,8 +156,8 @@ def label_observed_blocks(arr: np.ndarray) -> np.ndarray:
 def calculate_price_changes_over_intervals(
     price_paths: np.ndarray,
     interval_steps: int,
-    absolute_price=False,
-    is_gap=False,
+    absolute_price: bool = False,
+    is_gap: bool = False,
 ) -> np.ndarray:
     """
     Calculate price changes over specified intervals.
