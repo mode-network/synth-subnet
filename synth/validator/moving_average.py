@@ -23,17 +23,14 @@ def prepare_df_for_moving_average(df):
 
     # build your global‐worst‐score mappings exactly as you had them
     global_worst_score_mapping = {}
-    global_score_details_mapping = {}
     global_score_asset_mapping = {}
     for t in all_times:
         sample = df.loc[df["scored_time"] == t].iloc[0]
-        details = sample["score_details_v3"]
-        if details is None:
+        p90 = sample.get("percentile90")
+        low = sample.get("lowest_score")
+        if p90 is None or low is None:
             continue
-        global_worst_score_mapping[t] = (
-            details["percentile90"] - details["lowest_score"]
-        )
-        global_score_details_mapping[t] = details
+        global_worst_score_mapping[t] = p90 - low
         global_score_asset_mapping[t] = sample["asset"]
 
     # 2) find, for each miner, when they first appear
@@ -66,11 +63,6 @@ def prepare_df_for_moving_average(df):
         is_new, "prompt_score_v3"
     ].fillna(full.loc[is_new, "scored_time"].map(global_worst_score_mapping))
 
-    # overwrite score_details_v3 for new miners
-    full.loc[is_new, "score_details_v3"] = full.loc[is_new, "scored_time"].map(
-        global_score_details_mapping
-    )
-
     # overwrite asset for new miners
     full.loc[is_new, "asset"] = full.loc[is_new, "scored_time"].map(
         global_score_asset_mapping
@@ -78,9 +70,7 @@ def prepare_df_for_moving_average(df):
 
     # 6) drop the “fake” rows we only introduced for existing miners
     is_old = full["miner_min"] == global_min
-    was_missing = (
-        full["prompt_score_v3"].isna() & full["score_details_v3"].isna()
-    )
+    was_missing = full["prompt_score_v3"].isna() & full["percentile90"].isna()
     mask_drop = is_old & was_missing
     out = full.loc[
         ~mask_drop,
@@ -88,7 +78,6 @@ def prepare_df_for_moving_average(df):
             "scored_time",
             "miner_id",
             "prompt_score_v3",
-            "score_details_v3",
             "asset",
         ],
     ]

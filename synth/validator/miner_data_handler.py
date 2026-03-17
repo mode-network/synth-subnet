@@ -544,11 +544,17 @@ class MinerDataHandler:
                     .where(base_conditions)
                 )
 
-                # Query 2: one row per scored_time with JSONB
+                # Query 2: one row per scored_time with
+                # percentile90 and lowest_score extracted from JSONB
                 details_query = (
                     select(
                         MinerScore.scored_time,
-                        MinerScore.score_details_v3,
+                        MinerScore.score_details_v3["percentile90"]
+                        .as_float()
+                        .label("percentile90"),
+                        MinerScore.score_details_v3["lowest_score"]
+                        .as_float()
+                        .label("lowest_score"),
                     )
                     .select_from(MinerScore)
                     .join(
