@@ -70,7 +70,7 @@ def prepare_df_for_moving_average(df):
 
     # 6) drop the “fake” rows we only introduced for existing miners
     is_old = full["miner_min"] == global_min
-    was_missing = full["prompt_score_v3"].isna() & full["percentile90"].isna()
+    was_missing = full["prompt_score_v3"].isna()
     mask_drop = is_old & was_missing
     out = full.loc[
         ~mask_drop,
