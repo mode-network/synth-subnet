@@ -518,12 +518,17 @@ class MinerDataHandler:
 
         try:
             with self.engine.connect() as connection:
-                query = (
+                base_conditions = and_(
+                    MinerScore.scored_time > min_scored_time,
+                    ValidatorRequest.time_length == time_length,
+                )
+
+                # Query 1: all rows without expensive JSONB
+                scores_query = (
                     select(
                         MinerPrediction.miner_id,
                         MinerScore.prompt_score_v3,
                         MinerScore.scored_time,
-                        MinerScore.score_details_v3,
                         ValidatorRequest.asset,
                     )
                     .select_from(MinerScore)
@@ -536,17 +541,54 @@ class MinerDataHandler:
                         ValidatorRequest.id
                         == MinerPrediction.validator_requests_id,
                     )
-                    .where(
-                        and_(
-                            MinerScore.scored_time > min_scored_time,
-                            ValidatorRequest.time_length == time_length,
-                        )
-                    )
+                    .where(base_conditions)
                 )
 
-                result = connection.execute(query)
+                # Query 2: one row per scored_time with
+                # percentile90 and lowest_score extracted from JSONB
+                details_query = (
+                    select(
+                        MinerScore.scored_time,
+                        MinerScore.score_details_v3["percentile90"]
+                        .as_float()
+                        .label("percentile90"),
+                        MinerScore.score_details_v3["lowest_score"]
+                        .as_float()
+                        .label("lowest_score"),
+                    )
+                    .select_from(MinerScore)
+                    .join(
+                        MinerPrediction,
+                        MinerPrediction.id == MinerScore.miner_predictions_id,
+                    )
+                    .join(
+                        ValidatorRequest,
+                        ValidatorRequest.id
+                        == MinerPrediction.validator_requests_id,
+                    )
+                    .where(base_conditions)
+                    .distinct(MinerScore.scored_time)
+                    .order_by(MinerScore.scored_time)
+                )
 
-            return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
+                scores_result = connection.execute(scores_query)
+                details_result = connection.execute(details_query)
+
+            scores_df = pd.DataFrame(
+                scores_result.fetchall(),
+                columns=list(scores_result.keys()),
+            )
+            details_df = pd.DataFrame(
+                details_result.fetchall(),
+                columns=list(details_result.keys()),
+            )
+
+            if not scores_df.empty and not details_df.empty:
+                scores_df = scores_df.merge(
+                    details_df, on="scored_time", how="left"
+                )
+
+            return scores_df
         except Exception as e:
             bt.logging.exception(
                 f"in get_miner_scores (got an exception): {e}"
