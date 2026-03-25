@@ -4,7 +4,12 @@ import pytest
 from sqlalchemy import Engine, select, delete
 from sqlalchemy.dialects.postgresql import insert
 
-from synth.db.models import MinerPrediction, ValidatorRequest, Miner
+from synth.db.models import (
+    MinerPrediction,
+    MinerScore,
+    ValidatorRequest,
+    Miner,
+)
 from synth.validator import response_validation_v2
 from synth.simulation_input import SimulationInput
 from synth.validator.miner_data_handler import MinerDataHandler
@@ -437,3 +442,120 @@ def test_insert_new_miners(db_engine: Engine):
                 len(connection.execute(select(Miner)).fetchall())
                 == initial_len + 2
             )
+
+
+def test_set_miner_scores_upsert_preserves_individual_values(
+    db_engine: Engine,
+):
+    """Test that on_conflict_do_update uses each row's own values, not the last row's.
+
+    Previously, the on_conflict_do_update clause referenced a stale loop variable
+    `row` which always pointed to the LAST element of reward_details. This meant
+    on upsert conflicts, all rows got the last miner's scores.
+
+    Example of the bug:
+        reward_details = [
+            {"miner_uid": 1, "prompt_score_v3": 0.95, ...},  # miner 1
+            {"miner_uid": 2, "prompt_score_v3": 0.30, ...},  # miner 2
+        ]
+        # After loop: row = miner 2's dict
+        # On conflict for miner 1 -> got miner 2's score (0.30) instead of 0.95
+    """
+    handler = MinerDataHandler(db_engine)
+    start_time = "2024-11-20T00:00:00+00:00"
+    scored_time = datetime.fromisoformat("2024-11-22T00:00:00+00:00")
+
+    # Setup: create miners and save predictions to get valid miner_predictions_ids
+    handler, simulation_input, miner_uids = prepare_random_predictions(
+        db_engine, start_time
+    )
+
+    validator_requests = handler.get_validator_requests_to_score(
+        scored_time, 7
+    )
+    assert len(validator_requests) >= 1
+
+    # Get prediction IDs for the miners
+    with db_engine.connect() as connection:
+        predictions = connection.execute(
+            select(MinerPrediction.id, MinerPrediction.miner_id).where(
+                MinerPrediction.validator_requests_id
+                == validator_requests[0].id
+            )
+        ).fetchall()
+
+    assert len(predictions) >= 2, "Need at least 2 predictions to test upsert"
+
+    # Create reward_details with DIFFERENT scores for each miner
+    reward_details = []
+    scores = [0.95, 0.30, 0.10, 0.50]  # deliberately different
+    for i, pred in enumerate(predictions):
+        reward_details.append(
+            {
+                "miner_uid": i,
+                "miner_prediction_id": pred.id,
+                "total_crps": scores[i % len(scores)],
+                "percentile90": 1.0,
+                "lowest_score": 0.01,
+                "prompt_score_v3": scores[i % len(scores)],
+                "crps_data": [{"crps": scores[i % len(scores)]}],
+            }
+        )
+
+    # First insert
+    handler.set_miner_scores(
+        [], int(validator_requests[0].id), reward_details, scored_time
+    )
+
+    # Second insert (same prediction IDs -> triggers upsert conflict)
+    # Use different scores to verify each row gets its OWN updated values
+    updated_reward_details = []
+    updated_scores = [0.11, 0.22, 0.33, 0.44]
+    for i, pred in enumerate(predictions):
+        updated_reward_details.append(
+            {
+                "miner_uid": i,
+                "miner_prediction_id": pred.id,
+                "total_crps": updated_scores[i % len(updated_scores)],
+                "percentile90": 2.0,
+                "lowest_score": 0.02,
+                "prompt_score_v3": updated_scores[i % len(updated_scores)],
+                "crps_data": [
+                    {"crps": updated_scores[i % len(updated_scores)]}
+                ],
+            }
+        )
+
+    handler.set_miner_scores(
+        [],
+        int(validator_requests[0].id),
+        updated_reward_details,
+        scored_time,
+    )
+
+    # Verify: each miner should have their OWN updated score, not the last
+    # miner's
+    with db_engine.connect() as connection:
+        results = connection.execute(
+            select(
+                MinerScore.miner_predictions_id,
+                MinerScore.prompt_score_v3,
+                MinerScore.score_details_v3,
+            )
+            .where(
+                MinerScore.miner_predictions_id.in_(
+                    [p.id for p in predictions]
+                )
+            )
+            .order_by(MinerScore.miner_predictions_id)
+        ).fetchall()
+
+    assert len(results) == len(predictions)
+
+    for i, result in enumerate(results):
+        expected_score = updated_scores[i % len(updated_scores)]
+        assert result.prompt_score_v3 == pytest.approx(expected_score), (
+            f"Miner {i}: expected prompt_score_v3={expected_score}, "
+            f"got {result.prompt_score_v3}. "
+            f"Bug: all miners got last miner's score instead of their own."
+        )
