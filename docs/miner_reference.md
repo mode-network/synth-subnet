@@ -762,7 +762,7 @@ CORRECT
 
 #### 6. Synth is predicting multiple assets. How does each asset prediction contribute to the smoothed score?
 
-Each asset—BTC, ETH, XAU and SOL—contributes equally to the smoothed score. This means your miner must perform consistently well across all four. Future assets added to Synth will have the same weighting, unless noted otherwise.
+Each asset prediction is scored separately, and the scores are averaged to calculate the overall CRPS for that prompt. This average CRPS is then used in the smoothed score calculation.
 
 #### 7. I am getting fair CRPS scores but my reward weight is still zero. Why?
 

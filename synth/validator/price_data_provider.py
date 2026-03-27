@@ -19,7 +19,7 @@ from synth.utils.logging import print_execution_time
 # Pyth API benchmarks doc: https://benchmarks.pyth.network/docs
 # get the list of stocks supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_stock
 # get the list of crypto supported by pyth: https://benchmarks.pyth.network/v1/shims/tradingview/symbol_info?group=pyth_crypto
-# get the ticket: https://benchmarks.pyth.network/v1/shims/tradingview/symbols?symbol=Metal.XAU/USD
+# get the ticket: https://benchmarks.pyth.network/v1/shims/tradingview/symbols?symbol=Crypto.XAUT/USD
 
 
 class PriceDataProvider:
@@ -35,6 +35,9 @@ class PriceDataProvider:
         "TSLAX": "Crypto.TSLAX/USD",
         "AAPLX": "Crypto.AAPLX/USD",
         "GOOGLX": "Crypto.GOOGLX/USD",
+        "XRP": "Crypto.XRP/USD",
+        "HYPE": "Crypto.HYPE/USD",
+        "WTIOIL": "Commodities.Index.PYTHOIL/USD",
     }
 
     @staticmethod

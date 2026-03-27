@@ -112,21 +112,27 @@ The checking prompts sent to the miners will have the format:
 Initially prompt parameters will always have the following values:
 
 - **Start Time ($t_0$)**: 1 minute from the time of the request.
-- **Asset**: BTC, ETH, XAU, SOL, SPYX, NVDAX, TSLAX, AAPLX, and GOOGLX (note that CRPS for each asset contributes equally to final miner weights).
+- **Asset**: BTC, ETH, XAU, SOL, SPYX, NVDAX, TSLAX, AAPLX, GOOGLX, XRP, HYPE, WTIOIL.
 - **Time Increment ($\Delta t$)**: 5 minutes.
 - **Time Horizon ($T$)**: 24 hours.
 - **Number of Simulations ($N_{\text{sim}}$)**: 1000.
 
 **Asset Weights**
-BTC 1.0
-ETH 0.6715516528608204
-XAU 2.262003561659039
-SOL 0.5883682889710361
-SPYX 2.9914378891824693
-NVDAX 1.3885444209082594
-TSLAX 1.420016421725336
-AAPLX 1.864976360560554
-GOOGLX 1.4310534797250312
+
+| Asset | Weight |
+|-------|--------|
+| BTC | 1.0 |
+| ETH | 0.6715516528608204 |
+| XAU | 2.262003561659039 |
+| SOL | 0.5883682889710361 |
+| SPYX | 2.9914378891824693 |
+| NVDAX | 1.3885444209082594 |
+| TSLAX | 1.420016421725336 |
+| AAPLX | 1.864976360560554 |
+| GOOGLX | 1.4310534797250312 |
+| XRP | 0.7049316099375813 |
+| HYPE | 0.5308019504796754 |
+| WTIOIL | 0.5221290560341333 |
 
 Validators will alternate between sending out requests for BTC and ETH predictions, at 30min intervals. The miner has until the start time to return ($N_{\text{sim}}$) paths, each containing price predictions at times given by:
 
@@ -145,7 +151,7 @@ If they fail to return predictions by the start_time or the predictions are in t
 In addition to 24-Hour predictions, Synth has introduced a second competition focused on short-horizon, high-frequency forecasting.
 **Task Overview**
 Time Horizon: 1 hour
-Assets: BTC, ETH, SOL, XAU
+Assets: BTC, ETH, SOL, XAU, HYPE
 
 **Emissions Split**
 24-Hour Predictions: 50% of total emissions

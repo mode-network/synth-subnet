@@ -102,6 +102,9 @@ def apply_per_asset_coefficients(
         "TSLAX": 1.420016421725336,
         "AAPLX": 1.864976360560554,
         "GOOGLX": 1.4310534797250312,
+        "XRP": 0.7049316099375813,
+        "HYPE": 0.5308019504796754,
+        "WTIOIL": 0.5221290560341333,
     }
 
     sum_coefficients = 0.0
