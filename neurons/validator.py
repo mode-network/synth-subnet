@@ -81,6 +81,8 @@ class Validator(BaseValidatorNeuron):
         HIGH_FREQUENCY.softmax_beta = self.config.softmax.high.beta
         LOW_FREQUENCY.window_days = self.config.sma.low.days
         HIGH_FREQUENCY.window_days = self.config.sma.high.days
+        LOW_FREQUENCY.data_retention_days = self.config.retention.low.days
+        HIGH_FREQUENCY.data_retention_days = self.config.retention.high.days
 
         PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
         PriceDataProvider.assert_assets_supported(LOW_FREQUENCY.asset_list)

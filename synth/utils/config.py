@@ -253,6 +253,20 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
+        "--retention.low.days",
+        type=int,
+        help="Data retention days for the low frequency prompt in light mode.",
+        default=12,
+    )
+
+    parser.add_argument(
+        "--retention.high.days",
+        type=int,
+        help="Data retention days for the high frequency prompt in light mode.",
+        default=4,
+    )
+
+    parser.add_argument(
         "--softmax.low.beta",
         type=float,
         help="Negative beta to give higher weight to lower scores for the low frequency prompt.",
