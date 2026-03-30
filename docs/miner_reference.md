@@ -762,7 +762,7 @@ CORRECT
 
 #### 6. Synth is predicting multiple assets. How does each asset prediction contribute to the smoothed score?
 
-Each asset prediction is scored separately, and the scores are averaged to calculate the overall CRPS for that prompt. This average CRPS is then used in the smoothed score calculation.
+Each asset has its own prompts and is scored separately: for every asset/prompt pair, the validator computes a CRPS-based `prompt_score_v3` over time. These per-asset scores are then combined into a single smoothed score using a time-based moving average with asset-specific coefficients (weights). Assets with higher coefficients contribute more to the final smoothed score than lower-weighted assets.
 
 #### 7. I am getting fair CRPS scores but my reward weight is still zero. Why?
 
