@@ -110,7 +110,10 @@ def apply_per_asset_coefficients(
         df.loc[df["asset"] == asset, "prompt_score_v3"] *= coef
         sum_coefficients += coef * len(df.loc[df["asset"] == asset])
 
-    df["prompt_score_v3"] /= sum_coefficients
+    if sum_coefficients == 0:
+        df["prompt_score_v3"] = 0.0
+    else:
+        df["prompt_score_v3"] /= sum_coefficients
 
     return df["prompt_score_v3"]
 
