@@ -115,6 +115,24 @@ def apply_per_asset_coefficients(
     return df["prompt_score_v3"]
 
 
+def _replace_inf_rolling_avgs(rolling_avg_data: list[dict]) -> None:
+    """Replace inf rolling averages with the worst finite value.
+
+    Inf causes NaN weights when all miners have inf
+    (inf - inf = nan in softmax).
+    """
+    finite_avgs = [
+        r["rolling_avg"]
+        for r in rolling_avg_data
+        if np.isfinite(r["rolling_avg"])
+    ]
+    if finite_avgs:
+        worst_finite = max(finite_avgs)
+        for r in rolling_avg_data:
+            if not np.isfinite(r["rolling_avg"]):
+                r["rolling_avg"] = worst_finite
+
+
 def compute_smoothed_score(
     miner_data_handler: MinerDataHandler,
     input_df: DataFrame,
@@ -155,6 +173,8 @@ def compute_smoothed_score(
         rolling_avg_data.append(
             {"miner_id": miner_id, "rolling_avg": rolling_avg}
         )
+
+    _replace_inf_rolling_avgs(rolling_avg_data)
 
     # Add the miner UID to the results
     moving_averages_data = miner_data_handler.populate_miner_uid_in_miner_data(
