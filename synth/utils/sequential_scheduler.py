@@ -39,7 +39,7 @@ class SequentialScheduler:
 
         asset_list = prompt_config.asset_list
         if get_current_time() <= datetime(
-            2026, 3, 31, 14, 0, 0, tzinfo=timezone.utc
+            2026, 4, 7, 14, 0, 0, tzinfo=timezone.utc
         ):
             if prompt_config.label == "low":
                 asset_list = prompt_config.asset_list[:9]
