@@ -188,6 +188,7 @@ class MinerDataHandler:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
+    @print_execution_time
     def set_miner_scores(
         self,
         real_prices: list[dict],
@@ -363,6 +364,7 @@ class MinerDataHandler:
             )
             return None
 
+    @print_execution_time
     def get_validator_requests_to_score(
         self,
         scored_time: datetime,

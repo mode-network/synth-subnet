@@ -8,11 +8,13 @@ from pandas import DataFrame
 import bittensor as bt
 
 
+from synth.utils.logging import print_execution_time
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.prompt_config import PromptConfig
 from synth.validator.reward import compute_softmax
 
 
+@print_execution_time
 def prepare_df_for_moving_average(df):
     df = df.copy()
     df["scored_time"] = pd.to_datetime(df["scored_time"])
@@ -118,6 +120,7 @@ def apply_per_asset_coefficients(
     return df["prompt_score_v3"]
 
 
+@print_execution_time
 def compute_smoothed_score(
     miner_data_handler: MinerDataHandler,
     input_df: DataFrame,
@@ -205,6 +208,7 @@ def print_rewards_df(moving_averages_data: list[dict], label: str = ""):
     bt.logging.info(df.to_string())
 
 
+@print_execution_time
 def combine_moving_averages(
     moving_averages_data: dict[str, list[dict]],
 ) -> list[dict]:
