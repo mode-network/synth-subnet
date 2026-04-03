@@ -57,7 +57,7 @@ HIGH_FREQUENCY = PromptConfig(
     time_length=3600,
     time_increment=60,
     initial_delay=0,
-    total_cycle_minutes=12,
+    total_cycle_minutes=10,
     timeout_extra_seconds=60,
     scoring_intervals={
         "1min": 60,
