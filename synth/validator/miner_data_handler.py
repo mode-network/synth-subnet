@@ -531,7 +531,10 @@ class MinerDataHandler:
 
                 result = connection.execute(
                     query,
-                    {"min_scored_time": min_scored_time, "time_length": time_length},
+                    {
+                        "min_scored_time": min_scored_time,
+                        "time_length": time_length,
+                    },
                 )
 
             return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
