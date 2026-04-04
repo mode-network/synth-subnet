@@ -58,8 +58,8 @@ class PriceDataProvider:
             assert asset in supported
 
     @retry(
-        stop=stop_after_attempt(0),
-        wait=wait_random_exponential(multiplier=7),
+        stop=stop_after_attempt(3),
+        wait=wait_random_exponential(multiplier=2),
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
@@ -110,8 +110,8 @@ class PriceDataProvider:
         )
 
     @retry(
-        stop=stop_after_attempt(0),
-        wait=wait_random_exponential(multiplier=7),
+        stop=stop_after_attempt(3),
+        wait=wait_random_exponential(multiplier=2),
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
