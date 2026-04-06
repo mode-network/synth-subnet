@@ -2,7 +2,7 @@
 
 Covers:
 - prepare_df_for_moving_average
-- apply_per_asset_coefficients
+-
 - compute_smoothed_score
 - combine_moving_averages
 
@@ -19,7 +19,6 @@ import pytest
 
 from synth.validator.moving_average import (
     ASSET_COEFFICIENTS,
-    apply_per_asset_coefficients,
     combine_moving_averages,
     compute_smoothed_score,
     prepare_df_for_moving_average,
@@ -329,131 +328,6 @@ class TestPrepareDfForMovingAverage:
 
 
 # ===========================================================================
-# Tests for apply_per_asset_coefficients
-# ===========================================================================
-
-
-class TestApplyPerAssetCoefficients:
-    """Tests for apply_per_asset_coefficients."""
-
-    def test_single_asset(self):
-        """Single asset: score × coef / (coef × count)."""
-        df = pd.DataFrame(
-            {
-                "prompt_score_v3": [0.1, 0.2],
-                "asset": ["BTC", "BTC"],
-            }
-        )
-        result = apply_per_asset_coefficients(df)
-        # BTC coef = 1.0, sum_coefficients = 1.0 * 2 = 2.0
-        assert result.iloc[0] == pytest.approx(0.1 / 2.0)
-        assert result.iloc[1] == pytest.approx(0.2 / 2.0)
-
-    def test_two_assets(self):
-        """Two assets with different coefficients."""
-        df = pd.DataFrame(
-            {
-                "prompt_score_v3": [0.1, 0.1],
-                "asset": ["BTC", "ETH"],
-            }
-        )
-        btc_coef = 1.0
-        eth_coef = 0.7064366394033871
-        sum_coef = btc_coef + eth_coef
-
-        result = apply_per_asset_coefficients(df)
-        assert result.iloc[0] == pytest.approx(0.1 * btc_coef / sum_coef)
-        assert result.iloc[1] == pytest.approx(0.1 * eth_coef / sum_coef)
-
-    def test_returns_series(self):
-        """Should return a pandas Series."""
-        df = pd.DataFrame({"prompt_score_v3": [0.1], "asset": ["BTC"]})
-        result = apply_per_asset_coefficients(df)
-        assert isinstance(result, pd.Series)
-
-    def test_all_known_assets(self):
-        """All known assets should be handled without error."""
-        assets = [
-            "BTC",
-            "ETH",
-            "XAU",
-            "SOL",
-            "SPYX",
-            "NVDAX",
-            "TSLAX",
-            "AAPLX",
-            "GOOGLX",
-            "XRP",
-            "HYPE",
-            "WTIOIL",
-        ]
-        df = pd.DataFrame(
-            {
-                "prompt_score_v3": [0.01] * len(assets),
-                "asset": assets,
-            }
-        )
-        result = apply_per_asset_coefficients(df)
-        assert len(result) == len(assets)
-        assert not result.isna().any()
-
-    def test_unknown_asset_unchanged(self):
-        """An unknown asset's score is not multiplied but still divided by sum."""
-        df = pd.DataFrame(
-            {
-                "prompt_score_v3": [0.1, 0.1],
-                "asset": ["BTC", "UNKNOWN"],
-            }
-        )
-        result = apply_per_asset_coefficients(df)
-        # UNKNOWN doesn't get multiplied, BTC coef = 1.0
-        # sum_coefficients = 1.0 * 1 (only BTC matched)
-        # BTC: 0.1 * 1.0 / 1.0 = 0.1
-        # UNKNOWN: 0.1 / 1.0 = 0.1 (unchanged by multiply, divided by sum)
-        assert result.iloc[0] == pytest.approx(0.1)
-        assert result.iloc[1] == pytest.approx(0.1)
-
-    def test_zero_scores(self):
-        """Zero scores stay zero after coefficients."""
-        df = pd.DataFrame(
-            {
-                "prompt_score_v3": [0.0, 0.0],
-                "asset": ["BTC", "ETH"],
-            }
-        )
-        result = apply_per_asset_coefficients(df)
-        assert result.iloc[0] == 0.0
-        assert result.iloc[1] == 0.0
-
-    def test_sum_of_weighted_scores(self):
-        """Verify that the total sum is correct after weighting."""
-        df = pd.DataFrame(
-            {
-                "prompt_score_v3": [1.0, 1.0, 1.0],
-                "asset": ["BTC", "BTC", "ETH"],
-            }
-        )
-        btc_coef = 1.0
-        eth_coef = 0.7064366394033871
-        sum_coef = btc_coef * 2 + eth_coef * 1
-
-        result = apply_per_asset_coefficients(df)
-        total = result.sum()
-        expected = (btc_coef * 2 + eth_coef * 1) / sum_coef
-        assert total == pytest.approx(expected)
-
-    def test_mutates_input(self):
-        """apply_per_asset_coefficients modifies the input df in place (documenting behavior)."""
-        df = pd.DataFrame(
-            {"prompt_score_v3": [0.5, 0.5], "asset": ["BTC", "ETH"]}
-        )
-        original = df["prompt_score_v3"].iloc[0]
-        apply_per_asset_coefficients(df)
-        # After call, the value in df is modified (divided by sum_coefficients)
-        assert df["prompt_score_v3"].iloc[0] != original
-
-
-# ===========================================================================
 # Tests for compute_smoothed_score
 # ===========================================================================
 
@@ -738,7 +612,8 @@ class TestNumericalEquivalence:
             if valid_scores.empty:
                 result[miner_id] = float("inf")
                 continue
-            weighted = apply_per_asset_coefficients(valid_scores.copy())
+            coefs = valid_scores["asset"].map(ASSET_COEFFICIENTS).fillna(1.0)
+            weighted = valid_scores["prompt_score_v3"] * coefs / coefs.sum()
             result[miner_id] = float(weighted.sum())
         return result
 

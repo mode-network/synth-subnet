@@ -103,26 +103,6 @@ def prepare_df_for_moving_average(df):
     return out
 
 
-def apply_per_asset_coefficients(
-    df: DataFrame,
-) -> pd.Series:
-    """Apply per-asset weighting to prompt_score_v3 and normalize.
-
-    Warning: mutates the input DataFrame's prompt_score_v3 column.
-    """
-    asset_coefficients = ASSET_COEFFICIENTS
-
-    sum_coefficients = 0.0
-
-    for asset, coef in asset_coefficients.items():
-        df.loc[df["asset"] == asset, "prompt_score_v3"] *= coef
-        sum_coefficients += coef * len(df.loc[df["asset"] == asset])
-
-    df["prompt_score_v3"] /= sum_coefficients
-
-    return df["prompt_score_v3"]
-
-
 @print_execution_time
 def compute_smoothed_score(
     miner_data_handler: MinerDataHandler,
