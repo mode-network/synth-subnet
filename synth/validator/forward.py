@@ -102,6 +102,9 @@ def calculate_moving_average_and_update_rewards(
             prompt.time_length,
         )
 
+        if miner_scores_df.empty:
+            continue
+
         df = prepare_df_for_moving_average(miner_scores_df)
 
         moving_averages = compute_smoothed_score(
