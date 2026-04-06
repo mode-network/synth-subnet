@@ -105,7 +105,7 @@ def prepare_df_for_moving_average(df):
 
 def apply_per_asset_coefficients(
     df: DataFrame,
-) -> DataFrame:
+) -> pd.Series:
     """Apply per-asset weighting to prompt_score_v3 and normalize.
 
     Warning: mutates the input DataFrame's prompt_score_v3 column.
