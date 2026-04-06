@@ -537,7 +537,9 @@ class MinerDataHandler:
                     },
                 )
 
-                return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
+                return pd.DataFrame(
+                    result.fetchall(), columns=list(result.keys())
+                )
         except Exception as e:
             bt.logging.exception(
                 f"in get_miner_scores (got an exception): {e}"
