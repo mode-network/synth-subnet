@@ -279,6 +279,13 @@ def get_rewards_multiprocess(
         bt.logging.warning(f"Error fetching data: {e}")
         return None, [], []
 
+    if real_prices is None or len(real_prices) == 0:
+        bt.logging.warning(
+            f"No price data for {validator_request.asset} "
+            f"(start_time={validator_request.start_time}). Skipping."
+        )
+        return None, [], []
+
     predictions = miner_data_handler.get_predictions_by_request(
         int(validator_request.id)
     )
