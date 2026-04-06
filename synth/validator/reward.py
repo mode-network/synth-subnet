@@ -290,6 +290,12 @@ def get_rewards_multiprocess(
         int(validator_request.id)
     )
 
+    if predictions is None or len(predictions) == 0:
+        bt.logging.warning(
+            f"No predictions for request {validator_request.id}. Skipping."
+        )
+        return None, [], []
+
     # Create shared memory for real_prices to avoid duplicating across workers
     prices_array = np.array(real_prices, dtype=np.float64)
     shm = shared_memory.SharedMemory(create=True, size=prices_array.nbytes)
