@@ -135,7 +135,7 @@ class Validator(BaseValidatorNeuron):
         bt.logging.info("starting the scoring cycle", "cycle_scoring")
         while True:
             self.forward_score()
-            time.sleep(30)
+            time.sleep(5)
 
     @print_execution_time
     def cycle_high_frequency(self, asset: str):

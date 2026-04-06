@@ -29,6 +29,9 @@ LOW_FREQUENCY = PromptConfig(
         "TSLAX",
         "AAPLX",
         "GOOGLX",
+        "XRP",
+        "HYPE",
+        "WTIOIL",
     ],
     label="low",
     time_length=86400,
@@ -49,12 +52,12 @@ LOW_FREQUENCY = PromptConfig(
 )
 
 HIGH_FREQUENCY = PromptConfig(
-    asset_list=["BTC", "ETH", "XAU", "SOL"],
+    asset_list=["BTC", "ETH", "XAU", "SOL", "HYPE"],
     label="high",
     time_length=3600,
     time_increment=60,
     initial_delay=0,
-    total_cycle_minutes=12,
+    total_cycle_minutes=10,
     timeout_extra_seconds=60,
     scoring_intervals={
         "1min": 60,

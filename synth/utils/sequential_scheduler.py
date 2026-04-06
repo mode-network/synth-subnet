@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 
 
@@ -38,6 +38,13 @@ class SequentialScheduler:
         prompt_config = self.prompt_config
 
         asset_list = prompt_config.asset_list
+        if get_current_time() <= datetime(
+            2026, 4, 7, 14, 0, 0, tzinfo=timezone.utc
+        ):
+            if prompt_config.label == "low":
+                asset_list = prompt_config.asset_list[:9]
+            elif prompt_config.label == "high":
+                asset_list = prompt_config.asset_list[:4]
 
         delay = self.select_delay(
             asset_list,

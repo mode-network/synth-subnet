@@ -7,15 +7,18 @@ from synth.utils.helpers import (
 )
 
 SIGMA_MAP = {
-    "BTC": 0.00472,
-    "ETH": 0.00695,
-    "XAU": 0.00208,
-    "SOL": 0.00782,
-    "SPYX": 0.00156,
-    "NVDAX": 0.00342,
-    "TSLAX": 0.00332,
-    "AAPLX": 0.00250,
-    "GOOGLX": 0.00332,
+    "BTC": 0.00541,
+    "ETH": 0.00766,
+    "XAU": 0.00312,
+    "SOL": 0.00858,
+    "SPYX": 0.00157,
+    "NVDAX": 0.00338,
+    "TSLAX": 0.00337,
+    "AAPLX": 0.00259,
+    "GOOGLX": 0.00322,
+    "XRP": 0.00956,
+    "HYPE": 0.01131,
+    "WTIOIL": 0.00639,
 }
 
 

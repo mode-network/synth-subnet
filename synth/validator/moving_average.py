@@ -8,20 +8,46 @@ from pandas import DataFrame
 import bittensor as bt
 
 
+from synth.utils.logging import print_execution_time
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.prompt_config import PromptConfig
 from synth.validator.reward import compute_softmax
 
+# Per-asset weighting coefficients for score normalization across assets.
+# Higher coefficient = asset scores contribute more to the smoothed score.
+ASSET_COEFFICIENTS = {
+    "BTC": 1.0,
+    "ETH": 0.7064366394033871,
+    "XAU": 1.7370922597118699,
+    "SOL": 0.6310037175639559,
+    "SPYX": 3.437935601155441,
+    "NVDAX": 1.6028217601617174,
+    "TSLAX": 1.6068755936957768,
+    "AAPLX": 2.0916380815843123,
+    "GOOGLX": 1.6827392777257926,
+    "XRP": 0.5658394110809131,
+    "HYPE": 0.4784547133706857,
+    "WTIOIL": 0.8475062847978935,
+}
 
+
+@print_execution_time
 def prepare_df_for_moving_average(df):
+    """Prepare miner scores for moving average computation.
+
+    For miners that joined after the earliest scored_time in the window,
+    backfills missing earlier timestamps with the worst score (percentile90 - lowest_score)
+    so they are not unfairly advantaged by having fewer data points.
+
+    Miners present from the start keep only their real scores (no backfill).
+    """
     df = df.copy()
     df["scored_time"] = pd.to_datetime(df["scored_time"])
 
-    # 1) compute globals
     global_min = df["scored_time"].min()
     all_times = sorted(df["scored_time"].unique())
 
-    # build your global‐worst‐score mappings exactly as you had them
+    # Build worst-score and asset mappings per scored_time (used for backfilling new miners)
     global_worst_score_mapping = {}
     global_score_asset_mapping = {}
     for t in all_times:
@@ -33,141 +59,113 @@ def prepare_df_for_moving_average(df):
         global_worst_score_mapping[t] = p90 - low
         global_score_asset_mapping[t] = sample["asset"]
 
-    # 2) find, for each miner, when they first appear
-    miner_first = (
-        df.groupby("miner_id")["scored_time"]
-        .min()
-        .rename("miner_min")
-        .reset_index()
-    )
+    # Identify new miners (first appearance after the window start)
+    miner_first = df.groupby("miner_id")["scored_time"].min()
+    new_miner_ids = miner_first[miner_first > global_min].index
 
-    # 3) build the full cartesian product of miner_id × all_times
-    miners = df[["miner_id"]].drop_duplicates()
-    full = (
-        miners.assign(_tmp=1)
-        .merge(pd.DataFrame({"scored_time": all_times, "_tmp": 1}), on="_tmp")
-        .drop(columns="_tmp")
-    )
+    if len(new_miner_ids) == 0:
+        # No new miners - just return the real data (common fast path)
+        out = df[
+            ["scored_time", "miner_id", "prompt_score_v3", "asset"]
+        ].copy()
+        out["miner_id"] = out["miner_id"].astype(int)
+        out = out.sort_values(["scored_time", "miner_id"]).reset_index(
+            drop=True
+        )
+        return out
 
-    # 4) left‐merge the real data onto that grid
-    full["scored_time"] = pd.to_datetime(full["scored_time"])
-    full = full.merge(df, on=["miner_id", "scored_time"], how="left").merge(
-        miner_first, on="miner_id", how="left"
-    )
+    # Build backfill rows only for new miners at times before they joined
+    backfill_rows = []
+    backfill_times = [t for t in all_times if t in global_worst_score_mapping]
+    for mid in new_miner_ids:
+        first_time = miner_first[mid]
+        for t in backfill_times:
+            if t >= first_time:
+                continue
+            backfill_rows.append(
+                {
+                    "scored_time": t,
+                    "miner_id": mid,
+                    "prompt_score_v3": global_worst_score_mapping[t],
+                    "asset": global_score_asset_mapping[t],
+                }
+            )
 
-    # 5) now vectorize the “new‐miner” backfill logic:
-    is_new = full["miner_min"] > global_min
+    # Combine real data with backfill rows
+    out = df[["scored_time", "miner_id", "prompt_score_v3", "asset"]].copy()
+    if backfill_rows:
+        backfill_df = pd.DataFrame(backfill_rows)
+        backfill_df["scored_time"] = pd.to_datetime(backfill_df["scored_time"])
+        out = pd.concat([out, backfill_df], ignore_index=True)
 
-    # backfill prompt_score_v3 for new miners
-    full.loc[is_new, "prompt_score_v3"] = full.loc[
-        is_new, "prompt_score_v3"
-    ].fillna(full.loc[is_new, "scored_time"].map(global_worst_score_mapping))
-
-    # overwrite asset for new miners
-    full.loc[is_new, "asset"] = full.loc[is_new, "scored_time"].map(
-        global_score_asset_mapping
-    )
-
-    # 6) drop the “fake” rows we only introduced for existing miners
-    is_old = full["miner_min"] == global_min
-    was_missing = full["prompt_score_v3"].isna()
-    mask_drop = is_old & was_missing
-    out = full.loc[
-        ~mask_drop,
-        [
-            "scored_time",
-            "miner_id",
-            "prompt_score_v3",
-            "asset",
-        ],
-    ]
-
-    # 7) clean up types & sort
     out["miner_id"] = out["miner_id"].astype(int)
     out = out.sort_values(["scored_time", "miner_id"]).reset_index(drop=True)
     return out
 
 
-def apply_per_asset_coefficients(
-    df: DataFrame,
-) -> DataFrame:
-    # Define coefficients for each asset
-    asset_coefficients = {
-        "BTC": 1.0,
-        "ETH": 0.6715516528608204,
-        "XAU": 2.262003561659039,
-        "SOL": 0.5883682889710361,
-        "SPYX": 2.9914378891824693,
-        "NVDAX": 1.3885444209082594,
-        "TSLAX": 1.420016421725336,
-        "AAPLX": 1.864976360560554,
-        "GOOGLX": 1.4310534797250312,
-    }
-
-    sum_coefficients = 0.0
-
-    for asset, coef in asset_coefficients.items():
-        df.loc[df["asset"] == asset, "prompt_score_v3"] *= coef
-        sum_coefficients += coef * len(df.loc[df["asset"] == asset])
-
-    df["prompt_score_v3"] /= sum_coefficients
-
-    return df["prompt_score_v3"]
-
-
+@print_execution_time
 def compute_smoothed_score(
     miner_data_handler: MinerDataHandler,
     input_df: DataFrame,
     scored_time: datetime,
     prompt_config: PromptConfig,
 ) -> typing.Optional[list[dict]]:
+    """Compute smoothed scores and reward weights for all miners.
+
+    1. Filters scores to the scoring window (scored_time cutoff)
+    2. Applies per-asset coefficient weighting (vectorized)
+    3. Sums weighted scores per miner
+    4. Assigns inf to miners with no valid scores
+    5. Computes softmax reward weights
+    """
     if input_df.empty:
         return None
 
-    # Group by miner_id
-    grouped = input_df.groupby("miner_id")
+    # Filter to scoring window and drop NaN scores
+    df = input_df.loc[
+        pd.to_datetime(input_df["scored_time"]) <= scored_time
+    ].copy()
+    df = df.dropna(subset=["prompt_score_v3"])
 
-    rolling_avg_data = []  # will hold dict with miner_id and rolling average
+    if df.empty:
+        return None
 
-    for miner_id, group_df in grouped:
-        # Ensure scored_time is datetime and sort
-        group_df = group_df.copy()
-        group_df["scored_time"] = pd.to_datetime(group_df["scored_time"])
-        group_df = group_df.sort_values("scored_time")
+    # Apply per-asset coefficients vectorized (single pass, no per-miner loop).
+    # Normalization is per-miner: each miner's scores are divided by the sum of
+    # coefficients for that miner's assets, matching the original per-miner loop behavior.
+    coefs = df["asset"].map(ASSET_COEFFICIENTS).fillna(1.0)
+    df["weighted_score"] = df["prompt_score_v3"] * coefs
+    miner_coef_sums = coefs.groupby(df["miner_id"]).sum()
+    df["weighted_score"] /= df["miner_id"].map(miner_coef_sums)
 
-        mask = group_df["scored_time"] <= scored_time
-        window_df = group_df.loc[mask]
+    # Sum per miner in one groupby
+    rolling_avgs = df.groupby("miner_id")["weighted_score"].sum()
 
-        # Drop NaN prompt_score_v3
-        valid_scores = window_df[["prompt_score_v3", "asset"]].dropna()
-
-        # Apply per-asset coefficients
-        window_df = apply_per_asset_coefficients(valid_scores)
-
-        if not window_df.empty:
-            rolling_avg = float(window_df.sum())
-        else:
-            bt.logging.warning(
-                f"Miner ID {miner_id} has no valid scores in the window. Assigning infinite rolling average."
-            )
-            rolling_avg = float("inf")
-
-        rolling_avg_data.append(
-            {"miner_id": miner_id, "rolling_avg": rolling_avg}
+    # Miners present in input but with all NaN scores get inf (worst possible)
+    all_miner_ids = input_df["miner_id"].unique()
+    missing_miners = set(all_miner_ids) - set(rolling_avgs.index)
+    for miner_id in missing_miners:
+        bt.logging.warning(
+            f"Miner ID {miner_id} has no valid scores in the window. Assigning infinite rolling average."
         )
+        rolling_avgs.loc[miner_id] = float("inf")
 
-    # Add the miner UID to the results
+    rolling_avg_data = [
+        {"miner_id": int(mid), "rolling_avg": float(val)}
+        for mid, val in rolling_avgs.items()
+    ]
+
+    # Resolve miner_id -> miner_uid
     moving_averages_data = miner_data_handler.populate_miner_uid_in_miner_data(
         rolling_avg_data
     )
 
-    # Filter out None UID
-    filtered_moving_averages_data: list[dict] = []
-    for item in moving_averages_data:
-        if item["miner_uid"] is not None:
-            filtered_moving_averages_data.append(item)
+    # Filter out miners with no UID (deregistered)
+    filtered_moving_averages_data = [
+        item for item in moving_averages_data if item["miner_uid"] is not None
+    ]
 
-    # Now compute soft max to get the reward_scores
+    # Softmax: negative beta means lower score = higher reward
     rolling_avg_list = [
         r["rolling_avg"] for r in filtered_moving_averages_data
     ]
@@ -179,7 +177,6 @@ def compute_smoothed_score(
     for item, reward_weight in zip(
         filtered_moving_averages_data, reward_weight_list
     ):
-        # filter out zero rewards
         if float(reward_weight) > 0:
             rewards.append(
                 {
@@ -202,9 +199,14 @@ def print_rewards_df(moving_averages_data: list[dict], label: str = ""):
     bt.logging.info(df.to_string())
 
 
+@print_execution_time
 def combine_moving_averages(
     moving_averages_data: dict[str, list[dict]],
 ) -> list[dict]:
+    """Combine reward weights from low-frequency and high-frequency competitions.
+
+    Same miner appearing in both gets their weights summed.
+    """
     map_miner_reward: dict[int, dict] = {}
 
     for moving_averages in list(moving_averages_data.values()):

@@ -19,6 +19,7 @@ from sqlalchemy import (
     not_,
     update,
     delete,
+    text,
 )
 from sqlalchemy.dialects.postgresql import insert
 from tenacity import (
@@ -188,6 +189,7 @@ class MinerDataHandler:
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
+    @print_execution_time
     def set_miner_scores(
         self,
         real_prices: list[dict],
@@ -363,6 +365,7 @@ class MinerDataHandler:
             )
             return None
 
+    @print_execution_time
     def get_validator_requests_to_score(
         self,
         scored_time: datetime,
@@ -509,77 +512,32 @@ class MinerDataHandler:
 
         try:
             with self.engine.connect() as connection:
-                base_conditions = and_(
-                    MinerScore.scored_time > min_scored_time,
-                    ValidatorRequest.time_length == time_length,
+                query = text("""
+                    SELECT
+                        mp.miner_id,
+                        ms.prompt_score_v3,
+                        ms.scored_time,
+                        vr.asset,
+                        first_value((ms.score_details_v3->>'percentile90')::float)
+                            OVER (PARTITION BY ms.scored_time ORDER BY ms.id) AS percentile90,
+                        first_value((ms.score_details_v3->>'lowest_score')::float)
+                            OVER (PARTITION BY ms.scored_time ORDER BY ms.id) AS lowest_score
+                    FROM miner_scores ms
+                    JOIN miner_predictions mp ON mp.id = ms.miner_predictions_id
+                    JOIN validator_requests vr ON vr.id = mp.validator_requests_id
+                    WHERE ms.scored_time > :min_scored_time
+                      AND vr.time_length = :time_length
+                """)
+
+                result = connection.execute(
+                    query,
+                    {
+                        "min_scored_time": min_scored_time,
+                        "time_length": time_length,
+                    },
                 )
 
-                # Query 1: all rows without expensive JSONB
-                scores_query = (
-                    select(
-                        MinerPrediction.miner_id,
-                        MinerScore.prompt_score_v3,
-                        MinerScore.scored_time,
-                        ValidatorRequest.asset,
-                    )
-                    .select_from(MinerScore)
-                    .join(
-                        MinerPrediction,
-                        MinerPrediction.id == MinerScore.miner_predictions_id,
-                    )
-                    .join(
-                        ValidatorRequest,
-                        ValidatorRequest.id
-                        == MinerPrediction.validator_requests_id,
-                    )
-                    .where(base_conditions)
-                )
-
-                # Query 2: one row per scored_time with
-                # percentile90 and lowest_score extracted from JSONB
-                details_query = (
-                    select(
-                        MinerScore.scored_time,
-                        MinerScore.score_details_v3["percentile90"]
-                        .as_float()
-                        .label("percentile90"),
-                        MinerScore.score_details_v3["lowest_score"]
-                        .as_float()
-                        .label("lowest_score"),
-                    )
-                    .select_from(MinerScore)
-                    .join(
-                        MinerPrediction,
-                        MinerPrediction.id == MinerScore.miner_predictions_id,
-                    )
-                    .join(
-                        ValidatorRequest,
-                        ValidatorRequest.id
-                        == MinerPrediction.validator_requests_id,
-                    )
-                    .where(base_conditions)
-                    .distinct(MinerScore.scored_time)
-                    .order_by(MinerScore.scored_time)
-                )
-
-                scores_result = connection.execute(scores_query)
-                details_result = connection.execute(details_query)
-
-            scores_df = pd.DataFrame(
-                scores_result.fetchall(),
-                columns=list(scores_result.keys()),
-            )
-            details_df = pd.DataFrame(
-                details_result.fetchall(),
-                columns=list(details_result.keys()),
-            )
-
-            if not scores_df.empty and not details_df.empty:
-                scores_df = scores_df.merge(
-                    details_df, on="scored_time", how="left"
-                )
-
-            return scores_df
+            return pd.DataFrame(result.fetchall(), columns=list(result.keys()))
         except Exception as e:
             bt.logging.exception(
                 f"in get_miner_scores (got an exception): {e}"

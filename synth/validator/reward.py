@@ -279,9 +279,22 @@ def get_rewards_multiprocess(
         bt.logging.warning(f"Error fetching data: {e}")
         return None, [], []
 
+    if real_prices is None or len(real_prices) == 0:
+        bt.logging.warning(
+            f"No price data for {validator_request.asset} "
+            f"(start_time={validator_request.start_time}). Skipping."
+        )
+        return None, [], []
+
     predictions = miner_data_handler.get_predictions_by_request(
         int(validator_request.id)
     )
+
+    if predictions is None or len(predictions) == 0:
+        bt.logging.warning(
+            f"No predictions for request {validator_request.id}. Skipping."
+        )
+        return None, [], []
 
     # Create shared memory for real_prices to avoid duplicating across workers
     prices_array = np.array(real_prices, dtype=np.float64)
