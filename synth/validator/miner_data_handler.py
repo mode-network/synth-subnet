@@ -431,6 +431,7 @@ class MinerDataHandler:
                         )
                     )
                     .order_by(ValidatorRequest.start_time.asc())
+                    .limit(100)
                 )
 
                 results: list[ValidatorRequest] = []
