@@ -160,6 +160,9 @@ def compute_smoothed_score(
         rolling_avg_data
     )
 
+    if moving_averages_data is None:
+        return None
+
     # Filter out miners with no UID (deregistered)
     filtered_moving_averages_data = [
         item for item in moving_averages_data if item["miner_uid"] is not None
