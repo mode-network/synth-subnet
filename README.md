@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://www.synthdata.co/">
-    <img alt="Synth banner logo" src="https://github.com/mode-network/synth-subnet/blob/main/docs/images/logo.png" height="134" />
+    <img alt="Synth banner logo" src="https://github.com/synthdataco/synth-subnet/blob/main/docs/images/logo.png" height="134" />
   </a>
 </div>
 
@@ -13,7 +13,7 @@
         <b>Website</b>
     </a>
 ·
-    <a href="https://github.com/mode-network/synth-subnet/blob/main/Synth%20Whitepaper%20v1.pdf" target="_blank">
+    <a href="https://github.com/synthdataco/synth-subnet/blob/main/Synth%20Whitepaper%20v1.pdf" target="_blank">
         <b>Whitepaper</b>
     </a>
 ·
@@ -30,7 +30,7 @@
 
 <div align="center">
 
-[![License: MIT](https://img.shields.io/github/license/mode-network/synth-subnet)][license]
+[![License: MIT](https://img.shields.io/github/license/synthdataco/synth-subnet)][license]
 
 </div>
 
@@ -119,19 +119,19 @@ Initially prompt parameters will always have the following values:
 
 **Asset Weights**
 
-| Asset | Weight |
-|-------|--------|
-| BTC | 1.0 |
-| ETH | 0.7064366394033871 |
-| XAU | 1.7370922597118699 |
-| SOL | 0.6310037175639559 |
-| SPYX | 3.437935601155441 |
-| NVDAX | 1.6028217601617174 |
-| TSLAX | 1.6068755936957768 |
-| AAPLX | 2.0916380815843123 |
+| Asset  | Weight             |
+| ------ | ------------------ |
+| BTC    | 1.0                |
+| ETH    | 0.7064366394033871 |
+| XAU    | 1.7370922597118699 |
+| SOL    | 0.6310037175639559 |
+| SPYX   | 3.437935601155441  |
+| NVDAX  | 1.6028217601617174 |
+| TSLAX  | 1.6068755936957768 |
+| AAPLX  | 2.0916380815843123 |
 | GOOGLX | 1.6827392777257926 |
-| XRP | 0.5658394110809131 |
-| HYPE | 0.4784547133706857 |
+| XRP    | 0.5658394110809131 |
+| HYPE   | 0.4784547133706857 |
 | WTIOIL | 0.8475062847978935 |
 
 Validators will alternate between sending out requests for BTC and ETH predictions, at 30min intervals. The miner has until the start time to return ($N_{\text{sim}}$) paths, each containing price predictions at times given by:
@@ -321,5 +321,5 @@ Please refer to the [LICENSE][license] file.
 
 <!-- links -->
 
-[license]: https://github.com/mode-network/synth-subnet/blob/main/LICENSE
+[license]: https://github.com/synthdataco/synth-subnet/blob/main/LICENSE
 [table-of-contents]: #table-of-contents

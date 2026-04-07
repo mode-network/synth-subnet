@@ -104,7 +104,7 @@ After you submit a pull request, it will be reviewed by the maintainers. They ma
 > Note: Be sure to merge the latest from "upstream" before making a pull request:
 
 ```bash
-git remote add upstream https://github.com/mode-network/synth-subnet.git
+git remote add upstream https://github.com/synthdataco/synth-subnet.git
 git fetch upstream
 git merge upstream/<your-branch-name>
 git push origin <your-branch-name>

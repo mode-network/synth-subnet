@@ -741,11 +741,11 @@ where
 
 You can find the validation function here:
 
-[response_validation_v2.py#L49](https://github.com/mode-network/synth-subnet/blob/schedule-new-format/synth/validator/response_validation_v2.py#L49)
+[response_validation_v2.py#L49](https://github.com/synthdataco/synth-subnet/blob/main/synth/validator/response_validation_v2.py#L51)
 
 And an example of the prompt parameters here:
 
-[validator.py#L71](https://github.com/mode-network/synth-subnet/blob/44921d343e6f8ba770558018a28508796ce2a3ce/neurons/validator.py#L71)
+[validator.py#L71](https://github.com/mode-network/synth-subnet/blob/main/synth/validator/prompt_config.py#L5)
 
 You can test your prediction format using this miner script:
 
@@ -806,7 +806,7 @@ Yes. The testnet UID is 247, and it functions identically to mainnet.
 
 Modify this function:
 
-[simulations.py#L10](https://github.com/mode-network/synth-subnet/blob/13642c4c3287da52c602ac8c629b26a7cdc66628/synth/miner/simulations.py#L10)
+[simulations.py#L10](https://github.com/synthdataco/synth-subnet/blob/main/synth/miner/simulations.py#L25)
 
 Take into account all prompt parameters except sigma, which you may ignore.
 
