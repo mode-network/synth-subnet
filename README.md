@@ -100,21 +100,29 @@ sequenceDiagram
     end
 ```
 
-Miners are tasked with providing probabilistic forecasts of a cryptocurrency's future price movements. Specifically, each miner is required to generate multiple simulated price paths for an asset, from the current time over specified time increments and time horizon. Initially all checking prompts will be to produce 100 simulated paths for the future price of bitcoin at 5-minute time increments for the next 24 hours. As of November 13, 2025, the network has been upgraded to request that miners produce 1000 simulated paths for the future price of BTC, ETH, SOL, and XAU for the next 24 hours. This upgrade reflects Synth’s commitment to developing high frequency trading capabilities. January 2026, further assets were added to Synth predictions. 5 tokenized equity asset, SPYX, NVDAX, TSLAX, AAPLX, and GOOGLX are now included in the 24-Hour predictions.
+Miners are tasked with providing probabilistic forecasts of an asset's future price movements. Specifically, each miner is required to generate multiple simulated price paths for an asset, from the current time over specified time increments and time horizon. Initially, all checking prompts were to produce 100 simulated paths for the future price of bitcoin at 5-minute time increments for the next 24 hours. As of November 13, 2025, the network has been upgraded to request that miners produce 1000 simulated paths for the future price of BTC, ETH, SOL, and XAU for the next 24 hours. This upgrade reflects Synth’s commitment to developing high frequency trading capabilities. January 2026, further assets were added to Synth predictions. 5 tokenized equity assets, SPYX, NVDAX, TSLAX, AAPLX, and GOOGLX are now included in the 24-Hour predictions. In March 2026, 3 new assets were launched on the 24-Hour horizon: XRP, HYPE, and WTIOIL. HYPE was also added to the 1-Hour horizon.
 
-Whereas other subnets ask miners to predict single values for future prices, we’re interested in the miners correctly quantifying uncertainty. We want their price paths to represent their view of the probability distribution of the future price, and we want their paths to encapsulate realistic price dynamics, such as volatility clustering and skewed fat tailed price change distributions. Subsequently we’ll expand to requesting forecasts for multiple assets, where modelling the correlations between the asset prices will be essential.
+Whereas other subnets ask miners to predict single values for future prices, we’re interested in the miners correctly quantifying uncertainty. We want their price paths to represent their view of the probability distribution of the future price, and we want their paths to encapsulate realistic price dynamics, such as volatility clustering and skewed fat tailed price change distributions. As the network matures, modelling the correlations between asset prices will be essential.
 
 If the miners do a good job, the Synth Subnet will become the world-leading source of realistic synthetic price data for training AI agents. And it will be the go-to location for asking questions on future price probability distributions - a valuable resource for options trading and portfolio management.
 
 The checking prompts sent to the miners will have the format:
 (start_time, asset, time_increment, time_horizon, num_simulations)
 
-Initially prompt parameters will always have the following values:
+The 24-Hour prompt parameters have the following values:
 
 - **Start Time ($t_0$)**: 1 minute from the time of the request.
 - **Asset**: BTC, ETH, XAU, SOL, SPYX, NVDAX, TSLAX, AAPLX, GOOGLX, XRP, HYPE, WTIOIL.
 - **Time Increment ($\Delta t$)**: 5 minutes.
 - **Time Horizon ($T$)**: 24 hours.
+- **Number of Simulations ($N_{\text{sim}}$)**: 1000.
+
+The 1-Hour prompt parameters have the following values:
+
+- **Start Time ($t_0$)**: 1 minute from the time of the request.
+- **Asset**: BTC, ETH, SOL, XAU, HYPE.
+- **Time Increment ($\Delta t$)**: 1 minute.
+- **Time Horizon ($T$)**: 1 hour.
 - **Number of Simulations ($N_{\text{sim}}$)**: 1000.
 
 **Asset Weights**
@@ -134,7 +142,7 @@ Initially prompt parameters will always have the following values:
 | HYPE   | 0.4784547133706857 |
 | WTIOIL | 0.8475062847978935 |
 
-Validators will alternate between sending out requests for BTC and ETH predictions, at 30min intervals. The miner has until the start time to return ($N_{\text{sim}}$) paths, each containing price predictions at times given by:
+Validators cycle through the assets, sending out prediction requests at regular intervals. The miner has until the start time to return ($N_{\text{sim}}$) paths, each containing price predictions at times given by:
 
 $$
 t_i = t_0 + i \times \Delta t, \quad \text{for }\, i = 0, 1, 2, \dots, N
@@ -148,12 +156,8 @@ We recommend the miner sends a request to the Pyth Oracle to acquire the price o
 
 If they fail to return predictions by the start_time or the predictions are in the wrong format, they will be scored 0 for that prompt.
 
-In addition to 24-Hour predictions, Synth has introduced a second competition focused on short-horizon, high-frequency forecasting.
-**Task Overview**
-Time Horizon: 1 hour
-Assets: BTC, ETH, SOL, XAU, HYPE
-
 **Emissions Split**
+
 24-Hour Predictions: 50% of total emissions
 1-Hour HFT Predictions: 50% of total emissions
 
@@ -161,7 +165,7 @@ Assets: BTC, ETH, SOL, XAU, HYPE
 
 ### 1.3. Validator's Scoring Methodology
 
-The role of the validators is, after the time horizon as passed, to judge the accuracy of each miner’s predicted paths compared to how the price moved in reality. The validator evaluates the miners' probabilistic forecasts using the Continuous Ranked Probability Score (CRPS). The CRPS is a proper scoring rule that measures the accuracy of probabilistic forecasts for continuous variables, considering both the calibration and sharpness of the predicted distribution. The lower the CRPS, the better the forecasted distribution predicted the observed value.
+The role of the validators is, after the time horizon has passed, to judge the accuracy of each miner’s predicted paths compared to how the price moved in reality. The validator evaluates the miners' probabilistic forecasts using the Continuous Ranked Probability Score (CRPS). The CRPS is a proper scoring rule that measures the accuracy of probabilistic forecasts for continuous variables, considering both the calibration and sharpness of the predicted distribution. The lower the CRPS, the better the forecasted distribution predicted the observed value.
 
 #### Application of CRPS to Ensemble Forecasts
 
@@ -184,7 +188,7 @@ The CRPS values are calculated on the price change in basis points for each inte
 
 #### Application to Multiple Time Increments
 
-To comprehensively assess the miners' forecasts, the CRPS is applied to sets of price changes in basis points over different time increments. These increments include short-term and long-term intervals (in the case of the initial checking prompt parameters, these will be 5 minutes, 30 minutes, 3 hours, 24 hours).
+To comprehensively assess the miners' forecasts, the CRPS is applied to sets of price changes in basis points over different time increments. These increments include short-term and long-term intervals (for the 24-Hour prompts, these are 5 minutes, 30 minutes, 3 hours, 24 hours).
 
 For each time increment:
 
