@@ -257,7 +257,7 @@ $$
 A_i(t) = \frac{e^{-\beta \cdot L_i(t)}}{\sum_j e^{-\beta \cdot L_j(t)}} \cdot E(t)
 $$
 
-where $\beta=-0.1$ and $E(t)$ the emission at time $t$.
+where $\beta=0.1$ and $E(t)$ the emission at time $t$.
 
 ### 1.5. Overall Purpose
 
