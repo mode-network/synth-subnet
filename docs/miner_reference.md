@@ -741,7 +741,7 @@ where
 
 You can find the validation function here:
 
-[response_validation_v2.py#L49](https://github.com/synthdataco/synth-subnet/blob/main/synth/validator/response_validation_v2.py#L51)
+[response_validation_v2.py#L51](https://github.com/synthdataco/synth-subnet/blob/main/synth/validator/response_validation_v2.py#L51)
 
 And an example of the prompt parameters here:
 
