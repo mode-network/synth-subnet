@@ -745,7 +745,7 @@ You can find the validation function here:
 
 And an example of the prompt parameters here:
 
-[validator.py#L71](https://github.com/mode-network/synth-subnet/blob/main/synth/validator/prompt_config.py#L5)
+[prompt_config.py#L5](https://github.com/synthdataco/synth-subnet/blob/main/synth/validator/prompt_config.py#L5)
 
 You can test your prediction format using this miner script:
 
