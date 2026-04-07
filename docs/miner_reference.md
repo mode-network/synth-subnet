@@ -806,7 +806,7 @@ Yes. The testnet UID is 247, and it functions identically to mainnet.
 
 Modify this function:
 
-[simulations.py#L10](https://github.com/synthdataco/synth-subnet/blob/main/synth/miner/simulations.py#L25)
+[simulations.py#L25](https://github.com/synthdataco/synth-subnet/blob/main/synth/miner/simulations.py#L25)
 
 Take into account all prompt parameters except sigma, which you may ignore.
 
