@@ -47,7 +47,7 @@
 **Step 1: Clone the repository**
 
 ```shell
-git clone https://github.com/mode-network/synth-subnet.git
+git clone https://github.com/synthdataco/synth-subnet.git
 ```
 
 **Step 2: Change directory to the project root**

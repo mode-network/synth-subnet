@@ -40,7 +40,7 @@
 ### 2.1. Clone the code and implement your model
 
 - Clone the Synth subnet repository.
-- Modify the implementation of this function to run your own model: [simulations.py#L10](https://github.com/mode-network/synth-subnet/blob/13642c4c3287da52c602ac8c629b26a7cdc66628/synth/miner/simulations.py#L10)
+- Modify the implementation of this function to run your own model: [simulations.py#L25](https://github.com/synthdataco/synth-subnet/blob/main/synth/miner/simulations.py#L25)
 - Use all parameters from the prompt **except** `sigma`, which you may ignore.
 
 ### 2.2. Check that your model generates a valid response
@@ -71,7 +71,7 @@ $ CORRECT
 
 ### 2.5. Launch your miner with PM2
 
-- Create a new file called `miner.local.config.js` using the config from this link: [miner.config.js#L1](https://github.com/mode-network/synth-subnet/blob/f231c7b9151de6382d11e8102ae70c6b3f1b1fc7/miner.config.js#L1)
+- Create a new file called `miner.local.config.js` using the config from this link: [miner.config.js#L1](https://github.com/synthdataco/synth-subnet/blob/main/miner.config.js#L1)
 - Modify the wallet name and hotkey name as needed.
 - Start the miner with PM2:
 
@@ -251,7 +251,7 @@ sudo npm install pm2 -g
 Clone the synth subnet repository:
 
 ```shell
-git clone https://github.com/mode-network/synth-subnet.git
+git clone https://github.com/synthdataco/synth-subnet.git
 ```
 
 Change directory to the project root
