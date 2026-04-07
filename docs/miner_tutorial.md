@@ -40,7 +40,7 @@
 ### 2.1. Clone the code and implement your model
 
 - Clone the Synth subnet repository.
-- Modify the implementation of this function to run your own model: [simulations.py#L10](https://github.com/synthdataco/synth-subnet/blob/main/synth/miner/simulations.py#L25)
+- Modify the implementation of this function to run your own model: [simulations.py#L25](https://github.com/synthdataco/synth-subnet/blob/main/synth/miner/simulations.py#L25)
 - Use all parameters from the prompt **except** `sigma`, which you may ignore.
 
 ### 2.2. Check that your model generates a valid response
