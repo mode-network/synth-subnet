@@ -206,6 +206,9 @@ class PriceDataProvider:
         if len(timestamps) != int(time_length / time_increment) + 1:
             # Note: this part of code should never be activated; just included for precaution
             if len(timestamps) == int(time_length / time_increment) + 2:
+                bt.logging.warning(
+                    f"Unexpected number of timestamps generated. Expected {int(time_length / time_increment) + 1} but got {len(timestamps)}. Adjusting the timestamps list by removing the extra timestamp."
+                )
                 if data["t"][-1] < timestamps[1]:
                     timestamps = timestamps[:-1]
                 elif data["t"][0] > timestamps[0]:
