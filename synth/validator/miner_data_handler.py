@@ -407,6 +407,9 @@ class MinerDataHandler:
                     ValidatorRequest.start_time
                     + literal_column("INTERVAL '1 second'")
                     * ValidatorRequest.time_length
+                    + literal_column(
+                        "INTERVAL '1 minute'"
+                    )  # add 1 minute to ensure that pyth has the last candle available
                 )
 
                 query = (
