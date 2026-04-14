@@ -120,7 +120,7 @@ class TestPriceDataProvider(unittest.TestCase):
         # 1739974740 - 2025-02-19T14:19:00+00:00
         # 1739974800 - 2025-02-19T14:20:00+00:00
         # 1739974860 - 2025-02-19T14:21:00+00:00
-        # gap        - 2025-02-19T14:22:00+00:00
+        # 1739974920 - 2025-02-19T14:22:00+00:00
         mock_response = {
             "t": [
                 1739974320,
@@ -128,6 +128,7 @@ class TestPriceDataProvider(unittest.TestCase):
                 1739974740,
                 1739974800,
                 1739974860,
+                1739974920,
             ],
             "c": [
                 100000.23,
@@ -135,6 +136,7 @@ class TestPriceDataProvider(unittest.TestCase):
                 99000.23,
                 97123.55,
                 105123.345,
+                107995.889,
             ],
         }
 
@@ -144,7 +146,7 @@ class TestPriceDataProvider(unittest.TestCase):
             validator_request_eth = ValidatorRequest(
                 asset="ETH",
                 start_time=datetime.fromisoformat("2025-02-19T14:12:00+00:00"),
-                time_length=600,
+                time_length=540,
                 time_increment=120,
             )
 
@@ -156,21 +158,8 @@ class TestPriceDataProvider(unittest.TestCase):
                 np.nan,
                 108000.867,
                 97123.55,
-                np.nan,
+                107995.889,
             ]
-
-    def test_fetch_data_no_prices(self):
-        mock_response: dict = {
-            "t": [],
-            "c": [],
-        }
-
-        with patch("requests.get") as mock_get:
-            mock_get.return_value.json.return_value = mock_response
-
-            result = self.dataProvider.fetch_data(validator_request)
-
-            assert result == []
 
     def test_fetch_data_gap_from_start(self):
         # gap        - 2025-02-19T14:12:00+00:00

@@ -27,9 +27,10 @@ class SequentialScheduler:
         while True:
             try:
                 cycle_start_time = self.run_cycle(cycle_start_time)
-                self.first_run = False
             except Exception:
                 bt.logging.exception("Error in cycle ")
+                cycle_start_time = get_current_time()
+            self.first_run = False
 
     def run_cycle(
         self,

@@ -72,29 +72,41 @@ class PriceDataProvider:
         """
         asset = str(validator_request.asset)
 
+        prices = []
+
         if asset in self.HYPERLIQUID_SYMBOL_MAP:
-            return self.fetch_data_hyperliquid(validator_request)
+            prices = self.fetch_data_hyperliquid(validator_request)
+        else:
+            start_time_int = from_iso_to_unix_time(
+                validator_request.start_time.isoformat()
+            )
+            params = {
+                "symbol": self.PYTH_SYMBOL_MAP[asset],
+                "resolution": 1,
+                "from": start_time_int,
+                "to": start_time_int + validator_request.time_length,
+            }
 
-        start_time_int = from_iso_to_unix_time(
-            validator_request.start_time.isoformat()
-        )
-        params = {
-            "symbol": self.PYTH_SYMBOL_MAP[asset],
-            "resolution": 1,
-            "from": start_time_int,
-            "to": start_time_int + validator_request.time_length,
-        }
+            response = requests.get(self.PYTH_BASE_URL, params=params)
+            response.raise_for_status()
+            data = response.json()
 
-        response = requests.get(self.PYTH_BASE_URL, params=params)
-        response.raise_for_status()
-        data = response.json()
+            prices = self._transform_data(
+                data,
+                start_time_int,
+                int(validator_request.time_increment),
+                int(validator_request.time_length),
+            )
 
-        return self._transform_data(
-            data,
-            start_time_int,
-            int(validator_request.time_increment),
-            int(validator_request.time_length),
-        )
+        if not prices or np.isnan(prices[-1]):
+            bt.logging.warning(
+                f"missing price data for the last timestamp for asset {asset} in request {validator_request.id}"
+            )
+            raise ValueError(
+                f"missing price data for the last timestamp for asset {asset} in request {validator_request.id}"
+            )
+
+        return prices
 
     def fetch_data_hyperliquid(
         self, validator_request: ValidatorRequest
@@ -194,6 +206,9 @@ class PriceDataProvider:
         if len(timestamps) != int(time_length / time_increment) + 1:
             # Note: this part of code should never be activated; just included for precaution
             if len(timestamps) == int(time_length / time_increment) + 2:
+                bt.logging.warning(
+                    f"Unexpected number of timestamps generated. Expected {int(time_length / time_increment) + 1} but got {len(timestamps)}. Adjusting the timestamps list by removing the extra timestamp."
+                )
                 if data["t"][-1] < timestamps[1]:
                     timestamps = timestamps[:-1]
                 elif data["t"][0] > timestamps[0]:
