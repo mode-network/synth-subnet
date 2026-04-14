@@ -107,8 +107,8 @@ class MinerDataHandler:
             return None
 
     @retry(
-        stop=stop_after_attempt(5),
-        wait=wait_random_exponential(multiplier=7),
+        stop=stop_after_attempt(3),
+        wait=wait_random_exponential(multiplier=2),
         reraise=True,
         before=before_log(bt.logging._logger, logging.DEBUG),
     )
@@ -182,6 +182,7 @@ class MinerDataHandler:
             return validator_requests_id  # TODO: finish this: refactor to add the validator_requests_id in the score and reward table
         except Exception as e:
             bt.logging.exception(f"in save_responses (got an exception): {e}")
+            raise
 
     @retry(
         stop=stop_after_attempt(5),
