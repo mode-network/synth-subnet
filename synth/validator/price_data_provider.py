@@ -98,7 +98,7 @@ class PriceDataProvider:
                 int(validator_request.time_length),
             )
 
-        if np.isnan(prices[-1]):
+        if not prices or np.isnan(prices[-1]):
             bt.logging.warning(
                 f"missing price data for the last timestamp for asset {asset} in request {validator_request.id}"
             )
