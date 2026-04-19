@@ -20,9 +20,7 @@ def load_scheduler_dependencies():
     miner_data_handler_stub = types.ModuleType(
         "synth.validator.miner_data_handler"
     )
-    miner_data_handler_stub.MinerDataHandler = type(
-        "MinerDataHandler", (), {}
-    )
+    miner_data_handler_stub.MinerDataHandler = type("MinerDataHandler", (), {})
     sys.modules.setdefault(
         "synth.validator.miner_data_handler", miner_data_handler_stub
     )
@@ -129,9 +127,7 @@ def test_select_asset_uses_slot_position_within_cycle():
     )
 
     assert (
-        SequentialScheduler.select_asset(
-            first_slot_time, order, LOW_FREQUENCY
-        )
+        SequentialScheduler.select_asset(first_slot_time, order, LOW_FREQUENCY)
         == order[0]
     )
     assert (

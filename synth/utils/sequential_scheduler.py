@@ -24,9 +24,9 @@ class SequentialScheduler:
         self.target = target
         self.miner_data_handler = miner_data_handler
         self.first_run = True
-        self.schedule_secret = (
-            os.getenv("VALIDATOR_SCHEDULE_SECRET") or secrets.token_hex(32)
-        )
+        self.schedule_secret = os.getenv(
+            "VALIDATOR_SCHEDULE_SECRET"
+        ) or secrets.token_hex(32)
 
     def start(self):
         cycle_start_time = get_current_time()
