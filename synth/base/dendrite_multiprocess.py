@@ -2,6 +2,7 @@ import sys
 import threading
 import logging.handlers
 import time
+from datetime import datetime, timezone
 from typing import Union
 import asyncio
 import concurrent.futures
@@ -161,6 +162,7 @@ async def call(
     timeout: float,
 ):
     start_time = time.time()
+    received_at = None
     target_axon = (
         target_axon.info() if isinstance(target_axon, bt.Axon) else target_axon
     )
@@ -192,6 +194,7 @@ async def call(
             headers=synapse.to_headers(),
             json=synapse_body,
         )
+        received_at = datetime.now(timezone.utc).isoformat()
         response.raise_for_status()
         json_response = response.json()
         process_server_response(
@@ -208,7 +211,11 @@ async def call(
             f"dendrite | <-- | {synapse.get_total_size()} B | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)} | {synapse.dendrite.status_code} | {synapse.dendrite.status_message}"
         )
 
-        return [synapse.simulation_output, synapse.dendrite.process_time]
+        return [
+            synapse.simulation_output,
+            synapse.dendrite.process_time,
+            received_at,
+        ]
 
 
 async def worker(
@@ -320,7 +327,7 @@ def sync_forward_multiprocess(
     synapse: Simulation,
     timeout: float,
     nprocs: int = 2,
-) -> list[Simulation]:
+) -> list[tuple[Simulation, str | None, str | None]]:
     bt.logging.debug(
         f"Starting multiprocess forward with {nprocs} processes.", "dendrite"
     )
@@ -348,13 +355,15 @@ def sync_forward_multiprocess(
             repeat(timeout),
         )
         for chunk_results in intermediate_results:
-            for simulation_output, process_time in chunk_results:
+            for simulation_output, process_time, received_at in chunk_results:
                 synapse_result = Simulation(
                     simulation_input=SimulationInput()
                 ).from_headers(synapse.to_headers())
                 synapse_result.simulation_output = simulation_output
                 synapse_result.dendrite.process_time = process_time
-                results.append(synapse_result.model_copy())
+                results.append(
+                    (synapse_result.model_copy(), process_time, received_at)
+                )
 
     return results
 

@@ -1,10 +1,17 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import typing
 
 
 from synth.simulation_input import SimulationInput
 
 CORRECT = "CORRECT"
+
+
+def normalize_to_utc(dt: datetime) -> datetime:
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+
+    return dt.astimezone(timezone.utc)
 
 
 def validate_path(
@@ -52,6 +59,7 @@ def validate_responses(
     response,
     simulation_input: SimulationInput,
     process_time_str: typing.Optional[str],
+    received_at_str: typing.Optional[str] = None,
 ) -> str:
     """
     Validate responses from miners.
@@ -64,7 +72,18 @@ def validate_responses(
     if process_time_str is None:
         return "time out or internal server error (process time is None)"
 
-    start_time = datetime.fromisoformat(simulation_input.start_time)
+    start_time = normalize_to_utc(
+        datetime.fromisoformat(simulation_input.start_time)
+    )
+
+    if received_at_str is not None:
+        received_at = normalize_to_utc(datetime.fromisoformat(received_at_str))
+        if received_at > start_time:
+            return (
+                "Response arrived after start_time: "
+                f"received_at={received_at.isoformat()}, "
+                f"start_time={start_time.isoformat()}"
+            )
 
     error_message = validate_response_type(response)
     if error_message:

@@ -252,3 +252,75 @@ def test_validate_responses_correct_2():
 
     result = validate_responses(response, simulation_input, process_time_str)
     assert result == CORRECT
+
+
+def test_validate_responses_before_cutoff():
+    simulation_input = SimulationInput(
+        start_time=start_time.isoformat(),
+        num_simulations=1,
+        time_length=3,
+        time_increment=time_increment,
+    )
+    response = [
+        int(start_time.timestamp()),
+        time_increment,
+        [123.45678] * 4,
+    ]
+
+    result = validate_responses(
+        response,
+        simulation_input,
+        "0",
+        datetime.fromisoformat("2022-12-31T23:59:59+00:00").isoformat(),
+    )
+
+    assert result == CORRECT
+
+
+def test_validate_responses_after_cutoff():
+    simulation_input = SimulationInput(
+        start_time=start_time.isoformat(),
+        num_simulations=1,
+        time_length=3,
+        time_increment=time_increment,
+    )
+    response = [
+        int(start_time.timestamp()),
+        time_increment,
+        [123.45678] * 4,
+    ]
+
+    result = validate_responses(
+        response,
+        simulation_input,
+        "0",
+        datetime.fromisoformat("2023-01-01T00:00:01+00:00").isoformat(),
+    )
+
+    assert (
+        result
+        == "Response arrived after start_time: received_at=2023-01-01T00:00:01+00:00, start_time=2023-01-01T00:00:00+00:00"
+    )
+
+
+def test_validate_responses_at_cutoff_boundary():
+    simulation_input = SimulationInput(
+        start_time=start_time.isoformat(),
+        num_simulations=1,
+        time_length=3,
+        time_increment=time_increment,
+    )
+    response = [
+        int(start_time.timestamp()),
+        time_increment,
+        [123.45678] * 4,
+    ]
+
+    result = validate_responses(
+        response,
+        simulation_input,
+        "0",
+        start_time.isoformat(),
+    )
+
+    assert result == CORRECT

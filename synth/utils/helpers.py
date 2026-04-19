@@ -117,7 +117,9 @@ def from_iso_to_unix_time(iso_time: str):
     return int(dt.timestamp())
 
 
-def timeout_from_start_time(start_time_str: str) -> float:
+def timeout_from_start_time(
+    start_time_str: str, max_timeout: float | None = None
+) -> float:
     """
     Calculate the timeout duration from the start_time to the current time.
 
@@ -126,12 +128,20 @@ def timeout_from_start_time(start_time_str: str) -> float:
     """
     # Convert start_time to a datetime object
     start_time = datetime.fromisoformat(start_time_str)
+    if start_time.tzinfo is None:
+        start_time = start_time.replace(tzinfo=timezone.utc)
+    else:
+        start_time = start_time.astimezone(timezone.utc)
 
     # Get current date and time
     current_time = datetime.now(timezone.utc)
 
     # Calculate the timeout duration
-    return (start_time - current_time).total_seconds()
+    timeout = (start_time - current_time).total_seconds()
+    if max_timeout is not None:
+        timeout = min(timeout, max_timeout)
+
+    return timeout
 
 
 def convert_list_elements_to_str(items: list[int]) -> list[str]:
