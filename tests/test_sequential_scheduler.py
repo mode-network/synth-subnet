@@ -1,31 +1,45 @@
 from datetime import datetime, timezone
+from functools import lru_cache
+import importlib
 import sys
 import types
 
 
-bt_stub = types.SimpleNamespace(
-    logging=types.SimpleNamespace(
-        info=lambda *args, **kwargs: None,
-        exception=lambda *args, **kwargs: None,
+@lru_cache(maxsize=1)
+def load_scheduler_dependencies():
+    bt_stub = types.SimpleNamespace(
+        logging=types.SimpleNamespace(
+            info=lambda *args, **kwargs: None,
+            exception=lambda *args, **kwargs: None,
+            warning=lambda *args, **kwargs: None,
+        ),
         warning=lambda *args, **kwargs: None,
-    ),
-    warning=lambda *args, **kwargs: None,
-)
-sys.modules.setdefault("bittensor", bt_stub)
+    )
+    sys.modules.setdefault("bittensor", bt_stub)
 
-miner_data_handler_stub = types.ModuleType(
-    "synth.validator.miner_data_handler"
-)
-miner_data_handler_stub.MinerDataHandler = type("MinerDataHandler", (), {})
-sys.modules.setdefault(
-    "synth.validator.miner_data_handler", miner_data_handler_stub
-)
+    miner_data_handler_stub = types.ModuleType(
+        "synth.validator.miner_data_handler"
+    )
+    miner_data_handler_stub.MinerDataHandler = type(
+        "MinerDataHandler", (), {}
+    )
+    sys.modules.setdefault(
+        "synth.validator.miner_data_handler", miner_data_handler_stub
+    )
 
-from synth.utils.sequential_scheduler import SequentialScheduler
-from synth.validator.prompt_config import HIGH_FREQUENCY, LOW_FREQUENCY
+    sequential_scheduler = importlib.import_module(
+        "synth.utils.sequential_scheduler"
+    )
+    prompt_config = importlib.import_module("synth.validator.prompt_config")
+    return (
+        sequential_scheduler.SequentialScheduler,
+        prompt_config.HIGH_FREQUENCY,
+        prompt_config.LOW_FREQUENCY,
+    )
 
 
 def test_shuffle_assets_same_secret_same_cycle_is_stable():
+    SequentialScheduler, _, LOW_FREQUENCY = load_scheduler_dependencies()
     next_run_time = datetime(2026, 4, 19, 12, 1, tzinfo=timezone.utc)
 
     order_1 = SequentialScheduler.shuffle_assets_for_cycle(
@@ -45,6 +59,7 @@ def test_shuffle_assets_same_secret_same_cycle_is_stable():
 
 
 def test_shuffle_assets_different_cycle_changes_order():
+    SequentialScheduler, _, LOW_FREQUENCY = load_scheduler_dependencies()
     cycle_1 = datetime(2026, 4, 19, 12, 1, tzinfo=timezone.utc)
     cycle_2 = datetime(2026, 4, 19, 13, 1, tzinfo=timezone.utc)
 
@@ -65,6 +80,7 @@ def test_shuffle_assets_different_cycle_changes_order():
 
 
 def test_shuffle_assets_different_secret_changes_order():
+    SequentialScheduler, _, LOW_FREQUENCY = load_scheduler_dependencies()
     next_run_time = datetime(2026, 4, 19, 12, 1, tzinfo=timezone.utc)
 
     order_1 = SequentialScheduler.shuffle_assets_for_cycle(
@@ -84,6 +100,7 @@ def test_shuffle_assets_different_secret_changes_order():
 
 
 def test_shuffle_assets_preserves_permutation():
+    SequentialScheduler, HIGH_FREQUENCY, _ = load_scheduler_dependencies()
     next_run_time = datetime(2026, 4, 19, 12, 1, tzinfo=timezone.utc)
 
     shuffled = SequentialScheduler.shuffle_assets_for_cycle(
@@ -99,6 +116,7 @@ def test_shuffle_assets_preserves_permutation():
 
 
 def test_select_asset_uses_slot_position_within_cycle():
+    SequentialScheduler, _, LOW_FREQUENCY = load_scheduler_dependencies()
     first_slot_time = datetime(2026, 4, 19, 12, 1, tzinfo=timezone.utc)
     second_slot_time = datetime(2026, 4, 19, 12, 6, tzinfo=timezone.utc)
     last_slot_time = datetime(2026, 4, 19, 12, 56, tzinfo=timezone.utc)
