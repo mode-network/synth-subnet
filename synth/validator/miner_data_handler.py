@@ -367,6 +367,53 @@ class MinerDataHandler:
             return None
 
     @print_execution_time
+    def get_validator_requests_to_backfill(
+        self,
+        scored_time_start: datetime,
+        scored_time_end: datetime,
+        time_length: int | None = None,
+    ) -> typing.Optional[list[ValidatorRequest]]:
+        if time_length is None:
+            time_length = prompt_config.LOW_FREQUENCY.time_length
+
+        try:
+            with self.engine.connect() as connection:
+                query = (
+                    select(
+                        ValidatorRequest.id,
+                        ValidatorRequest.start_time,
+                        ValidatorRequest.asset,
+                        ValidatorRequest.time_length,
+                        ValidatorRequest.time_increment,
+                    )
+                    .where(
+                        and_(
+                            ValidatorRequest.start_time >= scored_time_start,
+                            ValidatorRequest.start_time <= scored_time_end,
+                            ValidatorRequest.time_length == time_length,
+                        )
+                    )
+                    .order_by(ValidatorRequest.start_time.asc())
+                )
+
+                results: list[ValidatorRequest] = []
+                for row in connection.execute(query).fetchall():
+                    vr = ValidatorRequest()
+                    vr.id = row.id
+                    vr.start_time = row.start_time
+                    vr.asset = row.asset
+                    vr.time_length = row.time_length
+                    vr.time_increment = row.time_increment
+                    results.append(vr)
+
+                return results
+        except Exception as e:
+            bt.logging.exception(
+                f"in get_latest_prediction_request (got an exception): {e}"
+            )
+            return None
+
+    @print_execution_time
     def get_validator_requests_to_score(
         self,
         scored_time: datetime,
