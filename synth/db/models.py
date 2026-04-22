@@ -17,6 +17,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, relationship, Session
+import urllib
 
 
 class Base(DeclarativeBase):
@@ -29,7 +30,7 @@ def get_database_url():
     load_dotenv()
     return (
         f"postgresql://{os.getenv('POSTGRES_USER')}:"
-        f"{os.getenv('POSTGRES_PASSWORD')}@"
+        f"{urllib.parse.quote_plus(os.getenv('POSTGRES_PASSWORD'))}@"
         f"{os.getenv('POSTGRES_HOST')}:"
         f"{os.getenv('POSTGRES_PORT')}/"
         f"{os.getenv('POSTGRES_DB')}"
@@ -61,6 +62,15 @@ class ValidatorRequest(Base):
 
     # backref from MinerPrediction
     predictions = relationship("MinerPrediction", back_populates="request")
+    
+    def __repr__(self):
+        return (
+            f"ValidatorRequest(id={self.id}, asset={self.asset!r}, "
+            f"start_time={self.start_time!r}, "
+            f"time_increment={self.time_increment}, "
+            f"time_length={self.time_length}, "
+            f"num_simulations={self.num_simulations})"
+        )
 
 
 class Miner(Base):

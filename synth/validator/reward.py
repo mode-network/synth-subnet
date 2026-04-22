@@ -345,7 +345,7 @@ def get_rewards_multiprocess(
         process_time,
     ) in results:
         if error:
-            bt.logging.error(f"Miner {miner_uid} error: {error}")
+            bt.logging.error(f"calculated rewards for miner {miner_uid} error: {error}")
 
         scores.append(score)
         detailed_crps_data_list.append(detailed_crps_data)
