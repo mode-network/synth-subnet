@@ -187,10 +187,18 @@ async def call(
         bt.logging.trace(
             f"dendrite | --> | {synapse.get_total_size()} B | {synapse.name} | {synapse.axon.hotkey} | {synapse.axon.ip}:{str(synapse.axon.port)} | 0 | Success"
         )
-        response = await client.post(
-            url=url,
-            headers=synapse.to_headers(),
-            json=synapse_body,
+        # Enforce a total per-miner wall-clock timeout. httpx's `timeout` on
+        # the AsyncClient is per-operation (connect/read/write/pool) and its
+        # `read` timer resets on every received chunk, so a miner that
+        # delivers its body incrementally can keep a request alive well past
+        # `timeout`. Wrapping with asyncio.wait_for bounds the whole call.
+        response = await asyncio.wait_for(
+            client.post(
+                url=url,
+                headers=synapse.to_headers(),
+                json=synapse_body,
+            ),
+            timeout=timeout,
         )
         response.raise_for_status()
         json_response = response.json()
