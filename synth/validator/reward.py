@@ -105,7 +105,7 @@ def _crps_worker(args):
                 scoring_intervals,
             )
 
-            if np.isnan(score):
+            if not np.isfinite(score):
                 return (
                     miner_uid,
                     -1,
