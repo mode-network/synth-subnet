@@ -1,5 +1,5 @@
 import unittest
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 
 from synth.utils.helpers import (
@@ -9,6 +9,7 @@ from synth.utils.helpers import (
     from_iso_to_unix_time,
     get_current_time,
     round_to_8_significant_digits,
+    timeout_from_start_time,
 )
 
 
@@ -139,3 +140,23 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(
             from_iso_to_unix_time("2025-08-05T14:56:00+00:00"), 1754405760
         )
+
+    def test_timeout_from_start_time_caps_to_configured_timeout(self):
+        start_time = (
+            datetime.now(timezone.utc) + timedelta(seconds=120)
+        ).isoformat()
+
+        timeout = timeout_from_start_time(start_time, max_timeout=30)
+
+        self.assertLessEqual(timeout, 30)
+        self.assertGreater(timeout, 0)
+
+    def test_timeout_from_start_time_does_not_widen_timeout(self):
+        start_time = (
+            datetime.now(timezone.utc) + timedelta(seconds=45)
+        ).isoformat()
+
+        timeout = timeout_from_start_time(start_time, max_timeout=120)
+
+        self.assertLessEqual(timeout, 45)
+        self.assertGreater(timeout, 0)
