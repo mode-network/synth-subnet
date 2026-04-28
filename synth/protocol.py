@@ -35,7 +35,7 @@ def invalid_to_none(v: Any, handler: Callable[[Any], Any]) -> Any:
     try:
         return handler(v)
     except ValidationError:
-        return v
+        return None
 
 
 class Simulation(bt.Synapse):
