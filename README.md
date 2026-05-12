@@ -216,19 +216,26 @@ sequenceDiagram
     participant PricesProvider as Prices Provider
     participant Bittensor
 
-    loop Every Hour
-        Validator->>Storage: Get prediction (at least 24 hours old)
-        Validator->>PricesProvider: Get real prices
-        Validator->>Validator: Calculate CRPS
-        Validator->>Validator: Cap worst 10% and invalid scores at 90th percentile
-        Validator->>Validator: Get best (lowest) score
-        Validator->>Validator: Subtract best score from all scores
-        Validator->>Validator: Save scores
-        Validator->>Storage: Get scores for past days
-        Validator->>Validator: Calculate rolling average
-        Validator->>Validator: Softmax to get final weights
-        Validator->>Storage: Save final weights
-        Validator->>Bittensor: Send final weights
+    loop Continuously
+        par 24h competition
+            Validator->>Storage: Get matured predictions (≥24h old)
+            Validator->>PricesProvider: Get real prices
+            Validator->>Validator: CRPS sum, cap worst 10% / invalid at 90th pct, subtract best
+            Validator->>Storage: Save per-request scores
+            Validator->>Storage: Get scores in 10-day window
+            Validator->>Validator: Weighted rolling average → softmax (β=0.1) → w_24h(i)
+            Validator->>Storage: Save w_24h
+        and 1h competition
+            Validator->>Storage: Get matured predictions (≥1h old)
+            Validator->>PricesProvider: Get real prices
+            Validator->>Validator: CRPS sum, cap worst 10% / invalid at 90th pct, subtract best
+            Validator->>Storage: Save per-request scores
+            Validator->>Storage: Get scores in 3-day window
+            Validator->>Validator: Weighted rolling average → softmax (β=0.2) → w_1h(i)
+            Validator->>Storage: Save w_1h
+        end
+        Note over Validator: Combine: w(i) = 0.5·w_24h(i) + 0.5·w_1h(i)
+        Validator->>Bittensor: Send combined weights w(i)
     end
 ```
 
