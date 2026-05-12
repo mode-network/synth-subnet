@@ -242,6 +242,8 @@ pm2 start validator.test.config.js
 pm2 list
 ```
 
+> 💡 **NOTE:** The validator queries miners in parallel via a multiprocess dendrite. The number of worker processes is controlled by [`--neuron.nprocs`](#--neuronnprocs-integer) (default `2`). The `1h` HFT competition sends prompts every ~10 min, so under-sized hosts can miss cycle deadlines — size `--neuron.nprocs` to roughly match the CPU cores available on the host.
+
 <sup>[Back to top ^][table-of-contents]</sup>
 
 ## 5. Options
