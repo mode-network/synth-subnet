@@ -1,0 +1,10 @@
+region        = "eu-west-1"
+instance_type = "t3.xlarge"
+disk_size_gb  = 30
+key_pair_name = "my-key-pair"
+
+# Bittensor config
+wallet_name = "miner"
+network     = "finney"    # "finney" for mainnet, "test" for testnet
+netuid      = 50          # 50 for mainnet, 247 for testnet
+axon_port   = 8091

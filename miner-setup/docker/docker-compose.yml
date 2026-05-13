@@ -1,0 +1,24 @@
+services:
+  miner:
+    build: .
+    container_name: synth-miner
+    restart: unless-stopped
+    ports:
+      - "${AXON_PORT:-8091}:${AXON_PORT:-8091}"
+    environment:
+      - WALLET_NAME=${WALLET_NAME:-miner}
+      - WALLET_HOTKEY=${WALLET_HOTKEY:-default}
+      - NETWORK=${NETWORK:-finney}
+      - NETUID=${NETUID:-50}
+      - AXON_PORT=${AXON_PORT:-8091}
+      - VALIDATOR_MIN_STAKE=${VALIDATOR_MIN_STAKE:-1000}
+    volumes:
+      - wallet-data:/root/.bittensor/wallets
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+volumes:
+  wallet-data:

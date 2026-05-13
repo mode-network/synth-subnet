@@ -48,6 +48,7 @@
   - [2.1. Miners](#21-miners)
     - [2.1.1. Tutorial](#211-tutorial)
     - [2.1.2. Reference](#212-reference)
+    - [2.1.3. Automated Deployment](#213-automated-deployment)
   - [2.2. Validators](#22-validators)
   - [2.3. Develop](#23-develop)
 - [3. License](#-3-license)
@@ -317,6 +318,16 @@ Please refer to this miner [tutorial](./docs/miner_tutorial.md) for detailed ins
 Once you have your miner set up, you can check out the miner [reference](./docs/miner_reference.md).
 
 > 💡 **TIP:** Are you having issues? Check out the [FAQs](./docs/miner_reference.md#21-faqs) section of the miner [reference](./docs/miner_reference.md).
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### 2.1.3. Automated Deployment
+
+For a one-command miner setup, see the [miner-setup](./miner-setup/) guide. It provides three options:
+
+- **Terraform** — provision a cloud VM (GCP or AWS) with everything pre-installed
+- **Docker** — run the miner in a container on any machine
+- **Ansible** — install all dependencies on an existing VM
 
 <sup>[Back to top ^][table-of-contents]</sup>
 
