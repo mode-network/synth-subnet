@@ -1,0 +1,9 @@
+[miners]
+miner1 ansible_host=YOUR_VM_IP ansible_user=ubuntu
+
+[miners:vars]
+miner_wallet_name=miner
+miner_wallet_hotkey=default
+miner_network=finney
+miner_netuid=50
+miner_axon_port=8091

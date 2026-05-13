@@ -1,0 +1,13 @@
+project_id     = "my-gcp-project"
+region         = "europe-west1"
+zone           = "europe-west1-b"
+machine_type   = "e2-standard-4"
+disk_size_gb   = 30
+ssh_public_key = "ssh-ed25519 AAAA... user@host"
+ssh_user       = "miner"
+
+# Bittensor config
+wallet_name = "miner"
+network     = "finney"    # "finney" for mainnet, "test" for testnet
+netuid      = 50          # 50 for mainnet, 247 for testnet
+axon_port   = 8091
