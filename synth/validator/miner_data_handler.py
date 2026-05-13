@@ -43,6 +43,22 @@ from synth.db.models import (
 from synth.simulation_input import SimulationInput
 from synth.utils.logging import print_execution_time
 from synth.validator import prompt_config, response_validation_v2
+from synth.validator.price_data_provider import PriceDataProvider
+
+# Observed headroom for Pyth to index the candle that opens at the end of
+# the prediction window. Combined with one full candle interval below, it
+# decides when a request becomes eligible for scoring. Tune via logs of
+# `realized path not yet settled` warnings — if those fire repeatedly,
+# Pyth's tail latency exceeds this and the value should grow.
+PYTH_PUBLISH_LATENCY_SECONDS = 30
+
+# Scoring gate = the candle interval that the settlement guard in
+# PriceDataProvider looks past + headroom for Pyth to publish that witness
+# candle. Must be >= PriceDataProvider.CANDLE_INTERVAL_SECONDS or the
+# guard inside fetch_data will fail every first attempt and rely on retry.
+SCORING_GATE_SECONDS = (
+    PriceDataProvider.CANDLE_INTERVAL_SECONDS + PYTH_PUBLISH_LATENCY_SECONDS
+)
 
 
 class MinerDataHandler:
@@ -407,9 +423,12 @@ class MinerDataHandler:
                     ValidatorRequest.start_time
                     + literal_column("INTERVAL '1 second'")
                     * ValidatorRequest.time_length
-                    + literal_column(
-                        "INTERVAL '1 minute'"
-                    )  # add 1 minute to ensure that pyth has the last candle available
+                    # Wait one full candle interval past window-end so the
+                    # last candle has closed, plus headroom for Pyth to
+                    # publish the witness candle that PriceDataProvider's
+                    # settlement guard checks for. See SCORING_GATE_SECONDS.
+                    + literal_column("INTERVAL '1 second'")
+                    * SCORING_GATE_SECONDS
                 )
 
                 query = (
@@ -516,7 +535,8 @@ class MinerDataHandler:
 
         try:
             with self.engine.connect() as connection:
-                query = text("""
+                query = text(
+                    """
                     SELECT
                         mp.miner_id,
                         ms.prompt_score_v3,
@@ -531,7 +551,8 @@ class MinerDataHandler:
                     JOIN validator_requests vr ON vr.id = mp.validator_requests_id
                     WHERE ms.scored_time > :min_scored_time
                       AND vr.time_length = :time_length
-                """)
+                """
+                )
 
                 result = connection.execute(
                     query,

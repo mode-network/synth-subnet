@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 import unittest
 from unittest.mock import patch
 import numpy as np
@@ -26,7 +26,8 @@ class TestPriceDataProvider(unittest.TestCase):
         # 1739974500 - 2025-02-19T14:15:00+00:00
         # 1739974560 - 2025-02-19T14:16:00+00:00
         # 1739974620 - 2025-02-19T14:17:00+00:00
-        # 1739974680 - 2025-02-19T14:18:00+00:00
+        # 1739974680 - 2025-02-19T14:18:00+00:00 (last grid point)
+        # 1739974740 - 2025-02-19T14:19:00+00:00 (settlement witness)
         mock_response = {
             "t": [
                 1739974320,
@@ -36,6 +37,7 @@ class TestPriceDataProvider(unittest.TestCase):
                 1739974560,
                 1739974620,
                 1739974680,
+                1739974740,
             ],
             "c": [
                 100000.23,
@@ -45,6 +47,7 @@ class TestPriceDataProvider(unittest.TestCase):
                 103000.55,
                 105000.55,
                 108000.867,
+                108500.0,
             ],
         }
 
@@ -64,8 +67,10 @@ class TestPriceDataProvider(unittest.TestCase):
         # 1739974620 - 2025-02-19T14:17:00+00:00
         # 1739974680 - 2025-02-19T14:18:00+00:00
         mock_response = {
-            "t": [1739974320, 1739974620, 1739974680],
-            "c": [100000.23, 105000.55, 108000.867],
+            # 1739974740 (14:19) is the settlement-witness candle proving
+            # the last grid point's 1-min candle has closed.
+            "t": [1739974320, 1739974620, 1739974680, 1739974740],
+            "c": [100000.23, 105000.55, 108000.867, 108500.0],
         }
 
         with patch("requests.get") as mock_get:
@@ -84,8 +89,9 @@ class TestPriceDataProvider(unittest.TestCase):
         # gap        - 2025-02-19T14:17:00+00:00
         # 1739974680 - 2025-02-19T14:18:00+00:00
         mock_response = {
-            "t": [1739974320, 1739974680],
-            "c": [100000.23, 108000.867],
+            # 1739974740 is the settlement-witness candle.
+            "t": [1739974320, 1739974680, 1739974740],
+            "c": [100000.23, 108000.867, 108500.0],
         }
 
         with patch("requests.get") as mock_get:
@@ -198,6 +204,8 @@ class TestPriceDataProvider(unittest.TestCase):
         # 1739974860 - 2025-02-19T14:21:00+00:00
         # 1739974920 - 2025-02-19T14:22:00+00:00
         mock_response = {
+            # 1739974980 (14:23) is the settlement-witness candle for the
+            # local request below whose last grid point is 14:22.
             "t": [
                 1739974380,
                 1739974440,
@@ -209,6 +217,7 @@ class TestPriceDataProvider(unittest.TestCase):
                 1739974800,
                 1739974860,
                 1739974920,
+                1739974980,
             ],
             "c": [
                 101000.55,
@@ -221,6 +230,7 @@ class TestPriceDataProvider(unittest.TestCase):
                 97123.55,
                 105123.345,
                 107995.889,
+                108500.0,
             ],
         }
 
@@ -355,3 +365,135 @@ class TestPriceDataProvider(unittest.TestCase):
     def test_fetch_data(self):
         result = self.dataProvider.fetch_data(validator_request)
         print("result", result)
+
+
+class TestSettlementGuard(unittest.TestCase):
+    """The settlement guard refuses to return prices unless the response
+    proves the last grid candle has closed (a candle with t strictly later
+    than the last grid timestamp). Without it, scoring would consume an
+    in-progress close that changes by the time we re-score, breaking CRPS
+    reproducibility."""
+
+    def test_raises_when_no_candle_past_last_grid(self):
+        data = {
+            "t": [1739974320, 1739974440, 1739974560, 1739974680],
+            "c": [1.0, 2.0, 3.0, 4.0],
+        }
+        with self.assertRaises(ValueError):
+            PriceDataProvider._assert_settled(
+                data, "BTC", "req-1", last_grid_timestamp=1739974680
+            )
+
+    def test_raises_when_no_candles_at_all(self):
+        data = {"t": [], "c": []}
+        with self.assertRaises(ValueError):
+            PriceDataProvider._assert_settled(
+                data, "BTC", "req-1", last_grid_timestamp=1739974680
+            )
+
+    def test_accepts_when_witness_candle_present(self):
+        data = {
+            "t": [1739974320, 1739974680, 1739974740],
+            "c": [1.0, 4.0, 5.0],
+        }
+        # Should not raise.
+        PriceDataProvider._assert_settled(
+            data, "BTC", "req-1", last_grid_timestamp=1739974680
+        )
+
+
+class TestPriceDataProviderProBackend(unittest.TestCase):
+    """Same regression suite, but with PYTH_BACKEND=pro selected so the
+    provider hits the Pyth Pro Router URL. Response shape is identical to
+    the legacy Benchmarks API, so the price-extraction output must match."""
+
+    def test_pro_backend_uses_pro_url(self):
+        # 1739974740 is the settlement-witness candle past the last grid
+        # point at 1739974680 (= start + time_length).
+        mock_response = {
+            "t": [
+                1739974320,
+                1739974440,
+                1739974560,
+                1739974680,
+                1739974740,
+            ],
+            "c": [100000.23, 99000.55, 103000.55, 108000.867, 108500.0],
+        }
+
+        with patch.dict("os.environ", {"PYTH_BACKEND": "pro"}):
+            provider = PriceDataProvider()
+            with patch("requests.get") as mock_get:
+                mock_get.return_value.json.return_value = mock_response
+                result = provider.fetch_data(validator_request)
+
+                called_url = mock_get.call_args[0][0]
+                called_params = mock_get.call_args.kwargs["params"]
+                assert called_url == PriceDataProvider.PYTH_PRO_URL
+                # The fetch window must extend one minute past the last grid
+                # point so the settlement witness can land in the response.
+                assert called_params["to"] == 1739974680 + 60
+                assert result == [100000.23, 99000.55, 103000.55, 108000.867]
+
+    def test_hermes_backend_uses_benchmarks_url(self):
+        mock_response = {
+            "t": [
+                1739974320,
+                1739974440,
+                1739974560,
+                1739974680,
+                1739974740,
+            ],
+            "c": [100000.23, 99000.55, 103000.55, 108000.867, 108500.0],
+        }
+
+        with patch.dict("os.environ", {"PYTH_BACKEND": "hermes"}):
+            provider = PriceDataProvider()
+            with patch("requests.get") as mock_get:
+                mock_get.return_value.json.return_value = mock_response
+                provider.fetch_data(validator_request)
+
+                called_url = mock_get.call_args[0][0]
+                assert called_url == PriceDataProvider.PYTH_BENCHMARKS_URL
+
+
+class TestPriceDataProviderLiveProBackend(unittest.TestCase):
+    """Hits the live Pyth Pro Router history endpoint — no mocks. The
+    endpoint is public, so no PYTH_API_KEY is required."""
+
+    def test_live_btc_history_from_pro_router(self):
+        # Query a 10-minute window ending 5 minutes ago, so even less
+        # liquid feeds would have published the closing candle. BTC is
+        # the safest choice for a smoke test.
+        end = datetime.now(timezone.utc).replace(
+            second=0, microsecond=0
+        ) - timedelta(minutes=5)
+        start = end - timedelta(minutes=10)
+        req = ValidatorRequest(
+            asset="BTC",
+            start_time=start,
+            time_length=600,
+            time_increment=60,
+        )
+
+        with patch.dict("os.environ", {"PYTH_BACKEND": "pro"}):
+            provider = PriceDataProvider()
+            self.assertEqual(
+                provider.pyth_history_url,
+                PriceDataProvider.PYTH_PRO_URL,
+            )
+            prices = provider.fetch_data(req)
+
+        # time_length=600s @ time_increment=60s => 11 grid points.
+        self.assertEqual(len(prices), 11)
+
+        finite = [p for p in prices if not np.isnan(p)]
+        self.assertGreater(
+            len(finite),
+            5,
+            f"too many gaps in live BTC series: {prices}",
+        )
+        for p in finite:
+            # Sanity bounds — keeps the test useful even if BTC moves.
+            self.assertGreater(p, 1000)
+            self.assertLess(p, 10_000_000)
