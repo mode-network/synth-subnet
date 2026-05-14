@@ -20,20 +20,16 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     # CREATE INDEX CONCURRENTLY cannot run inside a transaction
     op.execute("COMMIT")
-    op.execute(
-        """
+    op.execute("""
         CREATE INDEX CONCURRENTLY IF NOT EXISTS ix_metagraph_history_uid_updated_at
         ON metagraph_history (neuron_uid, updated_at DESC)
         INCLUDE (ip_address)
-        """
-    )
+        """)
 
 
 def downgrade() -> None:
     # DROP INDEX CONCURRENTLY cannot run inside a transaction
     op.execute("COMMIT")
-    op.execute(
-        """
+    op.execute("""
         DROP INDEX CONCURRENTLY IF EXISTS ix_metagraph_history_uid_updated_at
-        """
-    )
+        """)
