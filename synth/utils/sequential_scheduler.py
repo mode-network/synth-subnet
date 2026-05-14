@@ -48,7 +48,6 @@ class SequentialScheduler:
                 asset_list = prompt_config.asset_list[:4]
 
         delay = self.select_delay(
-            asset_list,
             cycle_start_time,
             prompt_config,
             self.first_run,
@@ -70,7 +69,6 @@ class SequentialScheduler:
 
     @staticmethod
     def select_delay(
-        asset_list: list[str],
         cycle_start_time: datetime,
         prompt_config: PromptConfig,
         first_run: bool = False,
@@ -79,7 +77,7 @@ class SequentialScheduler:
         next_cycle = round_time_to_minutes(next_cycle)
         if not first_run:
             next_cycle += timedelta(
-                minutes=prompt_config.total_cycle_minutes / len(asset_list)
+                minutes=prompt_config.cycle_interval_minutes
             )
             next_cycle = next_cycle - timedelta(minutes=1)
         next_cycle_diff = next_cycle - get_current_time()
