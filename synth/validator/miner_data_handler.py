@@ -535,8 +535,7 @@ class MinerDataHandler:
 
         try:
             with self.engine.connect() as connection:
-                query = text(
-                    """
+                query = text("""
                     SELECT
                         mp.miner_id,
                         ms.prompt_score_v3,
@@ -551,8 +550,7 @@ class MinerDataHandler:
                     JOIN validator_requests vr ON vr.id = mp.validator_requests_id
                     WHERE ms.scored_time > :min_scored_time
                       AND vr.time_length = :time_length
-                """
-                )
+                """)
 
                 result = connection.execute(
                     query,
