@@ -363,7 +363,20 @@ class TestPriceDataProvider(unittest.TestCase):
             assert result == [100000.23, 105000.55, 105123.345]
 
     def test_fetch_data(self):
-        result = self.dataProvider.fetch_data(validator_request)
+        # Live call — uses a recent window so the Pyth Pro Router (which
+        # only retains a rolling history) actually has data. The shared
+        # module-level `validator_request` is fine for the mocked tests
+        # above but its hardcoded 2025-02 date is outside the live window.
+        start = datetime.now(timezone.utc).replace(
+            second=0, microsecond=0
+        ) - timedelta(minutes=15)
+        live_request = ValidatorRequest(
+            asset="BTC",
+            start_time=start,
+            time_length=360,
+            time_increment=120,
+        )
+        result = self.dataProvider.fetch_data(live_request)
         print("result", result)
 
 
