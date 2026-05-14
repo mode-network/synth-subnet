@@ -22,7 +22,6 @@ from typing import Optional
 import requests
 from dotenv import load_dotenv
 
-
 # Pyth Pro Router (TradingView-shaped, PUBLIC — no auth on /v1/symbols or
 # /v1/{channel}/history; same `symbol` strings as the legacy Benchmarks
 # API). The channel in the path matters: `real_time` returns 404 for feeds
