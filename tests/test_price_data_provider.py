@@ -458,23 +458,16 @@ class TestPriceDataProviderProBackend(unittest.TestCase):
 
 
 class TestPriceDataProviderLiveProBackend(unittest.TestCase):
-    """Hits the live Pyth Pro Router history endpoint — no mocks. The
-    endpoint is public, so no PYTH_API_KEY is required."""
+    """Hits the live Pyth Pro Router history endpoint for every Pyth-routed
+    asset — no mocks. The endpoint is public, so no PYTH_API_KEY is
+    required. Catches channel/symbol regressions per asset (e.g. the 404s
+    we saw on stocks/metals when the URL channel was real_time)."""
 
-    def test_live_btc_history_from_pro_router(self):
-        # Query a 10-minute window ending 5 minutes ago, so even less
-        # liquid feeds would have published the closing candle. BTC is
-        # the safest choice for a smoke test.
+    def test_live_history_from_pro_router_per_asset(self):
         end = datetime.now(timezone.utc).replace(
             second=0, microsecond=0
         ) - timedelta(minutes=5)
         start = end - timedelta(minutes=10)
-        req = ValidatorRequest(
-            asset="BTC",
-            start_time=start,
-            time_length=600,
-            time_increment=60,
-        )
 
         with patch.dict("os.environ", {"PYTH_BACKEND": "pro"}):
             provider = PriceDataProvider()
@@ -482,18 +475,30 @@ class TestPriceDataProviderLiveProBackend(unittest.TestCase):
                 provider.pyth_history_url,
                 PriceDataProvider.PYTH_PRO_URL,
             )
-            prices = provider.fetch_data(req)
 
-        # time_length=600s @ time_increment=60s => 11 grid points.
-        self.assertEqual(len(prices), 11)
+            for asset in PriceDataProvider.PYTH_SYMBOL_MAP.keys():
+                with self.subTest(asset=asset):
+                    req = ValidatorRequest(
+                        asset=asset,
+                        start_time=start,
+                        time_length=600,
+                        time_increment=60,
+                    )
+                    prices = provider.fetch_data(req)
 
-        finite = [p for p in prices if not np.isnan(p)]
-        self.assertGreater(
-            len(finite),
-            5,
-            f"too many gaps in live BTC series: {prices}",
-        )
-        for p in finite:
-            # Sanity bounds — keeps the test useful even if BTC moves.
-            self.assertGreater(p, 1000)
-            self.assertLess(p, 10_000_000)
+                    # time_length=600s @ time_increment=60s => 11 grid points.
+                    self.assertEqual(len(prices), 11)
+                    finite = [p for p in prices if not np.isnan(p)]
+                    self.assertGreater(
+                        len(finite),
+                        5,
+                        f"{asset}: too many gaps: {prices}",
+                    )
+                    for p in finite:
+                        # Loose sanity bounds — XAU ~$5k, HYPE ~$40, BTC ~$80k.
+                        self.assertGreater(
+                            p, 0, f"{asset}: non-positive price"
+                        )
+                        self.assertLess(
+                            p, 10_000_000, f"{asset}: suspicious magnitude"
+                        )

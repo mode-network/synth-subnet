@@ -31,7 +31,10 @@ class PriceDataProvider:
     PYTH_BENCHMARKS_URL = (
         "https://benchmarks.pyth.network/v1/shims/tradingview/history"
     )
-    PYTH_PRO_URL = "https://pyth.dourolabs.app/v1/real_time/history"
+    # `fixed_rate@200ms` is the channel that meets every feed's min_channel:
+    # stocks/metals/oil reject `real_time` with 404, but accept this. Crypto
+    # majors accept it too. One channel, every feed.
+    PYTH_PRO_URL = "https://pyth.dourolabs.app/v1/fixed_rate@200ms/history"
     HYPERLIQUID_BASE_URL = "https://api.hyperliquid.xyz/info"
 
     # Both Pyth and Hyperliquid serve 1-minute candles indexed by their open
