@@ -93,6 +93,41 @@ class Validator(BaseValidatorNeuron):
             )
             self.cycle_name = self.config.validator.cycle_name
 
+        self._apply_assets_filter()
+
+    def _apply_assets_filter(self):
+        """Narrow the active cycle's asset_list to --validator.assets, if set.
+
+        No-op for the scoring cycle or when the flag is unset. Raises
+        ValueError on assets not in the active cycle's asset_list.
+        """
+        assets_filter = self.config.validator.assets
+        if assets_filter == "":
+            return
+
+        if self.cycle_name == CYCLE_LOW_FREQUENCY:
+            target_config: PromptConfig = LOW_FREQUENCY
+        elif self.cycle_name == CYCLE_HIGH_FREQUENCY:
+            target_config = HIGH_FREQUENCY
+        else:
+            return
+
+        requested = [a.strip() for a in assets_filter.split(",") if a.strip()]
+        unknown = set(requested) - set(target_config.asset_list)
+        if unknown:
+            raise ValueError(
+                f"--validator.assets contains unknown assets {sorted(unknown)} "
+                f"for {target_config.label}-frequency cycle. "
+                f"Valid: {target_config.asset_list}"
+            )
+        target_config.asset_list = [
+            a for a in target_config.asset_list if a in requested
+        ]
+        bt.logging.info(
+            f"Restricting {target_config.label}-frequency cycle to assets: "
+            f"{target_config.asset_list}"
+        )
+
     # Keep sync method for backward compatibility if needed
     def forward_validator(self):
         """Sync entry point - runs the async version"""

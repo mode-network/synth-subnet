@@ -232,6 +232,18 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
     )
 
     parser.add_argument(
+        "--validator.assets",
+        type=str,
+        help=(
+            "Comma-separated list of assets to restrict the cycle to "
+            "(e.g. 'BTC,ETH'). If unset, cycles through the full asset_list "
+            "of the selected cycle. Only applies to low_frequency / "
+            "high_frequency cycles; ignored for scoring."
+        ),
+        default="",
+    )
+
+    parser.add_argument(
         "--validator.mode",
         type=str,
         help="Full mode will keep all history, light mode will prune old predictions.",
