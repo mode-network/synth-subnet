@@ -28,6 +28,7 @@
     - [`--neuron.timeout INTEGER`](#--neurontimeout-integer)
     - [`--neuron.nprocs INTEGER`](#--neuronnprocs-integer)
     - [`--neuron.vpermit_tao_limit INTEGER`](#--neuronvpermit_tao_limit-integer)
+    - [`--validator.assets TEXT`](#--validatorassets-text)
     - [`--wallet.hotkey TEXT`](#--wallethotkey-text)
     - [`--wallet.name TEXT`](#--walletname-text)
   - [5.2. Logging Options](#52-logging-options)
@@ -898,6 +899,43 @@ Alternatively, you can add the args directly to the command:
 
 ```shell
 pm2 start validator.config.js -- --neuron.vpermit_tao_limit 1000
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### `--validator.assets TEXT`
+
+Comma-separated list of assets to restrict the cycle to (e.g. `BTC,ETH`). A single asset without a comma also works (e.g. `BTC`). When unset, the validator cycles through the full asset list of the selected cycle (the default and recommended behavior).
+
+Only applies to the `low_frequency` and `high_frequency` cycles. The `scoring` cycle ignores this flag.
+
+If any requested asset is not part of the selected cycle's asset list, the validator exits at startup with a `ValueError` listing the unknown assets and the valid options.
+
+Default: `""` (cycle through the full asset list)
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--validator.cycle_name low_frequency --validator.assets BTC,ETH",
+      env: {
+        PYTHONPATH: ".",
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+
+```shell
+pm2 start validator.config.js -- --validator.assets BTC,ETH
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
