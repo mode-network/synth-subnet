@@ -8,7 +8,7 @@ class PromptConfig:
     time_length: int
     time_increment: int
     initial_delay: int
-    total_cycle_minutes: int
+    cycle_interval_minutes: int
     timeout_extra_seconds: int
     scoring_intervals: dict[str, int]  # Define scoring intervals in seconds.
     window_days: int
@@ -37,7 +37,7 @@ LOW_FREQUENCY = PromptConfig(
     time_length=86400,
     time_increment=300,
     initial_delay=60,  # avoid 2 prompts to start simultaneously
-    total_cycle_minutes=60,
+    cycle_interval_minutes=5,
     timeout_extra_seconds=60,
     scoring_intervals={
         "5min": 300,  # 5 minutes
@@ -57,7 +57,7 @@ HIGH_FREQUENCY = PromptConfig(
     time_length=3600,
     time_increment=60,
     initial_delay=0,
-    total_cycle_minutes=10,
+    cycle_interval_minutes=2,
     timeout_extra_seconds=60,
     scoring_intervals={
         "1min": 60,
