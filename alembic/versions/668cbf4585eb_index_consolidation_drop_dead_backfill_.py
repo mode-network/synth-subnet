@@ -41,19 +41,12 @@ def upgrade() -> None:
     # CREATE/DROP INDEX CONCURRENTLY cannot run inside a transaction.
     op.execute("COMMIT")
 
-    # --- Backfills: indexes that exist in prod but not in alembic ---------
-
-    # Leaderboard rollup index in synth-api (mode-season3-monorepo).
-    # 1489 MB, 4.2M scans in prod.
     op.execute("""
         CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_miner_rewards_meta_lookup
             ON miner_rewards
             (prompt_name, updated_at, miner_id, reward_weight)
         """)
 
-    # Byte-identical to alembic's idx_mp_created_miner. We promote this
-    # manual one (45 lifetime scans) into alembic, then drop the alembic
-    # original (0 scans) below.
     op.execute("""
         CREATE INDEX CONCURRENTLY IF NOT EXISTS
             idx_miner_predictions_created_miner
@@ -67,7 +60,7 @@ def upgrade() -> None:
             ON miner_rewards (miner_id)
         """)
 
-    # --- Drops (defensible by lifetime scan counters) ---------------------
+    # --- Drops ------------------------------------------------------------
 
     # Strictly subsumed by ix_metagraph_history_uid_updated_at
     # (neuron_uid, updated_at DESC) INCLUDE (ip_address).
@@ -76,14 +69,13 @@ def upgrade() -> None:
         """)
 
     # Exact duplicate of idx_miner_predictions_created_miner (backfilled
-    # above). 0 lifetime scans -- the planner picked the manual one.
+    # above)
     op.execute("""
         DROP INDEX CONCURRENTLY IF EXISTS idx_mp_created_miner
         """)
 
-    # The `miner_uid` column is annotated `# deprecated` in the ORM models;
-    # active path is via `miner_id` FK to `miners`. These three single-
-    # column indexes are barely scanned.
+    # The `miner_uid` column is deprecated.
+    # active path is via `miner_id` FK to `miners`.
     op.execute("""
         DROP INDEX CONCURRENTLY IF EXISTS ix_miner_predictions_miner_uid
         """)
