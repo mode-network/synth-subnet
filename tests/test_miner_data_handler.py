@@ -11,6 +11,7 @@ from synth.db.models import (
     Miner,
 )
 from synth.validator import response_validation_v2
+from synth.validator.prompt_config import PromptConfig
 from synth.simulation_input import SimulationInput
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
@@ -565,3 +566,357 @@ def test_set_miner_scores_upsert_preserves_individual_values(
             f"got {result.prompt_score_v3}. "
             f"Bug: all miners got last miner's score instead of their own."
         )
+
+
+# ----- prune_redundant_predictions -----------------------------------------
+
+LOW_TEST_CONFIG = PromptConfig(
+    asset_list=["BTC"],
+    label="low",
+    time_length=86400,
+    time_increment=300,
+    initial_delay=0,
+    total_cycle_minutes=60,
+    timeout_extra_seconds=60,
+    scoring_intervals={},
+    window_days=10,
+    softmax_beta=-0.1,
+    smoothed_score_coefficient=0.5,
+    thin_after_minutes=30,
+    thin_bucket_seconds=3600,
+)
+
+HIGH_TEST_CONFIG = PromptConfig(
+    asset_list=["BTC"],
+    label="high",
+    time_length=3600,
+    time_increment=60,
+    initial_delay=0,
+    total_cycle_minutes=10,
+    timeout_extra_seconds=60,
+    scoring_intervals={},
+    window_days=3,
+    softmax_beta=-0.2,
+    smoothed_score_coefficient=0.5,
+    thin_after_minutes=10,
+    thin_bucket_seconds=600,
+)
+
+
+def _insert_miner(connection, miner_uid: int) -> int:
+    existing = connection.execute(
+        select(Miner.id).where(Miner.miner_uid == miner_uid)
+    ).fetchone()
+    if existing is not None:
+        return int(existing.id)
+    result = connection.execute(
+        insert(Miner).values(miner_uid=miner_uid).returning(Miner.id)
+    )
+    return int(result.fetchone().id)
+
+
+def _insert_prediction(
+    connection,
+    miner_id: int,
+    asset: str,
+    time_length: int,
+    start_time: datetime,
+    created_at: datetime,
+    payload: list,
+) -> int:
+    vr_id = (
+        connection.execute(
+            insert(ValidatorRequest)
+            .values(
+                start_time=start_time,
+                asset=asset,
+                time_increment=300,
+                time_length=time_length,
+                num_simulations=1,
+                request_time=created_at,
+            )
+            .returning(ValidatorRequest.id)
+        )
+        .fetchone()
+        .id
+    )
+    mp_id = (
+        connection.execute(
+            insert(MinerPrediction)
+            .values(
+                validator_requests_id=vr_id,
+                miner_uid=0,
+                miner_id=miner_id,
+                prediction=payload,
+                format_validation=response_validation_v2.CORRECT,
+                process_time=1.0,
+                created_at=created_at,
+            )
+            .returning(MinerPrediction.id)
+        )
+        .fetchone()
+        .id
+    )
+    return int(mp_id)
+
+
+def _fetch_prediction_state(connection, mp_id: int):
+    return connection.execute(
+        select(
+            MinerPrediction.id,
+            MinerPrediction.prediction,
+            MinerPrediction.deleted_at,
+        ).where(MinerPrediction.id == mp_id)
+    ).fetchone()
+
+
+def test_prune_leaves_recent_requests_untouched(db_engine: Engine):
+    """Validator_requests newer than `thin_after_minutes` are not pruned —
+    even when many in the same bucket. Short-term density survives for the
+    downstream low-latency consumer."""
+    now = datetime.now()
+    with db_engine.connect() as connection:
+        with connection.begin():
+            miner_a = _insert_miner(connection, miner_uid=300)
+            miner_b = _insert_miner(connection, miner_uid=301)
+            ids: list[int] = []
+            for m in (2, 5, 10):
+                start = now - timedelta(minutes=m)
+                for miner_id in (miner_a, miner_b):
+                    ids.append(
+                        _insert_prediction(
+                            connection,
+                            miner_id=miner_id,
+                            asset="BTC",
+                            time_length=LOW_TEST_CONFIG.time_length,
+                            start_time=start,
+                            created_at=start,
+                            payload=[[{"price": float(m)}]],
+                        )
+                    )
+
+    MinerDataHandler(db_engine).density_tapering_predictions(LOW_TEST_CONFIG)
+
+    with db_engine.connect() as connection:
+        for mp_id in ids:
+            row = _fetch_prediction_state(connection, mp_id)
+            assert row is not None
+            assert row.deleted_at is None
+            assert isinstance(row.prediction, list)
+
+
+def test_prune_collapses_old_requests_in_same_bucket(db_engine: Engine):
+    """Three old validator_requests for the same asset land in the same
+    hour bucket → the smallest-id request is the keeper; every prediction
+    on the other two requests gets the `thinned` tombstone, including
+    predictions for additional miners on those requests."""
+    bucket_anchor = datetime(2026, 1, 1, 12, 0, 0)
+    with db_engine.connect() as connection:
+        with connection.begin():
+            miner_a = _insert_miner(connection, miner_uid=310)
+            miner_b = _insert_miner(connection, miner_uid=311)
+
+            # Keeper request — smallest id, both miners.
+            kept_a = _insert_prediction(
+                connection,
+                miner_id=miner_a,
+                asset="SOL",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=bucket_anchor + timedelta(minutes=5),
+                created_at=bucket_anchor + timedelta(minutes=5),
+                payload=[[{"price": 1.0}]],
+            )
+            # Extra request 1 in the same bucket — both miners.
+            extras: list[int] = []
+            for minute in (25, 50):
+                start = bucket_anchor + timedelta(minutes=minute)
+                for miner_id in (miner_a, miner_b):
+                    extras.append(
+                        _insert_prediction(
+                            connection,
+                            miner_id=miner_id,
+                            asset="SOL",
+                            time_length=LOW_TEST_CONFIG.time_length,
+                            start_time=start,
+                            created_at=start,
+                            payload=[[{"price": float(minute)}]],
+                        )
+                    )
+
+    MinerDataHandler(db_engine).density_tapering_predictions(LOW_TEST_CONFIG)
+
+    with db_engine.connect() as connection:
+        keeper = _fetch_prediction_state(connection, kept_a)
+        assert keeper is not None
+        assert keeper.deleted_at is None
+        assert keeper.prediction == [[{"price": 1.0}]]
+
+        for mp_id in extras:
+            row = _fetch_prediction_state(connection, mp_id)
+            assert row is not None
+            assert row.deleted_at is not None
+            assert row.prediction == {"deleted": True, "reason": "thinned"}
+
+
+def test_prune_keeps_one_request_per_asset_per_bucket(db_engine: Engine):
+    """Different assets in the same bucket are independent — each asset
+    keeps its smallest-id request. Different buckets are independent —
+    each bucket keeps its own request."""
+    bucket_anchor = datetime(2026, 1, 1, 12, 0, 0)
+    with db_engine.connect() as connection:
+        with connection.begin():
+            miner_id = _insert_miner(connection, miner_uid=320)
+            # bucket 1, BTC: two requests → keep first, prune second
+            btc_keep = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="BTC",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=bucket_anchor + timedelta(minutes=5),
+                created_at=bucket_anchor + timedelta(minutes=5),
+                payload=[[{"price": 1.0}]],
+            )
+            btc_prune = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="BTC",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=bucket_anchor + timedelta(minutes=25),
+                created_at=bucket_anchor + timedelta(minutes=25),
+                payload=[[{"price": 2.0}]],
+            )
+            # bucket 1, ETH: one request → keep
+            eth_keep = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="ETH",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=bucket_anchor + timedelta(minutes=10),
+                created_at=bucket_anchor + timedelta(minutes=10),
+                payload=[[{"price": 3.0}]],
+            )
+            # bucket 2, BTC: one request → keep
+            btc_next_bucket = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="BTC",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=bucket_anchor + timedelta(hours=1, minutes=5),
+                created_at=bucket_anchor + timedelta(hours=1, minutes=5),
+                payload=[[{"price": 4.0}]],
+            )
+
+    MinerDataHandler(db_engine).density_tapering_predictions(LOW_TEST_CONFIG)
+
+    with db_engine.connect() as connection:
+        assert _fetch_prediction_state(connection, btc_keep).deleted_at is None
+        assert (
+            _fetch_prediction_state(connection, btc_prune).deleted_at
+            is not None
+        )
+        assert _fetch_prediction_state(connection, eth_keep).deleted_at is None
+        assert (
+            _fetch_prediction_state(connection, btc_next_bucket).deleted_at
+            is None
+        )
+
+
+def test_prune_scopes_by_time_length(db_engine: Engine):
+    """LOW pruning must not touch HIGH validator_requests, and vice versa."""
+    bucket_anchor = datetime(2026, 1, 1, 12, 0, 0)
+    with db_engine.connect() as connection:
+        with connection.begin():
+            miner_id = _insert_miner(connection, miner_uid=330)
+            low_kept = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="ETH",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=bucket_anchor,
+                created_at=bucket_anchor,
+                payload=[[{"price": 1.0}]],
+            )
+            low_extra = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="ETH",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=bucket_anchor + timedelta(minutes=30),
+                created_at=bucket_anchor + timedelta(minutes=30),
+                payload=[[{"price": 2.0}]],
+            )
+            high_a = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="ETH",
+                time_length=HIGH_TEST_CONFIG.time_length,
+                start_time=bucket_anchor,
+                created_at=bucket_anchor,
+                payload=[[{"price": 9.0}]],
+            )
+            high_b = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="ETH",
+                time_length=HIGH_TEST_CONFIG.time_length,
+                start_time=bucket_anchor + timedelta(minutes=4),
+                created_at=bucket_anchor + timedelta(minutes=4),
+                payload=[[{"price": 8.0}]],
+            )
+
+    MinerDataHandler(db_engine).density_tapering_predictions(LOW_TEST_CONFIG)
+
+    with db_engine.connect() as connection:
+        assert _fetch_prediction_state(connection, low_kept).deleted_at is None
+        assert (
+            _fetch_prediction_state(connection, low_extra).deleted_at
+            is not None
+        )
+        # HIGH untouched.
+        assert _fetch_prediction_state(connection, high_a).deleted_at is None
+        assert _fetch_prediction_state(connection, high_b).deleted_at is None
+
+
+def test_prune_high_bucket_is_ten_minutes(db_engine: Engine):
+    """HIGH bucket = 600 s. Two requests inside the same 10-min bucket
+    collapse to one; an adjacent-bucket request survives."""
+    bucket_anchor = datetime(2026, 1, 1, 11, 0, 0)
+    with db_engine.connect() as connection:
+        with connection.begin():
+            miner_id = _insert_miner(connection, miner_uid=340)
+            kept_a = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="HYPE",
+                time_length=HIGH_TEST_CONFIG.time_length,
+                start_time=bucket_anchor,
+                created_at=bucket_anchor,
+                payload=[[{"price": 1.0}]],
+            )
+            extra_a = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="HYPE",
+                time_length=HIGH_TEST_CONFIG.time_length,
+                start_time=bucket_anchor + timedelta(minutes=4),
+                created_at=bucket_anchor + timedelta(minutes=4),
+                payload=[[{"price": 2.0}]],
+            )
+            kept_b = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="HYPE",
+                time_length=HIGH_TEST_CONFIG.time_length,
+                start_time=bucket_anchor + timedelta(minutes=12),
+                created_at=bucket_anchor + timedelta(minutes=12),
+                payload=[[{"price": 3.0}]],
+            )
+
+    MinerDataHandler(db_engine).density_tapering_predictions(HIGH_TEST_CONFIG)
+
+    with db_engine.connect() as connection:
+        assert _fetch_prediction_state(connection, kept_a).deleted_at is None
+        assert (
+            _fetch_prediction_state(connection, extra_a).deleted_at is not None
+        )
+        assert _fetch_prediction_state(connection, kept_b).deleted_at is None

@@ -639,6 +639,80 @@ class MinerDataHandler:
             )
 
     @print_execution_time
+    def density_tapering_predictions(
+        self, prompt_config: prompt_config.PromptConfig
+    ):
+        """Density tapering at the validator_request grain.
+
+        Short-term: keep many validator_requests per asset (high-density
+        feed for downstream low-latency consumers, e.g. trading).
+        Mid-term: keep only one validator_request per (asset, bucket) for
+        scoring — 1 per hour LOW, 1 per 10 min HIGH. Scoring is a whole-
+        request operation that happens after `time_length` has elapsed and
+        the realized path is available, so partial / per-prediction scoring
+        does not exist; either a request is the bucket keeper (and all its
+        miners' predictions are kept) or it is redundant (and all its
+        miners' predictions are soft-deleted together).
+
+        Selects validator_requests with this cycle's `time_length` whose
+        `start_time` is older than `prompt_config.thin_after_minutes`,
+        buckets them by (asset, floor(epoch(start_time)/thin_bucket_seconds)),
+        keeps the smallest-id row per bucket, and soft-deletes every
+        miner_prediction under the non-keeper requests by setting
+        `deleted_at` and replacing `prediction` with a tombstone (same
+        pattern as `cleanup_old_history`).
+        """
+        now = datetime.now()
+        thin_cutoff = now - timedelta(minutes=prompt_config.thin_after_minutes)
+        thin_sql = text("""
+            WITH old AS (
+                SELECT vr.id AS vr_id,
+                       vr.asset,
+                       (floor(
+                           extract(epoch FROM vr.start_time)
+                           / :bucket_seconds
+                       )::bigint) AS bucket
+                  FROM validator_requests vr
+                 WHERE vr.time_length = :time_length
+                   AND vr.start_time < :thin_cutoff
+            ),
+            ranked AS (
+                SELECT vr_id,
+                       ROW_NUMBER() OVER (
+                           PARTITION BY asset, bucket
+                           ORDER BY vr_id ASC
+                       ) AS rn
+                  FROM old
+            )
+            UPDATE miner_predictions
+               SET deleted_at = :now,
+                   prediction = '{"deleted": true, "reason": "thinned"}'
+                                ::jsonb
+             WHERE deleted_at IS NULL
+               AND validator_requests_id IN (
+                   SELECT vr_id FROM ranked WHERE rn > 1
+               )
+            """)
+        try:
+            with self.engine.connect() as connection:
+                with connection.begin():
+                    connection.execute(
+                        thin_sql,
+                        {
+                            "bucket_seconds": (
+                                prompt_config.thin_bucket_seconds
+                            ),
+                            "time_length": prompt_config.time_length,
+                            "thin_cutoff": thin_cutoff,
+                            "now": now,
+                        },
+                    )
+        except Exception as e:
+            bt.logging.exception(
+                f"in prune_redundant_predictions (got an exception): {e}"
+            )
+
+    @print_execution_time
     def cleanup_old_history(self, prompt_config: prompt_config.PromptConfig):
         """Cleanup old history from the database."""
         cutoff_date = datetime.now() - timedelta(

@@ -307,6 +307,8 @@ class Validator(BaseValidatorNeuron):
 
     def cleanup_history(self):
         """Cleans up old history from the miner data handler."""
+        self.miner_data_handler.density_tapering_predictions(HIGH_FREQUENCY)
+        self.miner_data_handler.density_tapering_predictions(LOW_FREQUENCY)
         if self.config.validator.mode == "light":
             self.miner_data_handler.cleanup_old_history(HIGH_FREQUENCY)
             self.miner_data_handler.cleanup_old_history(LOW_FREQUENCY)

@@ -16,6 +16,12 @@ class PromptConfig:
     smoothed_score_coefficient: float
     num_simulations: int = 1000
     data_retention_days: int = 30
+    # Density tapering: predictions on validator_requests whose start_time is
+    # older than `thin_after_minutes` get soft-deleted down to one row per
+    # (miner_id, asset, bucket of `thin_bucket_seconds`). Keeps short-term
+    # density for the short scoring intervals while pruning the long tail.
+    thin_after_minutes: int = 30
+    thin_bucket_seconds: int = 3600
 
 
 LOW_FREQUENCY = PromptConfig(
@@ -49,6 +55,8 @@ LOW_FREQUENCY = PromptConfig(
     softmax_beta=-0.1,
     smoothed_score_coefficient=0.5,
     data_retention_days=12,
+    thin_after_minutes=30,
+    thin_bucket_seconds=3600,
 )
 
 HIGH_FREQUENCY = PromptConfig(
@@ -83,4 +91,6 @@ HIGH_FREQUENCY = PromptConfig(
     softmax_beta=-0.2,
     smoothed_score_coefficient=0.5,
     data_retention_days=4,
+    thin_after_minutes=10,
+    thin_bucket_seconds=600,
 )
