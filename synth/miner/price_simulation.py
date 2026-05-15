@@ -1,3 +1,6 @@
+import os
+import time
+
 import requests
 
 
@@ -9,6 +12,12 @@ from tenacity import (
 )
 
 # Hermes Pyth API documentation: https://hermes.pyth.network/docs/
+# Pyth Lazer (the Pro replacement for latest_price) docs:
+# https://docs.pyth.network/price-feeds/pro/api/rest#post-v1latest_price
+# Selected by env: PYTH_BACKEND=pro (default `hermes`). When `pro`, requests
+# go to Lazer with a Bearer PYTH_API_KEY. WTIOIL has no working Lazer feed
+# today so we route it through Hyperliquid (same coin `xyz:CL` the validator
+# uses for WTIOIL history).
 
 TOKEN_MAP = {
     "BTC": "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
@@ -25,15 +34,43 @@ TOKEN_MAP = {
     "WTIOIL": "67784f72e95ac01337edb7d7bd5bbd1c03669101b7068a620df228ed4e52ef14",
 }
 
+# Lazer u32 feed IDs sourced from https://pyth.dourolabs.app/v1/symbols by
+# matching each asset's hermes_id. Re-discover with
+# verify/pyth-lazer-listing.py. WTIOIL has no active Lazer feed (the closest
+# replacement USOILSPOT is inactive); it is intentionally absent and routed
+# to Hyperliquid in the `pro` branch instead.
+LAZER_FEED_ID_MAP: dict[str, int] = {
+    "BTC": 1,
+    "ETH": 2,
+    "SOL": 6,
+    "XRP": 14,
+    "HYPE": 110,
+    "XAU": 346,
+    "AAPLX": 1792,
+    "GOOGLX": 1808,
+    "NVDAX": 1833,
+    "SPYX": 1843,
+    "TSLAX": 1847,
+}
+
+# Hyperliquid `coin` codes for assets that have no usable Pyth feed. Mirrors
+# `PriceDataProvider.HYPERLIQUID_SYMBOL_MAP` on the validator side so the
+# miner's spot price comes from the same source the validator scores against.
+HYPERLIQUID_ASSET_MAP = {
+    "WTIOIL": "xyz:CL",
+}
+
+# `fixed_rate@200ms` meets every feed's min_channel (crypto majors accept
+# `real_time`, but stocks/metals/commodities require `fixed_rate@200ms` or
+# slower). Using one channel for every feed keeps the request body simple.
+LAZER_CHANNEL = "fixed_rate@200ms"
+
 pyth_base_url = "https://hermes.pyth.network/v2/updates/price/latest"
+lazer_base_url = "https://pyth-lazer.dourolabs.app/v1/latest_price"
+hyperliquid_base_url = "https://api.hyperliquid.xyz/info"
 
 
-@retry(
-    stop=stop_after_attempt(5),
-    wait=wait_random_exponential(multiplier=2),
-    reraise=True,
-)
-def get_asset_price(asset="BTC") -> float | None:
+def _fetch_price_hermes(asset: str) -> float | None:
     pyth_params = {"ids[]": [TOKEN_MAP[asset]]}
     response = requests.get(pyth_base_url, params=pyth_params)
     if response.status_code != 200:
@@ -43,13 +80,88 @@ def get_asset_price(asset="BTC") -> float | None:
     data = response.json()
     parsed_data = data.get("parsed", [])
 
-    asset = parsed_data[0]
-    price = int(asset["price"]["price"])
-    expo = int(asset["price"]["expo"])
+    feed = parsed_data[0]
+    price = int(feed["price"]["price"])
+    expo = int(feed["price"]["expo"])
 
     live_price: float = price * (10**expo)
-
     return live_price
+
+
+def _fetch_price_lazer(asset: str) -> float | None:
+    api_key = os.environ.get("PYTH_API_KEY")
+    if not api_key:
+        print("PYTH_API_KEY not set; required when PYTH_BACKEND=pro")
+        return None
+
+    payload = {
+        "channel": LAZER_CHANNEL,
+        "priceFeedIds": [LAZER_FEED_ID_MAP[asset]],
+        "properties": ["price", "exponent"],
+        "formats": [],
+        "parsed": True,
+        "jsonBinaryEncoding": "hex",
+    }
+    response = requests.post(
+        lazer_base_url,
+        json=payload,
+        headers={"Authorization": f"Bearer {api_key}"},
+    )
+    if response.status_code != 200:
+        print("Error in response of Pyth Lazer API")
+        return None
+
+    data = response.json()
+    feeds = (data.get("parsed") or {}).get("priceFeeds") or []
+    if not feeds:
+        return None
+
+    feed = feeds[0]
+    price_mantissa = feed.get("price")
+    expo = feed.get("exponent")
+    if price_mantissa is None or expo is None:
+        return None
+
+    live_price: float = float(price_mantissa) * (10 ** int(expo))
+    return live_price
+
+
+def _fetch_price_hyperliquid(asset: str) -> float | None:
+    now_ms = int(time.time() * 1000)
+    payload = {
+        "type": "candleSnapshot",
+        "req": {
+            "coin": HYPERLIQUID_ASSET_MAP[asset],
+            "interval": "1m",
+            "startTime": now_ms - 5 * 60 * 1000,
+            "endTime": now_ms,
+        },
+    }
+    response = requests.post(hyperliquid_base_url, json=payload, timeout=30)
+    if response.status_code != 200:
+        print("Error in response of Hyperliquid API")
+        return None
+
+    candles = response.json()
+    if not candles:
+        return None
+
+    return float(candles[-1]["c"])
+
+
+@retry(
+    stop=stop_after_attempt(5),
+    wait=wait_random_exponential(multiplier=2),
+    reraise=True,
+)
+def get_asset_price(asset="BTC") -> float | None:
+    backend = os.environ.get("PYTH_BACKEND", "hermes").lower()
+    if backend == "pro":
+        if asset in HYPERLIQUID_ASSET_MAP:
+            return _fetch_price_hyperliquid(asset)
+        if asset in LAZER_FEED_ID_MAP:
+            return _fetch_price_lazer(asset)
+    return _fetch_price_hermes(asset)
 
 
 def simulate_single_price_path(

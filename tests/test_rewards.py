@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_almost_equal
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import delete
 
@@ -12,7 +12,7 @@ from synth.validator.reward import (
     compute_softmax,
     get_rewards_multiprocess,
 )
-from tests.utils import prepare_random_predictions
+from tests.utils import prepare_random_predictions, recent_start_time
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -71,8 +71,10 @@ def test_compute_prompt_scores_only_one_miner():
 
 
 def test_get_rewards(db_engine):
-    start_time = "2024-11-25T23:58:00+00:00"
-    scored_time = datetime.fromisoformat("2024-11-28T00:00:00+00:00")
+    start_time = recent_start_time()
+    scored_time = datetime.fromisoformat(start_time) + timedelta(
+        hours=24, minutes=5
+    )
 
     handler, _, miner_uids = prepare_random_predictions(db_engine, start_time)
 

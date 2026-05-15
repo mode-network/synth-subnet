@@ -17,12 +17,14 @@ from synth.db.models import Miner, MinerReward
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator import prompt_config
-from tests.utils import prepare_random_predictions
+from tests.utils import prepare_random_predictions, recent_start_time
 
 
 def test_calculate_rewards_and_update_scores(db_engine: Engine):
-    start_time = "2024-08-25T23:58:00+00:00"
-    scored_time = datetime.fromisoformat("2024-08-28T00:00:00+00:00")
+    start_time = recent_start_time()
+    scored_time = datetime.fromisoformat(start_time) + timedelta(
+        hours=24, minutes=5
+    )
 
     handler, _, miner_uids = prepare_random_predictions(db_engine, start_time)
 
@@ -45,8 +47,10 @@ def test_calculate_rewards_and_update_scores(db_engine: Engine):
 
 
 def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
-    start_time = "2024-09-25T23:58:00+00:00"
-    scored_time = datetime.fromisoformat("2024-09-28T00:00:00+00:00")
+    start_time = recent_start_time()
+    scored_time = datetime.fromisoformat(start_time) + timedelta(
+        hours=24, minutes=5
+    )
 
     handler, _, _ = prepare_random_predictions(db_engine, start_time)
 
@@ -81,7 +85,11 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
             connection.execute(insert_stmt_validator)
 
     handler = MinerDataHandler(db_engine)
-    start_time_str = "2024-10-25T23:58:00+00:00"
+    # The loop rewrites `start_time_str` each iteration, so the effective
+    # offset from base is 0,1,3,6,10,15h across 6 iterations. The latest
+    # fetch window therefore ends at base + 15h + 24h = base + 39h, so the
+    # base must be far enough back that this is safely in the past.
+    start_time_str = recent_start_time(hours_ago=40)
     num_predictions = 6
     for i in range(num_predictions):
         miner_uids = [10, 20, 33, 40, 50, 60]
@@ -186,7 +194,10 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
             connection.execute(insert_stmt_validator)
 
     handler = MinerDataHandler(db_engine)
-    start_time_str = "2024-11-25T23:58:00+00:00"
+    # See the sibling _new_miner test — cumulative offset reaches +15h,
+    # so the fetch window ends at base + 39h. Anchor far enough back that
+    # all 6 witness candles have settled.
+    start_time_str = recent_start_time(hours_ago=40)
     num_predictions = 6
     for i in range(num_predictions):
         print("I is ", i)
@@ -307,7 +318,9 @@ def test_calculate_moving_average_and_update_rewards_only_invalid(
     db_engine: Engine,
 ):
     handler = MinerDataHandler(db_engine)
-    start_time_str = "2024-12-28T23:58:00+00:00"
+    # 3 iterations with the same cumulative-offset pattern; latest start
+    # is base + 3h, so latest fetch ends at base + 27h.
+    start_time_str = recent_start_time(hours_ago=28)
 
     handler.update_miner_rewards(
         [
