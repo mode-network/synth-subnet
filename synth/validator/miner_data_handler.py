@@ -368,8 +368,14 @@ class MinerDataHandler:
                         Miner.id == MinerPrediction.miner_id,
                     )
                     .where(
-                        MinerPrediction.validator_requests_id
-                        == validator_request_id,
+                        and_(
+                            MinerPrediction.validator_requests_id
+                            == validator_request_id,
+                            # Soft-deleted rows (cleanup_old_history or
+                            # density_tapering_predictions) carry tombstone
+                            # payloads — never feed them to the scorer.
+                            MinerPrediction.deleted_at.is_(None),
+                        ),
                     )
                 )
 
@@ -419,6 +425,26 @@ class MinerDataHandler:
                     )
                 )
 
+                # Density tapering soft-deletes every prediction on
+                # redundant validator_requests (start_time older than
+                # `thin_after_minutes`) well before they reach scoring
+                # eligibility. Without this guard, those tombstoned
+                # requests would still surface here once their
+                # `start_time + time_length + SCORING_GATE_SECONDS`
+                # passes, and `_crps_worker` would score `{"deleted":
+                # true}` payloads as garbage.
+                alive_subq = (
+                    select(1)
+                    .select_from(MinerPrediction)
+                    .where(
+                        and_(
+                            MinerPrediction.validator_requests_id
+                            == ValidatorRequest.id,
+                            MinerPrediction.deleted_at.is_(None),
+                        )
+                    )
+                )
+
                 window_start = (
                     ValidatorRequest.start_time
                     + literal_column("INTERVAL '1 second'")
@@ -450,6 +476,8 @@ class MinerDataHandler:
                             >= scored_time - timedelta(days=window_days),
                             # Exclude records that have a matching miner_prediction via the NOT EXISTS clause.
                             not_(exists(subq)),
+                            # Skip thinned-empty requests.
+                            exists(alive_subq),
                             ValidatorRequest.time_length == time_length,
                         )
                     )

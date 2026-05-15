@@ -576,7 +576,7 @@ LOW_TEST_CONFIG = PromptConfig(
     time_length=86400,
     time_increment=300,
     initial_delay=0,
-    total_cycle_minutes=60,
+    cycle_interval_minutes=5,
     timeout_extra_seconds=60,
     scoring_intervals={},
     window_days=10,
@@ -592,7 +592,7 @@ HIGH_TEST_CONFIG = PromptConfig(
     time_length=3600,
     time_increment=60,
     initial_delay=0,
-    total_cycle_minutes=10,
+    cycle_interval_minutes=2,
     timeout_extra_seconds=60,
     scoring_intervals={},
     window_days=3,
@@ -920,3 +920,73 @@ def test_prune_high_bucket_is_ten_minutes(db_engine: Engine):
             _fetch_prediction_state(connection, extra_a).deleted_at is not None
         )
         assert _fetch_prediction_state(connection, kept_b).deleted_at is None
+
+
+def test_scoring_path_skips_thinned_requests(db_engine: Engine):
+    """Regression: density_tapering_predictions tombstones every prediction
+    on redundant validator_requests ~30 min after start_time, but those
+    requests only become scoring-eligible at start_time + time_length +
+    SCORING_GATE_SECONDS (~24 h later for LOW). Without filtering, the
+    scorer would later load the `{"deleted": true}` tombstones and feed
+    them to CRPS as garbage.
+
+    This test plants two requests in the same hour-bucket, runs the
+    thinning, then verifies:
+      - `get_validator_requests_to_score` returns only the keeper.
+      - `get_predictions_by_request` on the thinned request returns nothing.
+    """
+    # 25 h ago, normalized to a stable minute so both rows share the same
+    # floor(epoch/3600) bucket regardless of wall-clock minute.
+    start = (datetime.now() - timedelta(hours=25)).replace(
+        minute=10, second=0, microsecond=0
+    )
+    scored_time = start + timedelta(hours=25)
+    with db_engine.connect() as connection:
+        with connection.begin():
+            miner_id = _insert_miner(connection, miner_uid=320)
+            keeper_mp = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="ETH",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=start,
+                created_at=start,
+                payload=[[{"price": 1.0}]],
+            )
+            thinned_mp = _insert_prediction(
+                connection,
+                miner_id=miner_id,
+                asset="ETH",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=start + timedelta(minutes=5),
+                created_at=start + timedelta(minutes=5),
+                payload=[[{"price": 2.0}]],
+            )
+
+    handler = MinerDataHandler(db_engine)
+    handler.density_tapering_predictions(LOW_TEST_CONFIG)
+
+    with db_engine.connect() as connection:
+        keeper_vr_id = connection.execute(
+            select(MinerPrediction.validator_requests_id).where(
+                MinerPrediction.id == keeper_mp
+            )
+        ).scalar_one()
+        thinned_vr_id = connection.execute(
+            select(MinerPrediction.validator_requests_id).where(
+                MinerPrediction.id == thinned_mp
+            )
+        ).scalar_one()
+
+    requests = handler.get_validator_requests_to_score(
+        scored_time=scored_time,
+        window_days=LOW_TEST_CONFIG.window_days,
+        time_length=LOW_TEST_CONFIG.time_length,
+    )
+    returned_ids = {int(r.id) for r in (requests or [])}
+    assert keeper_vr_id in returned_ids
+    assert thinned_vr_id not in returned_ids
+
+    # Defense in depth: even if a future caller bypasses the filter
+    # above, the predictions query must not surface tombstones.
+    assert handler.get_predictions_by_request(int(thinned_vr_id)) == []
