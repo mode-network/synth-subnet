@@ -61,7 +61,6 @@ class TestSelectDelay(unittest.TestCase):
         # not 60 min.
         now = datetime(2026, 5, 14, 14, 0, 0, tzinfo=timezone.utc)
         cfg = _config(cycle_interval_minutes=5)
-        cfg.asset_list = ["BTC"]
         with patch(
             "synth.utils.sequential_scheduler.get_current_time",
             return_value=now,
