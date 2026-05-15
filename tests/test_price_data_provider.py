@@ -377,7 +377,10 @@ class TestPriceDataProvider(unittest.TestCase):
             time_increment=120,
         )
         result = self.dataProvider.fetch_data(live_request)
-        print("result", result)
+        # 360s / 120s + 1 grid points; all finite and positive (BTC > 0).
+        assert len(result) == 4
+        assert all(np.isfinite(p) for p in result)
+        assert all(p > 0 for p in result)
 
 
 class TestSettlementGuard(unittest.TestCase):

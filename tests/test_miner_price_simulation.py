@@ -92,6 +92,9 @@ class TestGetAssetPriceProLazer(unittest.TestCase):
         assert body["req"]["interval"] == "1m"
 
     def test_pro_backend_returns_none_when_api_key_missing(self):
+        # Missing key returns None *without* raising — tenacity's @retry only
+        # acts on exceptions, so call_count must stay at 0 (we don't want 5
+        # useless network attempts once a key is later added).
         env = {"PYTH_BACKEND": "pro"}
         with patch.dict("os.environ", env, clear=False):
             # Make sure PYTH_API_KEY is absent.
