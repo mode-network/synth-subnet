@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 from sqlalchemy import Engine, insert
@@ -9,6 +9,18 @@ from synth.simulation_input import SimulationInput
 from synth.validator import response_validation_v2
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.db.models import Miner
+
+
+def recent_start_time(hours_ago: int = 25) -> str:
+    """Return an ISO start_time `hours_ago` hours before now (minute-aligned).
+
+    Live tests against the Pyth Pro Router can only query its rolling
+    history window, so hardcoded dates from months ago return empty data
+    and trip the settlement guard. Tests that exercise the full scoring
+    path call this to pick a window the router still serves.
+    """
+    now = datetime.now(timezone.utc).replace(second=0, microsecond=0)
+    return (now - timedelta(hours=hours_ago)).isoformat()
 
 
 def generate_values(start_time: datetime):

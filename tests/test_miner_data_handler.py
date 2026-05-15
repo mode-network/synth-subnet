@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 from sqlalchemy import Engine, select, delete
@@ -15,7 +15,11 @@ from synth.simulation_input import SimulationInput
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
 from synth.validator.reward import get_rewards_multiprocess
-from tests.utils import generate_values, prepare_random_predictions
+from tests.utils import (
+    generate_values,
+    prepare_random_predictions,
+    recent_start_time,
+)
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -365,8 +369,10 @@ def test_get_values_incorrect_format(db_engine: Engine):
 def test_set_get_scores(db_engine: Engine):
     handler = MinerDataHandler(db_engine)
     price_data_provider = PriceDataProvider()
-    start_time = "2024-11-25T23:58:00+00:00"
-    scored_time = datetime.fromisoformat("2024-11-27T00:00:00+00:00")
+    start_time = recent_start_time()
+    scored_time = datetime.fromisoformat(start_time) + timedelta(
+        hours=24, minutes=5
+    )
     handler, _, _ = prepare_random_predictions(db_engine, start_time)
 
     validator_requests = handler.get_validator_requests_to_score(

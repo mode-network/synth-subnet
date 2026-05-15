@@ -11,6 +11,9 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    env:
+      PYTH_BACKEND: pro
+      PYTH_API_KEY: ${{ secrets.PYTH_API_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
