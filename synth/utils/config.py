@@ -305,6 +305,22 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
         help="Cycle interval in minutes for the high frequency prompt.",
         default=2,
     )
+    parser.add_argument(
+        "--storage.backend",
+        type=str,
+        choices=("postgres", "bigtable"),
+        default="postgres",
+        help=(
+            "Storage backend for miner prediction payloads. 'postgres' "
+            "(default) keeps the legacy behavior: the prediction JSON lives "
+            "in miner_predictions.prediction. 'bigtable' stores the "
+            "prediction as raw float32 bytes in Bigtable (configured via "
+            "BIGTABLE_PROJECT / BIGTABLE_INSTANCE / BIGTABLE_TABLE_LOW / "
+            "BIGTABLE_TABLE_HIGH env vars); the Postgres column holds a "
+            "sentinel and the row key is stored in miner_predictions."
+            "bigtable_key."
+        ),
+    )
 
 
 def config(cls):

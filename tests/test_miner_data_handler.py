@@ -990,3 +990,188 @@ def test_scoring_path_skips_thinned_requests(db_engine: Engine):
     # Defense in depth: even if a future caller bypasses the filter
     # above, the predictions query must not surface tombstones.
     assert handler.get_predictions_by_request(int(thinned_vr_id)) == []
+
+
+# --- Bigtable backend integration -----------------------------------------
+
+
+def _production_format_prediction(num_simulations: int, num_timesteps: int):
+    """Build a prediction in production wire format (header + float paths)."""
+    paths = [
+        [float(s * 1000 + t) for t in range(num_timesteps)]
+        for s in range(num_simulations)
+    ]
+    return [1700000000, 300, *paths]
+
+
+def test_save_responses_with_bigtable_stores_sentinel_and_key(
+    db_engine: Engine,
+):
+    """save_responses with bigtable backend stores sentinel JSON in
+    `prediction` and the row key in `bigtable_key`; correctness is delegated
+    to the Bigtable backend.
+    """
+    miner_uid = 10
+    with db_engine.connect() as connection:
+        with connection.begin():
+            connection.execute(
+                insert(Miner).values([{"miner_uid": miner_uid}])
+            )
+
+    start_time = "2026-05-25T12:00:00"
+    simulation_input = SimulationInput(
+        asset="BTC",
+        start_time=start_time,
+        time_increment=300,
+        time_length=86400,
+        num_simulations=1,
+    )
+    prediction = _production_format_prediction(1, 289)
+    good_data = {
+        miner_uid: (prediction, response_validation_v2.CORRECT, "1.2"),
+    }
+
+    expected_key = f"BTC#low#{start_time}#1"
+
+    class FakeBigtable:
+        def __init__(self):
+            self.write_calls = []
+
+        def write_predictions(
+            self,
+            prompt_label,
+            simulation_input,
+            miner_predictions,
+            miner_id_map,
+        ):
+            self.write_calls.append(prompt_label)
+            return {miner_uid: expected_key}
+
+        def read_predictions(self, items):
+            # paths only, as the storage contract specifies
+            return {expected_key: prediction[2:]}
+
+    fake = FakeBigtable()
+    handler = MinerDataHandler(db_engine, bigtable_storage=fake)
+    handler.save_responses(
+        good_data,
+        simulation_input,
+        datetime.now(),
+        prompt_label="low",
+    )
+
+    assert fake.write_calls == ["low"]
+
+    with db_engine.connect() as connection:
+        row = connection.execute(
+            select(
+                MinerPrediction.prediction,
+                MinerPrediction.bigtable_key,
+            )
+        ).one()
+    assert row.prediction == {"stored": "bigtable"}
+    assert row.bigtable_key == expected_key
+
+
+def test_get_predictions_by_request_hydrates_from_bigtable(
+    db_engine: Engine,
+):
+    miner_uid = 10
+    with db_engine.connect() as connection:
+        with connection.begin():
+            connection.execute(
+                insert(Miner).values([{"miner_uid": miner_uid}])
+            )
+
+    start_time = "2026-05-25T12:00:00"
+    simulation_input = SimulationInput(
+        asset="BTC",
+        start_time=start_time,
+        time_increment=300,
+        time_length=86400,
+        num_simulations=1,
+    )
+    prediction = _production_format_prediction(1, 289)
+    expected_key = f"BTC#low#{start_time}#1"
+
+    class FakeBigtable:
+        def write_predictions(self, **_):
+            return {miner_uid: expected_key}
+
+        def read_predictions(self, items):
+            assert items[0][0] == expected_key
+            assert items[0][1] == "low"
+            assert items[0][2] == 1  # num_simulations
+            assert items[0][3] == 289  # num_timesteps
+            return {expected_key: prediction[2:]}
+
+    fake = FakeBigtable()
+    handler = MinerDataHandler(db_engine, bigtable_storage=fake)
+    handler.save_responses(
+        {miner_uid: (prediction, response_validation_v2.CORRECT, "1.2")},
+        simulation_input,
+        datetime.now(),
+        prompt_label="low",
+    )
+
+    validator_request = handler.get_validator_requests_to_score(
+        datetime.fromisoformat(start_time) + timedelta(days=2), 7
+    )[0]
+    result = handler.get_predictions_by_request(int(validator_request.id))
+    assert len(result) == 1
+    pred = result[0]
+    # Hydration derives the [start_ts, time_increment] header from the
+    # validator_requests row (which Postgres stores tz-aware in UTC), not
+    # from whatever the wire payload contained.
+    from datetime import timezone as _tz
+
+    expected_start_ts = int(
+        datetime.fromisoformat(start_time).replace(tzinfo=_tz.utc).timestamp()
+    )
+    assert pred.prediction[0] == expected_start_ts
+    assert pred.prediction[1] == simulation_input.time_increment
+    assert pred.prediction[2:] == prediction[2:]
+
+
+def test_get_predictions_by_request_missing_bigtable_row_returns_empty(
+    db_engine: Engine,
+):
+    """A row whose Bigtable blob has aged out should hydrate to [], so
+    downstream scoring treats it as no-prediction without crashing."""
+    miner_uid = 10
+    with db_engine.connect() as connection:
+        with connection.begin():
+            connection.execute(
+                insert(Miner).values([{"miner_uid": miner_uid}])
+            )
+
+    start_time = "2026-05-25T12:00:00"
+    simulation_input = SimulationInput(
+        asset="BTC",
+        start_time=start_time,
+        time_increment=300,
+        time_length=86400,
+        num_simulations=1,
+    )
+    prediction = _production_format_prediction(1, 289)
+
+    class FakeBigtable:
+        def write_predictions(self, **_):
+            return {miner_uid: "BTC#low#x#1"}
+
+        def read_predictions(self, items):
+            return {items[0][0]: []}
+
+    handler = MinerDataHandler(db_engine, bigtable_storage=FakeBigtable())
+    handler.save_responses(
+        {miner_uid: (prediction, response_validation_v2.CORRECT, "1.2")},
+        simulation_input,
+        datetime.now(),
+        prompt_label="low",
+    )
+
+    validator_request = handler.get_validator_requests_to_score(
+        datetime.fromisoformat(start_time) + timedelta(days=2), 7
+    )[0]
+    result = handler.get_predictions_by_request(int(validator_request.id))
+    assert result[0].prediction == []

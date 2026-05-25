@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 import typing
 import logging
 import math
@@ -44,6 +45,15 @@ from synth.simulation_input import SimulationInput
 from synth.utils.logging import print_execution_time
 from synth.validator import prompt_config, response_validation_v2
 from synth.validator.price_data_provider import PriceDataProvider
+from synth.validator.storage_backend import BIGTABLE_SENTINEL
+
+if typing.TYPE_CHECKING:
+    # Imported only for type hints. The Bigtable storage module pulls in
+    # google-cloud-bigtable, which is optional for validators that stay on
+    # the Postgres backend.
+    from synth.validator.bigtable_prediction_storage import (
+        BigtablePredictionStorage,
+    )
 
 # Observed headroom for Pyth to index the candle that opens at the end of
 # the prediction window. Combined with one full candle interval below, it
@@ -61,10 +71,23 @@ SCORING_GATE_SECONDS = (
 )
 
 
+def _label_from_time_length(time_length: int) -> str:
+    if time_length == prompt_config.HIGH_FREQUENCY.time_length:
+        return prompt_config.HIGH_FREQUENCY.label
+    return prompt_config.LOW_FREQUENCY.label
+
+
 class MinerDataHandler:
-    def __init__(self, engine: typing.Optional[Engine] = None):
+    def __init__(
+        self,
+        engine: typing.Optional[Engine] = None,
+        bigtable_storage: typing.Optional["BigtablePredictionStorage"] = None,
+    ):
         # Use the provided engine or fall back to the default engine
         self.engine = engine or get_engine()
+        # When set, prediction payloads are shipped to Bigtable and the
+        # Postgres `prediction` column holds a sentinel + `bigtable_key`.
+        self.bigtable_storage = bigtable_storage
 
     def get_miner_uids(self, connection: Connection):
         ranked_miners = select(
@@ -134,8 +157,15 @@ class MinerDataHandler:
         miner_predictions: dict,
         simulation_input: SimulationInput,
         request_time: datetime,
+        prompt_label: typing.Optional[str] = None,
     ):
-        """Save miner predictions and simulation input."""
+        """Save miner predictions and simulation input.
+
+        When `self.bigtable_storage` is set, CORRECT predictions are uploaded
+        to Bigtable first; the Postgres `prediction` column then carries a
+        sentinel JSON and `bigtable_key` carries the row key. `prompt_label`
+        is required in that case (selects which Bigtable table to write to).
+        """
 
         # Prepare the ValidatorRequest row from the simulation input:
         validator_requests_row = {
@@ -159,6 +189,27 @@ class MinerDataHandler:
 
                     # Create the records to insert
                     miner_id_map = self.get_miner_uids_map(connection)
+
+                    # Ship prediction blobs to Bigtable before we open the
+                    # Postgres write loop. If Postgres later fails the
+                    # @retry wrapper above will replay, and orphan Bigtable
+                    # rows age out via per-table GC policy.
+                    bigtable_keys: dict = {}
+                    if self.bigtable_storage is not None:
+                        if prompt_label is None:
+                            raise ValueError(
+                                "save_responses requires prompt_label when "
+                                "bigtable storage backend is enabled"
+                            )
+                        bigtable_keys = (
+                            self.bigtable_storage.write_predictions(
+                                prompt_label=prompt_label,
+                                simulation_input=simulation_input,
+                                miner_predictions=miner_predictions,
+                                miner_id_map=miner_id_map,
+                            )
+                        )
+
                     miner_prediction_records = []
 
                     for miner_uid, (
@@ -172,17 +223,25 @@ class MinerDataHandler:
                             )
                             continue
                         miner_id = miner_id_map[miner_uid]
+
+                        is_correct = (
+                            format_validation == response_validation_v2.CORRECT
+                        )
+                        bigtable_key = bigtable_keys.get(miner_uid)
+                        if self.bigtable_storage is not None and is_correct:
+                            prediction_column: typing.Any = BIGTABLE_SENTINEL
+                        elif is_correct:
+                            prediction_column = prediction
+                        else:
+                            prediction_column = []
+
                         miner_prediction_records.append(
                             {
                                 "validator_requests_id": validator_requests_id,
                                 "miner_uid": miner_uid,  # deprecated
                                 "miner_id": miner_id,
-                                "prediction": (
-                                    prediction
-                                    if format_validation
-                                    == response_validation_v2.CORRECT
-                                    else []
-                                ),
+                                "prediction": prediction_column,
+                                "bigtable_key": bigtable_key,
                                 "format_validation": format_validation,
                                 "process_time": process_time,
                             }
@@ -350,8 +409,15 @@ class MinerDataHandler:
     @print_execution_time
     def get_predictions_by_request(
         self, validator_request_id: int
-    ) -> typing.Optional[MinerPrediction]:
-        """Retrieve the record with the longest valid interval for the given miner_id."""
+    ) -> typing.Optional[list]:
+        """Retrieve the record with the longest valid interval for the given miner_id.
+
+        When rows were written by the Bigtable backend (`bigtable_key IS NOT
+        NULL`), the prediction blob is fetched from Bigtable and substituted
+        in place of the sentinel JSON. The returned shape stays
+        `(miner_uid, id, prediction, format_validation, process_time)` so
+        downstream consumers (reward.py) are backend-agnostic.
+        """
         try:
             with self.engine.connect() as connection:
                 query = (
@@ -361,6 +427,7 @@ class MinerDataHandler:
                         MinerPrediction.prediction,
                         MinerPrediction.format_validation,
                         MinerPrediction.process_time,
+                        MinerPrediction.bigtable_key,
                     )
                     .select_from(MinerPrediction)
                     .join(
@@ -379,9 +446,69 @@ class MinerDataHandler:
                     )
                 )
 
-                row = connection.execute(query).fetchall()
+                rows = connection.execute(query).fetchall()
 
-            return row
+                bigtable_rows = [r for r in rows if r.bigtable_key is not None]
+                if not bigtable_rows:
+                    return list(rows)
+
+                vr = connection.execute(
+                    select(
+                        ValidatorRequest.start_time,
+                        ValidatorRequest.time_increment,
+                        ValidatorRequest.time_length,
+                        ValidatorRequest.num_simulations,
+                    ).where(ValidatorRequest.id == validator_request_id)
+                ).one()
+
+            if self.bigtable_storage is None:
+                bt.logging.error(
+                    "found bigtable-backed predictions but no bigtable "
+                    "storage is configured on this validator; treating them "
+                    "as missing"
+                )
+                paths_by_key: dict = {}
+            else:
+                prompt_label = _label_from_time_length(vr.time_length)
+                num_timesteps = vr.time_length // vr.time_increment + 1
+                paths_by_key = self.bigtable_storage.read_predictions(
+                    [
+                        (
+                            r.bigtable_key,
+                            prompt_label,
+                            int(vr.num_simulations),
+                            int(num_timesteps),
+                        )
+                        for r in bigtable_rows
+                    ]
+                )
+
+            start_ts = int(vr.start_time.timestamp())
+            time_increment = int(vr.time_increment)
+
+            hydrated = []
+            for r in rows:
+                if r.bigtable_key is None:
+                    hydrated.append(r)
+                    continue
+                paths = paths_by_key.get(r.bigtable_key) or []
+                if paths:
+                    prediction = [start_ts, time_increment, *paths]
+                else:
+                    # Missing Bigtable row (likely GC'd). Treat as no
+                    # prediction: downstream adjust_predictions returns None.
+                    prediction = []
+                hydrated.append(
+                    SimpleNamespace(
+                        miner_uid=r.miner_uid,
+                        id=r.id,
+                        prediction=prediction,
+                        format_validation=r.format_validation,
+                        process_time=r.process_time,
+                    )
+                )
+
+            return hydrated
         except Exception as e:
             bt.logging.exception(
                 f"in get_miner_prediction (got an exception): {e}"

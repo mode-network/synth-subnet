@@ -93,6 +93,7 @@ class MinerPrediction(Base):
         nullable=False,
     )
     prediction = Column(JSONB, nullable=False)
+    bigtable_key = Column(Text, nullable=True)
     format_validation = Column(String, nullable=True)
     process_time = Column(Float, nullable=True)
 
