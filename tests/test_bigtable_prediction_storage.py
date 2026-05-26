@@ -12,10 +12,15 @@ import pytest
 pytest.importorskip("google.cloud.bigtable")
 
 from synth.simulation_input import SimulationInput  # noqa: E402
+from synth.validator import prompt_config  # noqa: E402
 from synth.validator import response_validation_v2  # noqa: E402
 from synth.validator import bigtable_prediction_storage as bps  # noqa: E402
 
 CORRECT = response_validation_v2.CORRECT
+LOW_TIME_LENGTH = prompt_config.LOW_FREQUENCY.time_length
+LOW_TIME_INCREMENT = prompt_config.LOW_FREQUENCY.time_increment
+HIGH_TIME_LENGTH = prompt_config.HIGH_FREQUENCY.time_length
+HIGH_TIME_INCREMENT = prompt_config.HIGH_FREQUENCY.time_increment
 
 
 def _make_production_prediction(num_simulations: int, num_timesteps: int):
@@ -63,6 +68,34 @@ def test_paths_round_trip():
     assert paths == expected
 
 
+def _low_sim_input():
+    return SimulationInput(
+        asset="BTC",
+        start_time="2026-05-25T12:00:00",
+        time_increment=LOW_TIME_INCREMENT,
+        time_length=LOW_TIME_LENGTH,
+        num_simulations=2,
+    )
+
+
+def _high_sim_input():
+    return SimulationInput(
+        asset="ETH",
+        start_time="2026-05-25T12:00:00",
+        time_increment=HIGH_TIME_INCREMENT,
+        time_length=HIGH_TIME_LENGTH,
+        num_simulations=2,
+    )
+
+
+def _validator_request(time_length, time_increment, num_simulations):
+    return MagicMock(
+        time_length=time_length,
+        time_increment=time_increment,
+        num_simulations=num_simulations,
+    )
+
+
 def test_write_predictions_skips_invalid_format_and_unknown_miners():
     storage = _make_storage_with_mock_tables()
     storage._tables["low"].direct_row.side_effect = lambda key: MagicMock(
@@ -72,13 +105,7 @@ def test_write_predictions_skips_invalid_format_and_unknown_miners():
 
     good = _make_production_prediction(2, 3)
     bad = _make_production_prediction(2, 3)
-    sim_input = SimulationInput(
-        asset="BTC",
-        start_time="2026-05-25T12:00:00",
-        time_increment=300,
-        time_length=600,
-        num_simulations=2,
-    )
+    sim_input = _low_sim_input()
     miner_predictions = {
         10: (good, CORRECT, "1.0"),
         11: (bad, "time out or internal server error", "1.5"),
@@ -88,7 +115,6 @@ def test_write_predictions_skips_invalid_format_and_unknown_miners():
     miner_id_map = {10: 100, 11: 101}
 
     keys = storage.write_predictions(
-        prompt_label="low",
         simulation_input=sim_input,
         miner_predictions=miner_predictions,
         miner_id_map=miner_id_map,
@@ -109,15 +135,8 @@ def test_write_predictions_routes_to_high_table():
     storage._tables["high"].mutate_rows.return_value = []
 
     prediction = _make_production_prediction(2, 3)
-    sim_input = SimulationInput(
-        asset="ETH",
-        start_time="2026-05-25T12:00:00",
-        time_increment=60,
-        time_length=120,
-        num_simulations=2,
-    )
+    sim_input = _high_sim_input()
     storage.write_predictions(
-        prompt_label="high",
         simulation_input=sim_input,
         miner_predictions={10: (prediction, CORRECT, "0.9")},
         miner_id_map={10: 100},
@@ -127,40 +146,22 @@ def test_write_predictions_routes_to_high_table():
     storage._tables["high"].mutate_rows.assert_called_once()
 
 
-def test_write_predictions_unknown_prompt_label_raises():
-    storage = _make_storage_with_mock_tables()
-    prediction = _make_production_prediction(1, 2)
-    sim_input = SimulationInput(
-        asset="BTC",
-        start_time="2026-05-25T12:00:00",
-        time_increment=60,
-        time_length=60,
-        num_simulations=1,
-    )
-    with pytest.raises(ValueError):
-        storage.write_predictions(
-            prompt_label="medium",
-            simulation_input=sim_input,
-            miner_predictions={10: (prediction, CORRECT, "1")},
-            miner_id_map={10: 100},
-        )
-
-
 def test_read_predictions_missing_rows_return_empty():
     storage = _make_storage_with_mock_tables()
     # Bigtable returns no rows — every key should map to [].
     storage._tables["low"].read_rows.return_value = iter([])
+    vr = _validator_request(LOW_TIME_LENGTH, LOW_TIME_INCREMENT, 2)
 
-    result = storage.read_predictions(
-        [("BTC#low#t0#100", "low", 2, 3), ("BTC#low#t0#101", "low", 2, 3)]
-    )
+    result = storage.read_predictions(vr, ["BTC#low#t0#100", "BTC#low#t0#101"])
 
     assert result == {"BTC#low#t0#100": [], "BTC#low#t0#101": []}
 
 
 def test_read_predictions_decodes_cell_bytes():
     storage = _make_storage_with_mock_tables()
-    prediction = _make_production_prediction(2, 3)
+    # use a tiny shape so the prediction fixture fits the validator_request
+    num_sims, num_steps = 2, 3
+    prediction = _make_production_prediction(num_sims, num_steps)
     blob = bps._paths_to_float32_bytes(prediction)
 
     cell = MagicMock()
@@ -170,7 +171,10 @@ def test_read_predictions_decodes_cell_bytes():
     bt_row.cells = {bps.COLUMN_FAMILY: {bps.COLUMN_QUALIFIER: [cell]}}
     storage._tables["low"].read_rows.return_value = iter([bt_row])
 
-    result = storage.read_predictions([("BTC#low#t0#100", "low", 2, 3)])
+    # validator_request.time_length / time_increment + 1 must equal num_steps
+    # so the reshape lines up; pick increment=1, length=num_steps-1.
+    vr = _validator_request(num_steps - 1, 1, num_sims)
+    result = storage.read_predictions(vr, ["BTC#low#t0#100"])
 
     expected = np.asarray(prediction[2:], dtype=np.float32).tolist()
     assert result["BTC#low#t0#100"] == expected

@@ -20,7 +20,7 @@ from google.cloud.bigtable.row_filters import CellsColumnLimitFilter
 from google.cloud.bigtable.row_set import RowSet
 
 from synth.simulation_input import SimulationInput
-from synth.validator import response_validation_v2
+from synth.validator import prompt_config, response_validation_v2
 
 COLUMN_FAMILY = "p"
 COLUMN_QUALIFIER = b"d"
@@ -62,7 +62,6 @@ class BigtablePredictionStorage:
 
     def write_predictions(
         self,
-        prompt_label: str,
         simulation_input: SimulationInput,
         miner_predictions: dict,
         miner_id_map: dict,
@@ -73,6 +72,9 @@ class BigtablePredictionStorage:
         whose response failed format validation or whose miner_uid is not in
         miner_id_map are skipped.
         """
+        prompt_label = prompt_config.label_from_time_length(
+            simulation_input.time_length
+        )
         table = self._table_for_label(prompt_label)
 
         rows = []
@@ -122,45 +124,47 @@ class BigtablePredictionStorage:
 
     def read_predictions(
         self,
-        items: list,
+        validator_request,
+        keys: list,
     ) -> dict:
         """Batch-read prediction blobs from Bigtable.
 
-        `items` is a list of tuples `(bigtable_key, prompt_label,
-        num_simulations, num_timesteps)`. Returns `{bigtable_key: paths}` where
-        `paths` is `list[list[float]]` with shape (num_simulations,
-        num_timesteps). Missing rows return `[]` (treated upstream as
-        no-prediction).
+        `validator_request` carries the metadata needed to pick the right
+        table (via `time_length` → prompt label) and to reshape the raw
+        float32 bytes back into `(num_simulations, num_timesteps)`. Returns
+        `{bigtable_key: paths}` where `paths` is `list[list[float]]`. Missing
+        rows return `[]` (treated upstream as no-prediction).
         """
-        grouped: dict = {}
-        shape_by_key: dict = {}
-        for key, prompt_label, num_simulations, num_timesteps in items:
-            grouped.setdefault(prompt_label, []).append(key)
-            shape_by_key[key] = (num_simulations, num_timesteps)
+        prompt_label = prompt_config.label_from_time_length(
+            validator_request.time_length
+        )
+        num_simulations = int(validator_request.num_simulations)
+        num_timesteps = (
+            validator_request.time_length // validator_request.time_increment
+            + 1
+        )
 
-        result: dict = {key: [] for key, *_ in items}
+        result: dict = {key: [] for key in keys}
+        if not keys:
+            return result
 
-        for prompt_label, keys in grouped.items():
-            table = self._table_for_label(prompt_label)
-            row_set = RowSet()
-            for key in keys:
-                row_set.add_row_key(key)
-            row_filter = CellsColumnLimitFilter(1)
-            for row in table.read_rows(row_set=row_set, filter_=row_filter):
-                key = (
-                    row.row_key.decode("utf-8")
-                    if isinstance(row.row_key, bytes)
-                    else row.row_key
-                )
-                cells = row.cells.get(COLUMN_FAMILY, {}).get(
-                    COLUMN_QUALIFIER, []
-                )
-                if not cells:
-                    continue
-                num_simulations, num_timesteps = shape_by_key[key]
-                result[key] = _float32_bytes_to_paths(
-                    cells[0].value, num_simulations, num_timesteps
-                )
+        table = self._table_for_label(prompt_label)
+        row_set = RowSet()
+        for key in keys:
+            row_set.add_row_key(key)
+        row_filter = CellsColumnLimitFilter(1)
+        for row in table.read_rows(row_set=row_set, filter_=row_filter):
+            key = (
+                row.row_key.decode("utf-8")
+                if isinstance(row.row_key, bytes)
+                else row.row_key
+            )
+            cells = row.cells.get(COLUMN_FAMILY, {}).get(COLUMN_QUALIFIER, [])
+            if not cells:
+                continue
+            result[key] = _float32_bytes_to_paths(
+                cells[0].value, num_simulations, num_timesteps
+            )
 
         return result
 

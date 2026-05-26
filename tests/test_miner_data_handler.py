@@ -1039,15 +1039,14 @@ def test_save_responses_with_bigtable_stores_sentinel_and_key(
 
         def write_predictions(
             self,
-            prompt_label,
             simulation_input,
             miner_predictions,
             miner_id_map,
         ):
-            self.write_calls.append(prompt_label)
+            self.write_calls.append(simulation_input.time_length)
             return {miner_uid: expected_key}
 
-        def read_predictions(self, items):
+        def read_predictions(self, validator_request, keys):
             # paths only, as the storage contract specifies
             return {expected_key: prediction[2:]}
 
@@ -1057,10 +1056,9 @@ def test_save_responses_with_bigtable_stores_sentinel_and_key(
         good_data,
         simulation_input,
         datetime.now(),
-        prompt_label="low",
     )
 
-    assert fake.write_calls == ["low"]
+    assert fake.write_calls == [simulation_input.time_length]
 
     with db_engine.connect() as connection:
         row = connection.execute(
@@ -1098,11 +1096,11 @@ def test_get_predictions_by_request_hydrates_from_bigtable(
         def write_predictions(self, **_):
             return {miner_uid: expected_key}
 
-        def read_predictions(self, items):
-            assert items[0][0] == expected_key
-            assert items[0][1] == "low"
-            assert items[0][2] == 1  # num_simulations
-            assert items[0][3] == 289  # num_timesteps
+        def read_predictions(self, validator_request, keys):
+            assert keys == [expected_key]
+            assert (
+                validator_request.time_length == simulation_input.time_length
+            )
             return {expected_key: prediction[2:]}
 
     fake = FakeBigtable()
@@ -1111,7 +1109,6 @@ def test_get_predictions_by_request_hydrates_from_bigtable(
         {miner_uid: (prediction, response_validation_v2.CORRECT, "1.2")},
         simulation_input,
         datetime.now(),
-        prompt_label="low",
     )
 
     validator_request = handler.get_validator_requests_to_score(
@@ -1159,15 +1156,14 @@ def test_get_predictions_by_request_missing_bigtable_row_returns_empty(
         def write_predictions(self, **_):
             return {miner_uid: "BTC#low#x#1"}
 
-        def read_predictions(self, items):
-            return {items[0][0]: []}
+        def read_predictions(self, validator_request, keys):
+            return {keys[0]: []}
 
     handler = MinerDataHandler(db_engine, bigtable_storage=FakeBigtable())
     handler.save_responses(
         {miner_uid: (prediction, response_validation_v2.CORRECT, "1.2")},
         simulation_input,
         datetime.now(),
-        prompt_label="low",
     )
 
     validator_request = handler.get_validator_requests_to_score(

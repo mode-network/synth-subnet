@@ -94,3 +94,10 @@ HIGH_FREQUENCY = PromptConfig(
     thin_after_minutes=10,
     thin_bucket_seconds=600,
 )
+
+
+def label_from_time_length(time_length: int) -> str:
+    """Return the prompt label ('low' or 'high') for a given time_length."""
+    if time_length == HIGH_FREQUENCY.time_length:
+        return HIGH_FREQUENCY.label
+    return LOW_FREQUENCY.label

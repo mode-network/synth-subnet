@@ -21,7 +21,6 @@ import random
 import time
 import sys
 import traceback
-import typing
 
 import bittensor as bt
 import numpy as np
@@ -185,7 +184,6 @@ def query_available_miners_and_save_responses(
     miner_uids: list,
     simulation_input: SimulationInput,
     request_time: datetime,
-    prompt_label: typing.Optional[str] = None,
 ):
     timeout = timeout_from_start_time(simulation_input.start_time)
 
@@ -252,7 +250,6 @@ def query_available_miners_and_save_responses(
             miner_predictions,
             simulation_input,
             request_time,
-            prompt_label=prompt_label,
         )
     else:
         bt.logging.info("skip saving because no prediction")

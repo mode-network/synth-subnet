@@ -71,12 +71,6 @@ SCORING_GATE_SECONDS = (
 )
 
 
-def _label_from_time_length(time_length: int) -> str:
-    if time_length == prompt_config.HIGH_FREQUENCY.time_length:
-        return prompt_config.HIGH_FREQUENCY.label
-    return prompt_config.LOW_FREQUENCY.label
-
-
 class MinerDataHandler:
     def __init__(
         self,
@@ -157,14 +151,12 @@ class MinerDataHandler:
         miner_predictions: dict,
         simulation_input: SimulationInput,
         request_time: datetime,
-        prompt_label: typing.Optional[str] = None,
     ):
         """Save miner predictions and simulation input.
 
         When `self.bigtable_storage` is set, CORRECT predictions are uploaded
         to Bigtable first; the Postgres `prediction` column then carries a
-        sentinel JSON and `bigtable_key` carries the row key. `prompt_label`
-        is required in that case (selects which Bigtable table to write to).
+        sentinel JSON and `bigtable_key` carries the row key.
         """
 
         # Prepare the ValidatorRequest row from the simulation input:
@@ -196,14 +188,8 @@ class MinerDataHandler:
                     # rows age out via per-table GC policy.
                     bigtable_keys: dict = {}
                     if self.bigtable_storage is not None:
-                        if prompt_label is None:
-                            raise ValueError(
-                                "save_responses requires prompt_label when "
-                                "bigtable storage backend is enabled"
-                            )
                         bigtable_keys = (
                             self.bigtable_storage.write_predictions(
-                                prompt_label=prompt_label,
                                 simulation_input=simulation_input,
                                 miner_predictions=miner_predictions,
                                 miner_id_map=miner_id_map,
@@ -485,24 +471,9 @@ class MinerDataHandler:
             )
             paths_by_key: dict = {}
         else:
-            prompt_label = _label_from_time_length(
-                validator_request.time_length
-            )
-            num_timesteps = (
-                validator_request.time_length
-                // validator_request.time_increment
-                + 1
-            )
             paths_by_key = self.bigtable_storage.read_predictions(
-                [
-                    (
-                        r.bigtable_key,
-                        prompt_label,
-                        int(validator_request.num_simulations),
-                        int(num_timesteps),
-                    )
-                    for r in bigtable_rows
-                ]
+                validator_request,
+                [r.bigtable_key for r in bigtable_rows],
             )
 
         start_ts = int(validator_request.start_time.timestamp())

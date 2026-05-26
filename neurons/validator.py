@@ -234,7 +234,6 @@ class Validator(BaseValidatorNeuron):
             miner_uids=self.miner_uids,
             simulation_input=simulation_input,
             request_time=request_time,
-            prompt_label=prompt_config.label,
         )
 
     @print_execution_time
