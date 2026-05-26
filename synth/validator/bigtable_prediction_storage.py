@@ -85,6 +85,10 @@ class BigtablePredictionStorage:
             if format_validation != response_validation_v2.CORRECT:
                 continue
             if miner_uid not in miner_id_map:
+                bt.logging.warning(
+                    f"bigtable write_predictions: miner_uid {miner_uid} "
+                    f"not in miners table, skipping"
+                )
                 continue
 
             miner_id = miner_id_map[miner_uid]

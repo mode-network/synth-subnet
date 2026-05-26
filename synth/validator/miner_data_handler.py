@@ -410,13 +410,13 @@ class MinerDataHandler:
     def get_predictions_by_request(
         self, validator_request_id: int
     ) -> typing.Optional[list]:
-        """Retrieve the record with the longest valid interval for the given miner_id.
+        """Return all miner predictions for `validator_request_id`.
 
-        When rows were written by the Bigtable backend (`bigtable_key IS NOT
-        NULL`), the prediction blob is fetched from Bigtable and substituted
-        in place of the sentinel JSON. The returned shape stays
+        Rows whose `bigtable_key` is set were written by the Bigtable backend;
+        their prediction blob is fetched from Bigtable and substituted in
+        place of the sentinel JSON. The returned shape stays
         `(miner_uid, id, prediction, format_validation, process_time)` so
-        downstream consumers (reward.py) are backend-agnostic.
+        downstream consumers (`reward.py`) are backend-agnostic.
         """
         try:
             with self.engine.connect() as connection:
@@ -461,59 +461,76 @@ class MinerDataHandler:
                     ).where(ValidatorRequest.id == validator_request_id)
                 ).one()
 
-            if self.bigtable_storage is None:
-                bt.logging.error(
-                    "found bigtable-backed predictions but no bigtable "
-                    "storage is configured on this validator; treating them "
-                    "as missing"
-                )
-                paths_by_key: dict = {}
-            else:
-                prompt_label = _label_from_time_length(vr.time_length)
-                num_timesteps = vr.time_length // vr.time_increment + 1
-                paths_by_key = self.bigtable_storage.read_predictions(
-                    [
-                        (
-                            r.bigtable_key,
-                            prompt_label,
-                            int(vr.num_simulations),
-                            int(num_timesteps),
-                        )
-                        for r in bigtable_rows
-                    ]
-                )
-
-            start_ts = int(vr.start_time.timestamp())
-            time_increment = int(vr.time_increment)
-
-            hydrated = []
-            for r in rows:
-                if r.bigtable_key is None:
-                    hydrated.append(r)
-                    continue
-                paths = paths_by_key.get(r.bigtable_key) or []
-                if paths:
-                    prediction = [start_ts, time_increment, *paths]
-                else:
-                    # Missing Bigtable row (likely GC'd). Treat as no
-                    # prediction: downstream adjust_predictions returns None.
-                    prediction = []
-                hydrated.append(
-                    SimpleNamespace(
-                        miner_uid=r.miner_uid,
-                        id=r.id,
-                        prediction=prediction,
-                        format_validation=r.format_validation,
-                        process_time=r.process_time,
-                    )
-                )
-
-            return hydrated
+            return self._hydrate_from_bigtable(vr, rows, bigtable_rows)
         except Exception as e:
             bt.logging.exception(
-                f"in get_miner_prediction (got an exception): {e}"
+                f"in get_predictions_by_request (got an exception): {e}"
             )
             return None
+
+    def _hydrate_from_bigtable(
+        self, validator_request, rows: list, bigtable_rows: list
+    ) -> list:
+        """Replace Bigtable-backed sentinels with the actual prediction.
+
+        `rows` is the full result set from the Postgres query above (mix of
+        Postgres-only and Bigtable-backed). `bigtable_rows` is the subset
+        with `bigtable_key IS NOT NULL` — passed in so we don't filter twice.
+        """
+        if self.bigtable_storage is None:
+            bt.logging.error(
+                "found bigtable-backed predictions but no bigtable "
+                "storage is configured on this validator; treating them "
+                "as missing"
+            )
+            paths_by_key: dict = {}
+        else:
+            prompt_label = _label_from_time_length(
+                validator_request.time_length
+            )
+            num_timesteps = (
+                validator_request.time_length
+                // validator_request.time_increment
+                + 1
+            )
+            paths_by_key = self.bigtable_storage.read_predictions(
+                [
+                    (
+                        r.bigtable_key,
+                        prompt_label,
+                        int(validator_request.num_simulations),
+                        int(num_timesteps),
+                    )
+                    for r in bigtable_rows
+                ]
+            )
+
+        start_ts = int(validator_request.start_time.timestamp())
+        time_increment = int(validator_request.time_increment)
+
+        hydrated = []
+        for r in rows:
+            if r.bigtable_key is None:
+                hydrated.append(r)
+                continue
+            paths = paths_by_key.get(r.bigtable_key) or []
+            if paths:
+                prediction = [start_ts, time_increment, *paths]
+            else:
+                # Missing Bigtable row (likely GC'd). Treat as no
+                # prediction: downstream adjust_predictions returns None.
+                prediction = []
+            hydrated.append(
+                SimpleNamespace(
+                    miner_uid=r.miner_uid,
+                    id=r.id,
+                    prediction=prediction,
+                    format_validation=r.format_validation,
+                    process_time=r.process_time,
+                )
+            )
+
+        return hydrated
 
     @print_execution_time
     def get_validator_requests_to_score(
