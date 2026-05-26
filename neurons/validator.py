@@ -83,6 +83,12 @@ class Validator(BaseValidatorNeuron):
         HIGH_FREQUENCY.window_days = self.config.sma.high.days
         LOW_FREQUENCY.data_retention_days = self.config.retention.low.days
         HIGH_FREQUENCY.data_retention_days = self.config.retention.high.days
+        LOW_FREQUENCY.cycle_interval_minutes = (
+            self.config.cycle_interval_minutes.low
+        )
+        HIGH_FREQUENCY.cycle_interval_minutes = (
+            self.config.cycle_interval_minutes.high
+        )
 
         PriceDataProvider.assert_assets_supported(HIGH_FREQUENCY.asset_list)
         PriceDataProvider.assert_assets_supported(LOW_FREQUENCY.asset_list)

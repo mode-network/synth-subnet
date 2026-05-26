@@ -292,6 +292,20 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
         default=-0.2,
     )
 
+    parser.add_argument(
+        "--cycle_interval_minutes.low",
+        type=int,
+        help="Cycle interval in minutes for the low frequency prompt.",
+        default=5,
+    )
+
+    parser.add_argument(
+        "--cycle_interval_minutes.high",
+        type=int,
+        help="Cycle interval in minutes for the high frequency prompt.",
+        default=2,
+    )
+
 
 def config(cls):
     """
