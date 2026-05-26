@@ -199,14 +199,16 @@ def test_read_predictions_missing_rows_return_empty():
     assert result == {"k1": [], "k2": []}
 
 
+LOW_NUM_STEPS = LOW_TIME_LENGTH // LOW_TIME_INCREMENT + 1
+
+
 def test_read_predictions_decodes_cell_bytes():
     storage = _make_storage_with_mock_tables()
-    num_sims, num_steps = 2, 3
-    prediction = _make_production_prediction(num_sims, num_steps)
+    num_sims = 2
+    prediction = _make_production_prediction(num_sims, LOW_NUM_STEPS)
     blob = bps._paths_to_float32_bytes(prediction)
 
-    # validator_request.time_length / time_increment + 1 must equal num_steps
-    vr = _validator_request(num_steps - 1, 1, num_sims)
+    vr = _validator_request(LOW_TIME_LENGTH, LOW_TIME_INCREMENT, num_sims)
     start_unix = int(vr.start_time.timestamp())
     key = bps.BigtablePredictionStorage.build_row_key(
         vr.asset, start_unix, 100
@@ -229,11 +231,11 @@ def test_read_predictions_ignores_unwanted_keys_from_range_scan():
     """The range scan also surfaces rows whose Postgres siblings were
     soft-deleted; we should ignore those, not return them in the result."""
     storage = _make_storage_with_mock_tables()
-    num_sims, num_steps = 2, 3
-    prediction = _make_production_prediction(num_sims, num_steps)
+    num_sims = 2
+    prediction = _make_production_prediction(num_sims, LOW_NUM_STEPS)
     blob = bps._paths_to_float32_bytes(prediction)
 
-    vr = _validator_request(num_steps - 1, 1, num_sims)
+    vr = _validator_request(LOW_TIME_LENGTH, LOW_TIME_INCREMENT, num_sims)
     start_unix = int(vr.start_time.timestamp())
     wanted = bps.BigtablePredictionStorage.build_row_key(
         vr.asset, start_unix, 100
@@ -261,8 +263,7 @@ def test_read_predictions_ignores_unwanted_keys_from_range_scan():
 
 def test_read_predictions_skips_undecodable_blobs():
     storage = _make_storage_with_mock_tables()
-    num_sims, num_steps = 2, 3
-    vr = _validator_request(num_steps - 1, 1, num_sims)
+    vr = _validator_request(LOW_TIME_LENGTH, LOW_TIME_INCREMENT, 2)
     start_unix = int(vr.start_time.timestamp())
     key = bps.BigtablePredictionStorage.build_row_key(
         vr.asset, start_unix, 100
@@ -280,8 +281,14 @@ def test_read_predictions_skips_undecodable_blobs():
     assert result[key] == []
 
 
+def test_label_from_time_length_raises_on_unknown():
+    with pytest.raises(ValueError):
+        prompt_config.label_from_time_length(time_length=42)
+
+
 def test_start_time_to_unix_treats_naive_as_utc():
-    # Naive vs +00:00 vs trailing Z should all produce the same unix int.
+    # Naive matches +00:00 (no Z support needed — callers always pass
+    # `simulation_input.start_time` which is an isoformat() string).
     base = bps._start_time_to_unix("2026-05-25T12:00:00")
     assert bps._start_time_to_unix("2026-05-25T12:00:00+00:00") == base
     assert bps._start_time_to_unix("2026-05-25T12:00:00") == 1779710400

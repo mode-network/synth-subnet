@@ -394,15 +394,20 @@ class MinerDataHandler:
 
     @print_execution_time
     def get_predictions_by_request(
-        self, validator_request_id: int
+        self, validator_request
     ) -> typing.Optional[list]:
-        """Return all miner predictions for `validator_request_id`.
+        """Return all miner predictions for `validator_request`.
 
-        Rows whose `bigtable_key` is set were written by the Bigtable backend;
-        their prediction blob is fetched from Bigtable and substituted in
-        place of the sentinel JSON. The returned shape stays
-        `(miner_uid, id, prediction, format_validation, process_time)` so
-        downstream consumers (`reward.py`) are backend-agnostic.
+        Takes the full `validator_request` row (not just its id) so we avoid
+        a second DB roundtrip when hydrating Bigtable-backed predictions —
+        the caller already has the row from `get_validator_requests_to_score`.
+
+        Each returned item has the attributes `miner_uid`, `id`, `prediction`,
+        `format_validation`, `process_time`. Postgres-only rows are returned
+        as SQLAlchemy `Row` objects (with an extra `bigtable_key` attribute,
+        unused by consumers); Bigtable-hydrated rows are returned as
+        `SimpleNamespace` with the same five attributes. Consumers
+        (`reward.py`) access by name and are agnostic to which one they get.
         """
         try:
             with self.engine.connect() as connection:
@@ -423,7 +428,7 @@ class MinerDataHandler:
                     .where(
                         and_(
                             MinerPrediction.validator_requests_id
-                            == validator_request_id,
+                            == validator_request.id,
                             # Soft-deleted rows (cleanup_old_history or
                             # density_tapering_predictions) carry tombstone
                             # payloads — never feed them to the scorer.
@@ -434,20 +439,13 @@ class MinerDataHandler:
 
                 rows = connection.execute(query).fetchall()
 
-                bigtable_rows = [r for r in rows if r.bigtable_key is not None]
-                if not bigtable_rows:
-                    return list(rows)
+            bigtable_rows = [r for r in rows if r.bigtable_key is not None]
+            if not bigtable_rows:
+                return list(rows)
 
-                vr = connection.execute(
-                    select(
-                        ValidatorRequest.start_time,
-                        ValidatorRequest.time_increment,
-                        ValidatorRequest.time_length,
-                        ValidatorRequest.num_simulations,
-                    ).where(ValidatorRequest.id == validator_request_id)
-                ).one()
-
-            return self._hydrate_from_bigtable(vr, rows, bigtable_rows)
+            return self._hydrate_from_bigtable(
+                validator_request, rows, bigtable_rows
+            )
         except Exception as e:
             bt.logging.exception(
                 f"in get_predictions_by_request (got an exception): {e}"

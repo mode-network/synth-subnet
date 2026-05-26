@@ -287,7 +287,7 @@ def get_rewards_multiprocess(
         return None, [], []
 
     predictions = miner_data_handler.get_predictions_by_request(
-        int(validator_request.id)
+        validator_request
     )
 
     if predictions is None or len(predictions) == 0:

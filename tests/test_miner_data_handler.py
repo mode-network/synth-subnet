@@ -72,7 +72,7 @@ def test_get_values_within_range(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 1
 
-    result = handler.get_predictions_by_request(int(validator_requests[0].id))
+    result = handler.get_predictions_by_request(validator_requests[0])
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
@@ -200,7 +200,7 @@ def test_multiple_records_for_same_miner(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 2
 
-    result = handler.get_predictions_by_request(int(validator_requests[1].id))
+    result = handler.get_predictions_by_request(validator_requests[1])
 
     assert result is not None
     pred = result[0]
@@ -285,7 +285,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 1
 
-    result = handler.get_predictions_by_request(int(validator_requests[0].id))
+    result = handler.get_predictions_by_request(validator_requests[0])
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
@@ -356,7 +356,7 @@ def test_get_values_incorrect_format(db_engine: Engine):
     )
     assert validator_requests is not None
     assert len(validator_requests) == 1
-    result = handler.get_predictions_by_request(int(validator_requests[0].id))
+    result = handler.get_predictions_by_request(validator_requests[0])
 
     assert result is not None
     pred = result[0]
@@ -989,7 +989,13 @@ def test_scoring_path_skips_thinned_requests(db_engine: Engine):
 
     # Defense in depth: even if a future caller bypasses the filter
     # above, the predictions query must not surface tombstones.
-    assert handler.get_predictions_by_request(int(thinned_vr_id)) == []
+    with db_engine.connect() as connection:
+        thinned_vr = connection.execute(
+            select(ValidatorRequest).where(
+                ValidatorRequest.id == thinned_vr_id
+            )
+        ).one()
+    assert handler.get_predictions_by_request(thinned_vr) == []
 
 
 # --- Bigtable backend integration -----------------------------------------
@@ -1116,7 +1122,7 @@ def test_get_predictions_by_request_hydrates_from_bigtable(
     validator_request = handler.get_validator_requests_to_score(
         datetime.fromisoformat(start_time) + timedelta(days=2), 7
     )[0]
-    result = handler.get_predictions_by_request(int(validator_request.id))
+    result = handler.get_predictions_by_request(validator_request)
     assert len(result) == 1
     pred = result[0]
     # Hydration derives the [start_ts, time_increment] header from the
@@ -1171,5 +1177,5 @@ def test_get_predictions_by_request_missing_bigtable_row_returns_empty(
     validator_request = handler.get_validator_requests_to_score(
         datetime.fromisoformat(start_time) + timedelta(days=2), 7
     )[0]
-    result = handler.get_predictions_by_request(int(validator_request.id))
+    result = handler.get_predictions_by_request(validator_request)
     assert result[0].prediction == []
