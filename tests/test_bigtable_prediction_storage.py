@@ -48,10 +48,9 @@ def _make_storage_with_mock_tables():
 
 
 def test_build_row_key_format():
-    key = bps.BigtablePredictionStorage.build_row_key(
-        "BTC", "low", "2026-05-25T12:00:00", 42
-    )
-    assert key == "BTC#low#2026-05-25T12:00:00#42"
+    key = bps.BigtablePredictionStorage.build_row_key("BTC", 1779710400, 42)
+    # miner_id is zero-padded so range scans return rows in numeric order
+    assert key == "BTC#1779710400#000042"
 
 
 def test_paths_round_trip():
@@ -88,11 +87,26 @@ def _high_sim_input():
     )
 
 
-def _validator_request(time_length, time_increment, num_simulations):
+def _validator_request(
+    time_length, time_increment, num_simulations, asset="BTC", start_time=None
+):
+    from datetime import datetime, timezone
+
+    if start_time is None:
+        start_time = datetime(2026, 5, 25, 12, 0, 0, tzinfo=timezone.utc)
     return MagicMock(
+        asset=asset,
+        start_time=start_time,
         time_length=time_length,
         time_increment=time_increment,
         num_simulations=num_simulations,
+    )
+
+
+def _expected_key_for(sim_input, miner_id):
+    start_unix = bps._start_time_to_unix(sim_input.start_time)
+    return bps.BigtablePredictionStorage.build_row_key(
+        sim_input.asset, start_unix, miner_id
     )
 
 
@@ -101,7 +115,9 @@ def test_write_predictions_skips_invalid_format_and_unknown_miners():
     storage._tables["low"].direct_row.side_effect = lambda key: MagicMock(
         key=key
     )
-    storage._tables["low"].mutate_rows.return_value = []
+    ok = MagicMock()
+    ok.code = 0
+    storage._tables["low"].mutate_rows.return_value = [ok]
 
     good = _make_production_prediction(2, 3)
     bad = _make_production_prediction(2, 3)
@@ -122,7 +138,7 @@ def test_write_predictions_skips_invalid_format_and_unknown_miners():
 
     # only miner 10 was CORRECT *and* in miner_id_map
     assert list(keys.keys()) == [10]
-    assert keys[10] == "BTC#low#2026-05-25T12:00:00#100"
+    assert keys[10] == _expected_key_for(sim_input, 100)
     storage._tables["high"].mutate_rows.assert_not_called()
     assert storage._tables["low"].mutate_rows.call_count == 1
 
@@ -132,7 +148,9 @@ def test_write_predictions_routes_to_high_table():
     storage._tables["high"].direct_row.side_effect = lambda key: MagicMock(
         key=key
     )
-    storage._tables["high"].mutate_rows.return_value = []
+    ok = MagicMock()
+    ok.code = 0
+    storage._tables["high"].mutate_rows.return_value = [ok]
 
     prediction = _make_production_prediction(2, 3)
     sim_input = _high_sim_input()
@@ -146,35 +164,124 @@ def test_write_predictions_routes_to_high_table():
     storage._tables["high"].mutate_rows.assert_called_once()
 
 
+def test_write_predictions_raises_when_any_mutate_fails():
+    """Failed Bigtable writes must surface so save_responses' @retry kicks
+    in. Returning a key for a row whose blob never landed would silently
+    drop scoring data later."""
+    storage = _make_storage_with_mock_tables()
+    storage._tables["low"].direct_row.side_effect = lambda key: MagicMock(
+        key=key
+    )
+    bad = MagicMock()
+    bad.code = 13  # any non-zero
+    bad.message = "boom"
+    storage._tables["low"].mutate_rows.return_value = [bad]
+
+    sim_input = _low_sim_input()
+    prediction = _make_production_prediction(2, 3)
+    with pytest.raises(RuntimeError):
+        storage.write_predictions(
+            simulation_input=sim_input,
+            miner_predictions={10: (prediction, CORRECT, "1.0")},
+            miner_id_map={10: 100},
+        )
+
+
 def test_read_predictions_missing_rows_return_empty():
     storage = _make_storage_with_mock_tables()
-    # Bigtable returns no rows — every key should map to [].
+    # Range scan returns no rows — every requested key stays [].
     storage._tables["low"].read_rows.return_value = iter([])
     vr = _validator_request(LOW_TIME_LENGTH, LOW_TIME_INCREMENT, 2)
+    keys = ["k1", "k2"]
 
-    result = storage.read_predictions(vr, ["BTC#low#t0#100", "BTC#low#t0#101"])
+    result = storage.read_predictions(vr, keys)
 
-    assert result == {"BTC#low#t0#100": [], "BTC#low#t0#101": []}
+    assert result == {"k1": [], "k2": []}
 
 
 def test_read_predictions_decodes_cell_bytes():
     storage = _make_storage_with_mock_tables()
-    # use a tiny shape so the prediction fixture fits the validator_request
     num_sims, num_steps = 2, 3
     prediction = _make_production_prediction(num_sims, num_steps)
     blob = bps._paths_to_float32_bytes(prediction)
 
+    # validator_request.time_length / time_increment + 1 must equal num_steps
+    vr = _validator_request(num_steps - 1, 1, num_sims)
+    start_unix = int(vr.start_time.timestamp())
+    key = bps.BigtablePredictionStorage.build_row_key(
+        vr.asset, start_unix, 100
+    )
+
     cell = MagicMock()
     cell.value = blob
     bt_row = MagicMock()
-    bt_row.row_key = b"BTC#low#t0#100"
+    bt_row.row_key = key.encode("utf-8")
     bt_row.cells = {bps.COLUMN_FAMILY: {bps.COLUMN_QUALIFIER: [cell]}}
     storage._tables["low"].read_rows.return_value = iter([bt_row])
 
-    # validator_request.time_length / time_increment + 1 must equal num_steps
-    # so the reshape lines up; pick increment=1, length=num_steps-1.
-    vr = _validator_request(num_steps - 1, 1, num_sims)
-    result = storage.read_predictions(vr, ["BTC#low#t0#100"])
+    result = storage.read_predictions(vr, [key])
 
     expected = np.asarray(prediction[2:], dtype=np.float32).tolist()
-    assert result["BTC#low#t0#100"] == expected
+    assert result[key] == expected
+
+
+def test_read_predictions_ignores_unwanted_keys_from_range_scan():
+    """The range scan also surfaces rows whose Postgres siblings were
+    soft-deleted; we should ignore those, not return them in the result."""
+    storage = _make_storage_with_mock_tables()
+    num_sims, num_steps = 2, 3
+    prediction = _make_production_prediction(num_sims, num_steps)
+    blob = bps._paths_to_float32_bytes(prediction)
+
+    vr = _validator_request(num_steps - 1, 1, num_sims)
+    start_unix = int(vr.start_time.timestamp())
+    wanted = bps.BigtablePredictionStorage.build_row_key(
+        vr.asset, start_unix, 100
+    )
+    unwanted = bps.BigtablePredictionStorage.build_row_key(
+        vr.asset, start_unix, 999
+    )
+
+    def _row(key):
+        cell = MagicMock()
+        cell.value = blob
+        r = MagicMock()
+        r.row_key = key.encode("utf-8")
+        r.cells = {bps.COLUMN_FAMILY: {bps.COLUMN_QUALIFIER: [cell]}}
+        return r
+
+    storage._tables["low"].read_rows.return_value = iter(
+        [_row(wanted), _row(unwanted)]
+    )
+
+    result = storage.read_predictions(vr, [wanted])
+
+    assert set(result.keys()) == {wanted}
+
+
+def test_read_predictions_skips_undecodable_blobs():
+    storage = _make_storage_with_mock_tables()
+    num_sims, num_steps = 2, 3
+    vr = _validator_request(num_steps - 1, 1, num_sims)
+    start_unix = int(vr.start_time.timestamp())
+    key = bps.BigtablePredictionStorage.build_row_key(
+        vr.asset, start_unix, 100
+    )
+
+    # Three bytes — not a multiple of 4, so np.frombuffer raises.
+    cell = MagicMock()
+    cell.value = b"\x00\x01\x02"
+    bt_row = MagicMock()
+    bt_row.row_key = key.encode("utf-8")
+    bt_row.cells = {bps.COLUMN_FAMILY: {bps.COLUMN_QUALIFIER: [cell]}}
+    storage._tables["low"].read_rows.return_value = iter([bt_row])
+
+    result = storage.read_predictions(vr, [key])
+    assert result[key] == []
+
+
+def test_start_time_to_unix_treats_naive_as_utc():
+    # Naive vs +00:00 vs trailing Z should all produce the same unix int.
+    base = bps._start_time_to_unix("2026-05-25T12:00:00")
+    assert bps._start_time_to_unix("2026-05-25T12:00:00+00:00") == base
+    assert bps._start_time_to_unix("2026-05-25T12:00:00") == 1779710400

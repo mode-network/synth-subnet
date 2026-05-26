@@ -1031,7 +1031,8 @@ def test_save_responses_with_bigtable_stores_sentinel_and_key(
         miner_uid: (prediction, response_validation_v2.CORRECT, "1.2"),
     }
 
-    expected_key = f"BTC#low#{start_time}#1"
+    # The handler treats bigtable_key as opaque; any stable string works.
+    expected_key = "bt-key-for-miner-10"
 
     class FakeBigtable:
         def __init__(self):
@@ -1090,7 +1091,8 @@ def test_get_predictions_by_request_hydrates_from_bigtable(
         num_simulations=1,
     )
     prediction = _production_format_prediction(1, 289)
-    expected_key = f"BTC#low#{start_time}#1"
+    # The handler treats bigtable_key as opaque; any stable string works.
+    expected_key = "bt-key-for-miner-10"
 
     class FakeBigtable:
         def write_predictions(self, **_):
@@ -1154,7 +1156,7 @@ def test_get_predictions_by_request_missing_bigtable_row_returns_empty(
 
     class FakeBigtable:
         def write_predictions(self, **_):
-            return {miner_uid: "BTC#low#x#1"}
+            return {miner_uid: "bt-key-aged-out"}
 
         def read_predictions(self, validator_request, keys):
             return {keys[0]: []}

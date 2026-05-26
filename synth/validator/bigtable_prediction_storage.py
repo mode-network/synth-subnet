@@ -1,9 +1,10 @@
 """Bigtable storage backend for miner predictions.
 
-Predictions for a single (asset, prompt_label, start_time, miner) live in one
-Bigtable row, value = raw float32 bytes (num_simulations x num_timesteps).
-Two tables are used so that retention can be enforced by per-table GC policy:
-one for the `low` prompt and one for the `high` prompt.
+Each (asset, start_time, miner) is one row, value = raw float32 bytes shaped
+(num_simulations x num_timesteps). Two tables are used so retention is
+enforced by per-table GC policy: one for the `low` prompt and one for the
+`high` prompt. The table choice already encodes the prompt label, so the
+row key omits it.
 
 The Postgres `miner_predictions` row stays — its `prediction` column holds a
 sentinel JSON, and `bigtable_key` holds the row key used here.
@@ -12,18 +13,24 @@ sentinel JSON, and `bigtable_key` holds the row key used here.
 from __future__ import annotations
 
 import os
+from datetime import datetime, timezone
 
 import bittensor as bt
 import numpy as np
 from google.cloud import bigtable
 from google.cloud.bigtable.row_filters import CellsColumnLimitFilter
-from google.cloud.bigtable.row_set import RowSet
+from google.cloud.bigtable.row_set import RowRange, RowSet
 
 from synth.simulation_input import SimulationInput
 from synth.validator import prompt_config, response_validation_v2
 
 COLUMN_FAMILY = "p"
 COLUMN_QUALIFIER = b"d"
+
+# Zero-pad miner_id so lexicographic order inside a range scan matches
+# numeric order. 6 digits cover the foreseeable miners.id space (Postgres
+# bigint surrogate; growing slowly).
+_MINER_ID_PAD = 6
 
 _ENV_PROJECT = "BIGTABLE_PROJECT"
 _ENV_INSTANCE = "BIGTABLE_INSTANCE"
@@ -52,13 +59,19 @@ class BigtablePredictionStorage:
         }
 
     @staticmethod
-    def build_row_key(
-        asset: str,
-        prompt_label: str,
-        start_time: str,
-        miner_id: int,
-    ) -> str:
-        return f"{asset}#{prompt_label}#{start_time}#{miner_id}"
+    def build_row_key(asset: str, start_time_unix: int, miner_id: int) -> str:
+        """Compose the Bigtable row key.
+
+        Leading `{asset}` (e.g. BTC, ETH, ...) interleaves writes across
+        ~12 distinct prefixes, which is enough fan-out to keep sequential
+        timestamps from hotspotting a single tablet. The trailing
+        `{miner_id}` is zero-padded so lexicographic range scans match
+        numeric order.
+
+        `prompt_label` is intentionally NOT in the key — the table itself
+        (low vs high) already encodes it.
+        """
+        return f"{asset}#{start_time_unix}#{miner_id:0{_MINER_ID_PAD}d}"
 
     def write_predictions(
         self,
@@ -68,14 +81,17 @@ class BigtablePredictionStorage:
     ) -> dict:
         """Write CORRECT predictions for one request to Bigtable.
 
-        Returns {miner_uid: bigtable_key} for rows that were written. Miners
-        whose response failed format validation or whose miner_uid is not in
-        miner_id_map are skipped.
+        Returns {miner_uid: bigtable_key} for rows that were successfully
+        committed. Miners whose response failed format validation or whose
+        miner_uid is not in miner_id_map are skipped. If any mutate fails,
+        raises so the `@retry` on `save_responses` triggers — never report
+        keys for rows whose write failed (would silently drop scoring data).
         """
         prompt_label = prompt_config.label_from_time_length(
             simulation_input.time_length
         )
         table = self._table_for_label(prompt_label)
+        start_time_unix = _start_time_to_unix(simulation_input.start_time)
 
         rows = []
         keys_by_miner_uid: dict = {}
@@ -95,10 +111,7 @@ class BigtablePredictionStorage:
 
             miner_id = miner_id_map[miner_uid]
             key = self.build_row_key(
-                simulation_input.asset,
-                prompt_label,
-                simulation_input.start_time,
-                miner_id,
+                simulation_input.asset, start_time_unix, miner_id
             )
             blob = _paths_to_float32_bytes(prediction)
 
@@ -111,14 +124,24 @@ class BigtablePredictionStorage:
             return keys_by_miner_uid
 
         statuses = table.mutate_rows(rows)
+        failed_keys = []
         for key, status in zip(
             list(keys_by_miner_uid.values()), statuses, strict=False
         ):
             if status.code != 0:
+                failed_keys.append(key)
                 bt.logging.error(
                     f"bigtable write failed for key={key} "
                     f"code={status.code} message={status.message}"
                 )
+        if failed_keys:
+            # Surface the failure so save_responses' @retry triggers.
+            # Letting the caller persist bigtable_key for a row whose
+            # blob never landed would silently drop scoring data later.
+            raise RuntimeError(
+                f"bigtable mutate_rows failed for "
+                f"{len(failed_keys)}/{len(rows)} rows"
+            )
 
         return keys_by_miner_uid
 
@@ -129,12 +152,19 @@ class BigtablePredictionStorage:
     ) -> dict:
         """Batch-read prediction blobs from Bigtable.
 
-        `validator_request` carries the metadata needed to pick the right
-        table (via `time_length` → prompt label) and to reshape the raw
-        float32 bytes back into `(num_simulations, num_timesteps)`. Returns
-        `{bigtable_key: paths}` where `paths` is `list[list[float]]`. Missing
+        `validator_request` carries the asset + start_time used to build the
+        row-key prefix, the time_length used to pick the right table, and the
+        shape used to reshape the float32 bytes. Returns `{bigtable_key:
+        paths}` where `paths` is `list[list[float]]`. Missing or undecodable
         rows return `[]` (treated upstream as no-prediction).
+
+        Uses a single range scan over `{asset}#{start_time_unix}#` — much
+        cheaper than N point lookups at 256 miners per request.
         """
+        result: dict = {key: [] for key in keys}
+        if not keys:
+            return result
+
         prompt_label = prompt_config.label_from_time_length(
             validator_request.time_length
         )
@@ -143,28 +173,47 @@ class BigtablePredictionStorage:
             validator_request.time_length // validator_request.time_increment
             + 1
         )
+        start_time_unix = int(validator_request.start_time.timestamp())
+        prefix = f"{validator_request.asset}#{start_time_unix}#"
 
-        result: dict = {key: [] for key in keys}
-        if not keys:
-            return result
+        # `~` (0x7e) sits above every digit (0x30-0x39), so this end-key
+        # captures every row that starts with `prefix + <digits>`.
+        row_range = RowRange(
+            start_key=prefix.encode("utf-8"),
+            end_key=(prefix + "~").encode("utf-8"),
+        )
+        row_set = RowSet()
+        row_set.add_row_range(row_range)
 
         table = self._table_for_label(prompt_label)
-        row_set = RowSet()
-        for key in keys:
-            row_set.add_row_key(key)
-        row_filter = CellsColumnLimitFilter(1)
-        for row in table.read_rows(row_set=row_set, filter_=row_filter):
+        wanted = set(keys)
+        for row in table.read_rows(
+            row_set=row_set, filter_=CellsColumnLimitFilter(1)
+        ):
             key = (
                 row.row_key.decode("utf-8")
                 if isinstance(row.row_key, bytes)
                 else row.row_key
             )
+            # The range scan also surfaces rows whose Postgres siblings
+            # were soft-deleted (density tapering doesn't touch Bigtable).
+            # Filter to the keys the caller asked for.
+            if key not in wanted:
+                continue
             cells = row.cells.get(COLUMN_FAMILY, {}).get(COLUMN_QUALIFIER, [])
             if not cells:
                 continue
-            result[key] = _float32_bytes_to_paths(
-                cells[0].value, num_simulations, num_timesteps
-            )
+            try:
+                result[key] = _float32_bytes_to_paths(
+                    cells[0].value, num_simulations, num_timesteps
+                )
+            except Exception as e:
+                # Corrupted / mis-shaped blob. Don't crash the whole
+                # scoring loop on one bad row — leave it as [] so just
+                # that miner is treated as no-prediction.
+                bt.logging.warning(
+                    f"bigtable read: failed to decode key={key}: {e}"
+                )
 
         return result
 
@@ -175,6 +224,18 @@ class BigtablePredictionStorage:
             raise ValueError(
                 f"unsupported prompt_label for Bigtable: {prompt_label!r}"
             ) from exc
+
+
+def _start_time_to_unix(start_time_str: str) -> int:
+    """Convert the simulation_input.start_time ISO string to a unix int.
+
+    Naive ISO strings are treated as UTC so the unix timestamp matches what
+    Postgres-derived `validator_request.start_time` produces at read time.
+    """
+    dt = datetime.fromisoformat(start_time_str)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return int(dt.timestamp())
 
 
 def _paths_to_float32_bytes(prediction) -> bytes:
