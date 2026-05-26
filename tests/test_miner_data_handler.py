@@ -1109,6 +1109,13 @@ def test_get_predictions_by_request_hydrates_from_bigtable(
             assert (
                 validator_request.time_length == simulation_input.time_length
             )
+            # Bigtable hydration reshapes the float32 blob using
+            # num_simulations; if get_validator_requests_to_score forgets
+            # to populate it, that path crashes in production with int(None).
+            assert (
+                validator_request.num_simulations
+                == simulation_input.num_simulations
+            )
             return {expected_key: prediction[2:]}
 
     fake = FakeBigtable()

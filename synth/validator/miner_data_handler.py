@@ -215,6 +215,19 @@ class MinerDataHandler:
                         )
                         bigtable_key = bigtable_keys.get(miner_uid)
                         if self.bigtable_storage is not None and is_correct:
+                            # Invariant: write_predictions returns a key for
+                            # every (CORRECT, known miner_uid) pair, and
+                            # raises on any mutate failure. A CORRECT row
+                            # reaching this branch without a key would mean
+                            # the storage class drifted from the contract —
+                            # fail loudly rather than write a sentinel that
+                            # points at nothing.
+                            if bigtable_key is None:
+                                raise RuntimeError(
+                                    f"bigtable storage returned no key for "
+                                    f"miner_uid {miner_uid} despite CORRECT "
+                                    f"format_validation"
+                                )
                             prediction_column: typing.Any = BIGTABLE_SENTINEL
                         elif is_correct:
                             prediction_column = prediction
@@ -577,6 +590,7 @@ class MinerDataHandler:
                         ValidatorRequest.asset,
                         ValidatorRequest.time_length,
                         ValidatorRequest.time_increment,
+                        ValidatorRequest.num_simulations,
                     )
                     .where(
                         and_(
@@ -605,6 +619,10 @@ class MinerDataHandler:
                     vr.asset = row.asset
                     vr.time_length = row.time_length
                     vr.time_increment = row.time_increment
+                    # Bigtable hydration needs this to reshape the float32
+                    # blob; without it `_hydrate_from_bigtable` crashes on
+                    # `int(None)`.
+                    vr.num_simulations = row.num_simulations
                     results.append(vr)
 
                 return results
