@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy import Engine, select, delete
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
 
 from synth.db.models import (
     MinerPrediction,
@@ -989,12 +990,12 @@ def test_scoring_path_skips_thinned_requests(db_engine: Engine):
 
     # Defense in depth: even if a future caller bypasses the filter
     # above, the predictions query must not surface tombstones.
-    with db_engine.connect() as connection:
-        thinned_vr = connection.execute(
+    with Session(db_engine) as session:
+        thinned_vr = session.execute(
             select(ValidatorRequest).where(
                 ValidatorRequest.id == thinned_vr_id
             )
-        ).one()
+        ).scalar_one()
     assert handler.get_predictions_by_request(thinned_vr) == []
 
 
