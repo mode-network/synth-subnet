@@ -13,6 +13,8 @@
     - [`--sma.high.days INTEGER`](#--smahighdays-integer)
     - [`--softmax.low.beta FLOAT`](#--softmaxlowbeta-float)
     - [`--softmax.high.beta FLOAT`](#--softmaxhighbeta-float)
+    - [`--cycle_interval_minutes.low INTEGER`](#--cycle_interval_minuteslow-integer)
+    - [`--cycle_interval_minutes.high INTEGER`](#--cycle_interval_minuteshigh-integer)
     - [`--logging.debug`](#--loggingdebug)
     - [`--logging.info`](#--logginginfo)
     - [`--logging.trace`](#--loggingtrace)
@@ -416,6 +418,72 @@ Alternatively, you can add the args directly to the command:
 
 ```shell
 pm2 start validator.config.js -- --softmax.high.beta -0.2
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### `--cycle_interval_minutes.low INTEGER`
+
+Cycle interval in minutes for the 24h prompt.
+
+Default: `5`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--cycle_interval_minutes.low 5",
+      env: {
+        PYTHONPATH: ".",
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+
+```shell
+pm2 start validator.config.js -- --cycle_interval_minutes.low 5
+```
+
+<sup>[Back to top ^][table-of-contents]</sup>
+
+#### `--cycle_interval_minutes.high INTEGER`
+
+Cycle interval in minutes for the 1h prompt.
+
+Default: `2`
+
+Example:
+
+```js
+// validator.config.js
+module.exports = {
+  apps: [
+    {
+      name: "validator",
+      interpreter: "python3",
+      script: "./neurons/validator.py",
+      args: "--cycle_interval_minutes.high 2",
+      env: {
+        PYTHONPATH: ".",
+      },
+    },
+  ],
+};
+```
+
+Alternatively, you can add the args directly to the command:
+
+```shell
+pm2 start validator.config.js -- --cycle_interval_minutes.high 2
 ```
 
 <sup>[Back to top ^][table-of-contents]</sup>
