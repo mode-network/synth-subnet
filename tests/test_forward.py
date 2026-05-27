@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import logging
+from unittest.mock import patch
 
 # from numpy.testing import assert_almost_equal
 import bittensor as bt
@@ -73,7 +74,12 @@ def test_calculate_moving_average_and_update_rewards(db_engine: Engine):
     print("moving_averages_data", moving_averages_data)
 
 
+# Pin the miner's live-price fetch (Pyth Lazer on PYTH_BACKEND=pro) so these
+# tests don't depend on it. PriceDataProvider's history fetch stays live — it
+# hits the public Pyth Pro history endpoint and is part of what's scored.
+@patch("synth.miner.simulations.get_asset_price", return_value=90000.0)
 def test_calculate_moving_average_and_update_rewards_new_miner(
+    mock_get_asset_price,
     db_engine: Engine,
 ):
     miner_uids = [10, 20, 33, 40, 50, 60]
@@ -173,7 +179,9 @@ def test_calculate_moving_average_and_update_rewards_new_miner(
         print("moving_averages_data", moving_averages_data)
 
 
+@patch("synth.miner.simulations.get_asset_price", return_value=90000.0)
 def test_calculate_moving_average_and_update_rewards_new_miner_registration(
+    mock_get_asset_price,
     db_engine: Engine,
 ):
     bt.logging._logger.setLevel(logging.DEBUG)
@@ -314,7 +322,9 @@ def test_calculate_moving_average_and_update_rewards_new_miner_registration(
         # assert_almost_equal(sum(miner_weights), 0.5, decimal=12)
 
 
+@patch("synth.miner.simulations.get_asset_price", return_value=90000.0)
 def test_calculate_moving_average_and_update_rewards_only_invalid(
+    mock_get_asset_price,
     db_engine: Engine,
 ):
     handler = MinerDataHandler(db_engine)
