@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 
 import bittensor as bt
 import numpy as np
+from google.api_core import exceptions as gapi_exceptions
 from google.cloud import bigtable
 from google.cloud.bigtable.row_filters import CellsColumnLimitFilter
 from google.cloud.bigtable.row_set import RowRange, RowSet
@@ -57,6 +58,30 @@ class BigtablePredictionStorage:
             "low": instance.table(self._table_low_id),
             "high": instance.table(self._table_high_id),
         }
+        # Fail fast at boot if the instance/tables aren't reachable.
+        # Without this, the first save_responses hangs ~2 minutes on the
+        # mutate_rows RPC deadline before surfacing a misconfig.
+        self._probe_connectivity(project, instance_id)
+
+    def _probe_connectivity(self, project: str, instance_id: str) -> None:
+        """Verify both tables are reachable. One cheap data-plane read each."""
+        for table in self._tables.values():
+            try:
+                # Probe a sentinel row that can't collide with real keys
+                # (real keys are `{asset}#{unix}#{miner_id:06d}`).
+                table.read_row(b"__probe__")
+            except gapi_exceptions.NotFound as e:
+                raise RuntimeError(
+                    f"bigtable probe failed: table {table.table_id!r} not "
+                    f"found in instance {instance_id!r} (project "
+                    f"{project!r}). Run the provisioner in synth-subnet-ops."
+                ) from e
+            except gapi_exceptions.PermissionDenied as e:
+                raise RuntimeError(
+                    f"bigtable probe failed: permission denied on table "
+                    f"{table.table_id!r} in instance {instance_id!r}. "
+                    f"Check IAM (need roles/bigtable.user)."
+                ) from e
 
     @staticmethod
     def build_row_key(asset: str, start_time_unix: int, miner_id: int) -> str:
@@ -123,16 +148,28 @@ class BigtablePredictionStorage:
         if not rows:
             return keys_by_miner_uid
 
-        statuses = table.mutate_rows(rows)
+        statuses = table.mutate_rows(rows) or []
+        keys = list(keys_by_miner_uid.values())
+        if len(statuses) != len(rows):
+            # Server didn't confirm every row — we can't tell which landed.
+            # Treat as failure so save_responses' @retry kicks in.
+            raise RuntimeError(
+                f"bigtable mutate_rows returned {len(statuses)} statuses "
+                f"for {len(rows)} rows"
+            )
+
         failed_keys = []
-        for key, status in zip(
-            list(keys_by_miner_uid.values()), statuses, strict=False
-        ):
-            if status.code != 0:
+        for key, status in zip(keys, statuses):
+            # `status` can be None when the SDK had no per-row response
+            # to report (transport hiccup). Treat None as a failure —
+            # we cannot confirm the write landed.
+            code = getattr(status, "code", None)
+            if code is None or code != 0:
                 failed_keys.append(key)
+                message = getattr(status, "message", "no status returned")
                 bt.logging.error(
                     f"bigtable write failed for key={key} "
-                    f"code={status.code} message={status.message}"
+                    f"code={code} message={message}"
                 )
         if failed_keys:
             # Surface the failure so save_responses' @retry triggers.

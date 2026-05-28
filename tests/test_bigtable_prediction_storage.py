@@ -43,8 +43,38 @@ def _make_storage_with_mock_tables():
     )
     storage._table_low_id = "tbl_low"
     storage._table_high_id = "tbl_high"
-    storage._tables = {"low": MagicMock(), "high": MagicMock()}
+    low = MagicMock()
+    low.table_id = "tbl_low"
+    high = MagicMock()
+    high.table_id = "tbl_high"
+    storage._tables = {"low": low, "high": high}
     return storage
+
+
+def test_probe_connectivity_passes_when_tables_reachable():
+    storage = _make_storage_with_mock_tables()
+    # read_row succeeds (returns None for non-existent key) → no raise
+    storage._tables["low"].read_row.return_value = None
+    storage._tables["high"].read_row.return_value = None
+    storage._probe_connectivity("proj", "inst")  # no exception
+
+
+def test_probe_connectivity_raises_on_missing_table():
+    from google.api_core import exceptions as gapi
+
+    storage = _make_storage_with_mock_tables()
+    storage._tables["low"].read_row.side_effect = gapi.NotFound("table gone")
+    with pytest.raises(RuntimeError, match="not found"):
+        storage._probe_connectivity("proj", "inst")
+
+
+def test_probe_connectivity_raises_on_permission_denied():
+    from google.api_core import exceptions as gapi
+
+    storage = _make_storage_with_mock_tables()
+    storage._tables["low"].read_row.side_effect = gapi.PermissionDenied("nope")
+    with pytest.raises(RuntimeError, match="permission denied"):
+        storage._probe_connectivity("proj", "inst")
 
 
 def test_build_row_key_format():
@@ -162,6 +192,51 @@ def test_write_predictions_routes_to_high_table():
 
     storage._tables["low"].mutate_rows.assert_not_called()
     storage._tables["high"].mutate_rows.assert_called_once()
+
+
+def test_write_predictions_treats_none_status_as_failure():
+    """The Bigtable SDK can return `None` for a row when it has no per-row
+    response to report (e.g. transport hiccup). Treat that as a failure —
+    we cannot confirm the write landed."""
+    storage = _make_storage_with_mock_tables()
+    storage._tables["low"].direct_row.side_effect = lambda key: MagicMock(
+        key=key
+    )
+    storage._tables["low"].mutate_rows.return_value = [None]
+
+    sim_input = _low_sim_input()
+    prediction = _make_production_prediction(2, 3)
+    with pytest.raises(RuntimeError):
+        storage.write_predictions(
+            simulation_input=sim_input,
+            miner_predictions={10: (prediction, CORRECT, "1.0")},
+            miner_id_map={10: 100},
+        )
+
+
+def test_write_predictions_raises_on_short_status_list():
+    """If the SDK returns fewer statuses than rows we sent, we can't tell
+    which landed. Treat the whole batch as indeterminate."""
+    storage = _make_storage_with_mock_tables()
+    storage._tables["low"].direct_row.side_effect = lambda key: MagicMock(
+        key=key
+    )
+    ok = MagicMock()
+    ok.code = 0
+    # 2 rows sent, only 1 status returned
+    storage._tables["low"].mutate_rows.return_value = [ok]
+
+    sim_input = _low_sim_input()
+    prediction = _make_production_prediction(2, 3)
+    with pytest.raises(RuntimeError):
+        storage.write_predictions(
+            simulation_input=sim_input,
+            miner_predictions={
+                10: (prediction, CORRECT, "1.0"),
+                11: (prediction, CORRECT, "1.0"),
+            },
+            miner_id_map={10: 100, 11: 101},
+        )
 
 
 def test_write_predictions_raises_when_any_mutate_fails():
