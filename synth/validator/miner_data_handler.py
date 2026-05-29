@@ -45,7 +45,10 @@ from synth.simulation_input import SimulationInput
 from synth.utils.logging import print_execution_time
 from synth.validator import prompt_config, response_validation_v2
 from synth.validator.price_data_provider import PriceDataProvider
-from synth.validator.storage_backend import BIGTABLE_SENTINEL
+from synth.validator.storage_backend import (
+    BIGTABLE_MISSING_FORMAT,
+    BIGTABLE_SENTINEL,
+)
 
 if typing.TYPE_CHECKING:
     # Imported only for type hints. The Bigtable storage module pulls in
@@ -465,16 +468,17 @@ class MinerDataHandler:
             paths = paths_by_key.get(r.bigtable_key) or []
             if paths:
                 prediction = [start_ts, time_increment, *paths]
+                format_validation = r.format_validation
             else:
-                # Missing Bigtable row (likely GC'd). Treat as no
-                # prediction: downstream adjust_predictions returns None.
+                # Bigtable row missing or undecodable. Flip format_validation away from CORRECT
                 prediction = []
+                format_validation = BIGTABLE_MISSING_FORMAT
             hydrated.append(
                 SimpleNamespace(
                     miner_uid=r.miner_uid,
                     id=r.id,
                     prediction=prediction,
-                    format_validation=r.format_validation,
+                    format_validation=format_validation,
                     process_time=r.process_time,
                 )
             )

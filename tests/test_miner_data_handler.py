@@ -1187,6 +1187,13 @@ def test_get_predictions_by_request_missing_bigtable_row_returns_empty(
     )[0]
     result = handler.get_predictions_by_request(validator_request)
     assert result[0].prediction == []
+    # Missing-row hydration must also flip format_validation away from
+    # CORRECT — otherwise _crps_worker (reward.py) doesn't short-circuit
+    # and the miner gets penalised as a CRPS error on an infra failure.
+    from synth.validator.storage_backend import BIGTABLE_MISSING_FORMAT
+
+    assert result[0].format_validation == BIGTABLE_MISSING_FORMAT
+    assert result[0].format_validation != response_validation_v2.CORRECT
 
 
 def test_prune_preserves_latest_request_per_asset_during_gap(
