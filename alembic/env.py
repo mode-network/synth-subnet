@@ -27,7 +27,9 @@ else:
     print(
         f'using table {os.getenv("POSTGRES_DB")} on host {os.getenv("POSTGRES_HOST")}'
     )
-    password = urllib.parse.quote_plus(os.getenv("POSTGRES_PASSWORD") or "").replace("%", "%%")
+    password = urllib.parse.quote_plus(
+        os.getenv("POSTGRES_PASSWORD") or ""
+    ).replace("%", "%%")
     db_url = f"postgresql://{os.getenv('POSTGRES_USER')}:{password}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
 
 # Get database URL from environment variable

@@ -1246,9 +1246,9 @@ def test_prune_preserves_latest_request_per_asset_during_gap(
         latest_row = _fetch_prediction_state(connection, latest_id)
 
         assert keeper_row is not None
-        assert keeper_row.deleted_at is None, (
-            "Bucket keeper (rn = 1) must stay alive — scoring still uses it."
-        )
+        assert (
+            keeper_row.deleted_at is None
+        ), "Bucket keeper (rn = 1) must stay alive — scoring still uses it."
 
         assert latest_row is not None
         assert latest_row.deleted_at is None, (
@@ -1256,9 +1256,9 @@ def test_prune_preserves_latest_request_per_asset_during_gap(
             "non-keeper, so low-latency downstream consumers can read "
             "fresh predictions during an issuance gap."
         )
-        assert latest_row.prediction == [[{"price": 2.0}]], (
-            "Latest's payload must not be replaced with the thinned tombstone."
-        )
+        assert latest_row.prediction == [
+            [{"price": 2.0}]
+        ], "Latest's payload must not be replaced with the thinned tombstone."
 
 
 def test_prune_drops_protection_once_latest_ages_past_time_length(
