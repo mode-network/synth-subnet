@@ -41,6 +41,7 @@ from synth.validator.forward import (
 )
 from synth.validator.miner_data_handler import MinerDataHandler
 from synth.validator.price_data_provider import PriceDataProvider
+from synth.validator.storage_backend import STORAGE_BACKEND_BIGTABLE
 from synth.validator.prompt_config import (
     PromptConfig,
     LOW_FREQUENCY,
@@ -73,7 +74,18 @@ class Validator(BaseValidatorNeuron):
         bt.logging.info("load_state()", "__init__")
         self.load_state()
 
-        self.miner_data_handler = MinerDataHandler()
+        bigtable_storage = None
+        if self.config.storage.backend == STORAGE_BACKEND_BIGTABLE:
+            # Lazy import keeps google-cloud-bigtable optional for
+            # validators that stay on the Postgres backend.
+            from synth.validator.bigtable_prediction_storage import (
+                BigtablePredictionStorage,
+            )
+
+            bigtable_storage = BigtablePredictionStorage()
+        self.miner_data_handler = MinerDataHandler(
+            bigtable_storage=bigtable_storage
+        )
         self.price_data_provider = PriceDataProvider()
 
         self.miner_uids: list[int] = []

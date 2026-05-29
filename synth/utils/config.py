@@ -21,6 +21,10 @@ import subprocess
 import argparse
 import bittensor as bt
 from .logging import setup_events_logger
+from synth.validator.storage_backend import (
+    STORAGE_BACKEND_CHOICES,
+    STORAGE_BACKEND_POSTGRES,
+)
 
 
 def is_cuda_available():
@@ -304,6 +308,18 @@ def add_validator_args(_, parser: argparse.ArgumentParser):
         type=int,
         help="Cycle interval in minutes for the high frequency prompt.",
         default=2,
+    )
+    parser.add_argument(
+        "--storage.backend",
+        type=str,
+        choices=STORAGE_BACKEND_CHOICES,
+        default=STORAGE_BACKEND_POSTGRES,
+        help=(
+            "Storage backend for miner prediction payloads. 'postgres' "
+            "(default) stores predictions JSON. 'bigtable' offloads the "
+            "prediction blob to Bigtable (configured via BIGTABLE_* env "
+            "vars); see .env.example."
+        ),
     )
 
 

@@ -247,7 +247,9 @@ def query_available_miners_and_save_responses(
 
     if len(miner_predictions) > 0:
         miner_data_handler.save_responses(
-            miner_predictions, simulation_input, request_time
+            miner_predictions,
+            simulation_input,
+            request_time,
         )
     else:
         bt.logging.info("skip saving because no prediction")

@@ -37,7 +37,7 @@ LAZER_LATEST_PRICE_URL = "https://pyth-lazer.dourolabs.app/v1/latest_price"
 HERMES_ID_MAP = {
     "BTC": "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
     "ETH": "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
-    "XAU": "765d2ba906dbc32ca17cc11f5310a89e9ee1f6420508c63861f2f8ba4ee34bb2",
+    "XAU": "44465e17d2e9d390e70c999d5a11fda4f092847fcd2e3e5aa089d96c98a30e67",
     "SOL": "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
     "SPYX": "2817b78438c769357182c04346fddaad1178c82f4048828fe0997c3c64624e14",
     "NVDAX": "4244d07890e4610f46bbde67de8f43a4bf8b569eebe904f136b469f148503b7f",

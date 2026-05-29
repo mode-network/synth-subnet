@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytest
 from sqlalchemy import Engine, select, delete
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
 
 from synth.db.models import (
     MinerPrediction,
@@ -72,7 +73,7 @@ def test_get_values_within_range(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 1
 
-    result = handler.get_predictions_by_request(int(validator_requests[0].id))
+    result = handler.get_predictions_by_request(validator_requests[0])
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
@@ -200,7 +201,7 @@ def test_multiple_records_for_same_miner(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 2
 
-    result = handler.get_predictions_by_request(int(validator_requests[1].id))
+    result = handler.get_predictions_by_request(validator_requests[1])
 
     assert result is not None
     pred = result[0]
@@ -285,7 +286,7 @@ def test_multiple_records_for_same_miner_with_overlapping(db_engine: Engine):
     assert validator_requests is not None
     assert len(validator_requests) == 1
 
-    result = handler.get_predictions_by_request(int(validator_requests[0].id))
+    result = handler.get_predictions_by_request(validator_requests[0])
 
     # get only second element from the result tuple
     # that corresponds to the prediction result
@@ -356,7 +357,7 @@ def test_get_values_incorrect_format(db_engine: Engine):
     )
     assert validator_requests is not None
     assert len(validator_requests) == 1
-    result = handler.get_predictions_by_request(int(validator_requests[0].id))
+    result = handler.get_predictions_by_request(validator_requests[0])
 
     assert result is not None
     pred = result[0]
@@ -989,4 +990,351 @@ def test_scoring_path_skips_thinned_requests(db_engine: Engine):
 
     # Defense in depth: even if a future caller bypasses the filter
     # above, the predictions query must not surface tombstones.
-    assert handler.get_predictions_by_request(int(thinned_vr_id)) == []
+    with Session(db_engine) as session:
+        thinned_vr = session.execute(
+            select(ValidatorRequest).where(
+                ValidatorRequest.id == thinned_vr_id
+            )
+        ).scalar_one()
+    assert handler.get_predictions_by_request(thinned_vr) == []
+
+
+# --- Bigtable backend integration -----------------------------------------
+
+
+def _production_format_prediction(num_simulations: int, num_timesteps: int):
+    """Build a prediction in production wire format (header + float paths)."""
+    paths = [
+        [float(s * 1000 + t) for t in range(num_timesteps)]
+        for s in range(num_simulations)
+    ]
+    return [1700000000, 300, *paths]
+
+
+def test_save_responses_with_bigtable_stores_sentinel_and_key(
+    db_engine: Engine,
+):
+    """save_responses with bigtable backend stores sentinel JSON in
+    `prediction` and the row key in `bigtable_key`; correctness is delegated
+    to the Bigtable backend.
+    """
+    miner_uid = 10
+    with db_engine.connect() as connection:
+        with connection.begin():
+            connection.execute(
+                insert(Miner).values([{"miner_uid": miner_uid}])
+            )
+
+    start_time = "2026-05-25T12:00:00"
+    simulation_input = SimulationInput(
+        asset="BTC",
+        start_time=start_time,
+        time_increment=300,
+        time_length=86400,
+        num_simulations=1,
+    )
+    prediction = _production_format_prediction(1, 289)
+    good_data = {
+        miner_uid: (prediction, response_validation_v2.CORRECT, "1.2"),
+    }
+
+    # The handler treats bigtable_key as opaque; any stable string works.
+    expected_key = "bt-key-for-miner-10"
+
+    class FakeBigtable:
+        def __init__(self):
+            self.write_calls = []
+
+        def write_predictions(
+            self,
+            simulation_input,
+            miner_predictions,
+            miner_id_map,
+        ):
+            self.write_calls.append(simulation_input.time_length)
+            return {miner_uid: expected_key}
+
+        def read_predictions(self, validator_request, keys):
+            # paths only, as the storage contract specifies
+            return {expected_key: prediction[2:]}
+
+    fake = FakeBigtable()
+    handler = MinerDataHandler(db_engine, bigtable_storage=fake)
+    handler.save_responses(
+        good_data,
+        simulation_input,
+        datetime.now(),
+    )
+
+    assert fake.write_calls == [simulation_input.time_length]
+
+    with db_engine.connect() as connection:
+        row = connection.execute(
+            select(
+                MinerPrediction.prediction,
+                MinerPrediction.bigtable_key,
+            )
+        ).one()
+    assert row.prediction == {"stored": "bigtable"}
+    assert row.bigtable_key == expected_key
+
+
+def test_get_predictions_by_request_hydrates_from_bigtable(
+    db_engine: Engine,
+):
+    miner_uid = 10
+    with db_engine.connect() as connection:
+        with connection.begin():
+            connection.execute(
+                insert(Miner).values([{"miner_uid": miner_uid}])
+            )
+
+    start_time = "2026-05-25T12:00:00"
+    simulation_input = SimulationInput(
+        asset="BTC",
+        start_time=start_time,
+        time_increment=300,
+        time_length=86400,
+        num_simulations=1,
+    )
+    prediction = _production_format_prediction(1, 289)
+    # The handler treats bigtable_key as opaque; any stable string works.
+    expected_key = "bt-key-for-miner-10"
+
+    class FakeBigtable:
+        def write_predictions(self, **_):
+            return {miner_uid: expected_key}
+
+        def read_predictions(self, validator_request, keys):
+            assert keys == [expected_key]
+            assert (
+                validator_request.time_length == simulation_input.time_length
+            )
+            # Bigtable hydration reshapes the float32 blob using
+            # num_simulations; if get_validator_requests_to_score forgets
+            # to populate it, that path crashes in production with int(None).
+            assert (
+                validator_request.num_simulations
+                == simulation_input.num_simulations
+            )
+            return {expected_key: prediction[2:]}
+
+    fake = FakeBigtable()
+    handler = MinerDataHandler(db_engine, bigtable_storage=fake)
+    handler.save_responses(
+        {miner_uid: (prediction, response_validation_v2.CORRECT, "1.2")},
+        simulation_input,
+        datetime.now(),
+    )
+
+    validator_request = handler.get_validator_requests_to_score(
+        datetime.fromisoformat(start_time) + timedelta(days=2), 7
+    )[0]
+    result = handler.get_predictions_by_request(validator_request)
+    assert len(result) == 1
+    pred = result[0]
+    # Hydration derives the [start_ts, time_increment] header from the
+    # validator_requests row (which Postgres stores tz-aware in UTC), not
+    # from whatever the wire payload contained.
+    from datetime import timezone as _tz
+
+    expected_start_ts = int(
+        datetime.fromisoformat(start_time).replace(tzinfo=_tz.utc).timestamp()
+    )
+    assert pred.prediction[0] == expected_start_ts
+    assert pred.prediction[1] == simulation_input.time_increment
+    assert pred.prediction[2:] == prediction[2:]
+
+
+def test_get_predictions_by_request_missing_bigtable_row_returns_empty(
+    db_engine: Engine,
+):
+    """A row whose Bigtable blob has aged out should hydrate to [], so
+    downstream scoring treats it as no-prediction without crashing."""
+    miner_uid = 10
+    with db_engine.connect() as connection:
+        with connection.begin():
+            connection.execute(
+                insert(Miner).values([{"miner_uid": miner_uid}])
+            )
+
+    start_time = "2026-05-25T12:00:00"
+    simulation_input = SimulationInput(
+        asset="BTC",
+        start_time=start_time,
+        time_increment=300,
+        time_length=86400,
+        num_simulations=1,
+    )
+    prediction = _production_format_prediction(1, 289)
+
+    class FakeBigtable:
+        def write_predictions(self, **_):
+            return {miner_uid: "bt-key-aged-out"}
+
+        def read_predictions(self, validator_request, keys):
+            return {keys[0]: []}
+
+    handler = MinerDataHandler(db_engine, bigtable_storage=FakeBigtable())
+    handler.save_responses(
+        {miner_uid: (prediction, response_validation_v2.CORRECT, "1.2")},
+        simulation_input,
+        datetime.now(),
+    )
+
+    validator_request = handler.get_validator_requests_to_score(
+        datetime.fromisoformat(start_time) + timedelta(days=2), 7
+    )[0]
+    result = handler.get_predictions_by_request(validator_request)
+    assert result[0].prediction == []
+    # Missing-row hydration must also flip format_validation away from
+    # CORRECT — otherwise _crps_worker (reward.py) doesn't short-circuit
+    # and the miner gets penalised as a CRPS error on an infra failure.
+    from synth.validator.storage_backend import BIGTABLE_MISSING_FORMAT
+
+    assert result[0].format_validation == BIGTABLE_MISSING_FORMAT
+    assert result[0].format_validation != response_validation_v2.CORRECT
+
+
+def test_prune_preserves_latest_request_per_asset_during_gap(
+    db_engine: Engine,
+):
+    """The single newest request per asset is preserved through tapering
+    even when it would otherwise be a non-keeper in its bucket — so
+    low-latency downstream consumers always have the freshest predictions
+    to read, even after an issuance gap that left the latest request
+    older than `thin_after_minutes`.
+
+    Scenario (mirrors the production gap on 2026-05-27, where two
+    validator_requests landed in the same hourly bucket and the newer one
+    was being tombstoned as a non-keeper):
+
+        same asset, same hourly bucket, both older than `thin_after_minutes`:
+          - "Keeper"  : start_time = now - 90 min   (smaller id, rn = 1).
+          - "Latest"  : start_time = now - 50 min   (larger id, rn = 2 in
+                        bucket; without the new protection it would be
+                        soft-deleted as redundant).
+
+    Both must stay alive after `density_tapering_predictions`:
+    the keeper because rn = 1 (scoring still uses it), the latest
+    because the new `latest_per_asset` clause shields the freshest
+    request per asset from the rn > 1 deletion.
+    """
+    now = datetime.now()
+    keeper_start = now - timedelta(minutes=90)
+    latest_start = now - timedelta(minutes=50)
+
+    with db_engine.connect() as connection:
+        with connection.begin():
+            miner = _insert_miner(connection, miner_uid=320)
+            keeper_id = _insert_prediction(
+                connection,
+                miner_id=miner,
+                asset="ETH",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=keeper_start,
+                created_at=keeper_start,
+                payload=[[{"price": 1.0}]],
+            )
+            latest_id = _insert_prediction(
+                connection,
+                miner_id=miner,
+                asset="ETH",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=latest_start,
+                created_at=latest_start,
+                payload=[[{"price": 2.0}]],
+            )
+
+    MinerDataHandler(db_engine).density_tapering_predictions(LOW_TEST_CONFIG)
+
+    with db_engine.connect() as connection:
+        keeper_row = _fetch_prediction_state(connection, keeper_id)
+        latest_row = _fetch_prediction_state(connection, latest_id)
+
+        assert keeper_row is not None
+        assert (
+            keeper_row.deleted_at is None
+        ), "Bucket keeper (rn = 1) must stay alive — scoring still uses it."
+
+        assert latest_row is not None
+        assert latest_row.deleted_at is None, (
+            "Latest request per asset must stay alive even as a "
+            "non-keeper, so low-latency downstream consumers can read "
+            "fresh predictions during an issuance gap."
+        )
+        assert latest_row.prediction == [
+            [{"price": 2.0}]
+        ], "Latest's payload must not be replaced with the thinned tombstone."
+
+
+def test_prune_drops_protection_once_latest_ages_past_time_length(
+    db_engine: Engine,
+):
+    """The "latest per asset" protection is gated to
+    `start_time > now - time_length`, so a request that has already aged
+    into its scoring window can no longer stay alive — otherwise it would
+    become a second scorable row in its bucket alongside the keeper.
+
+    Scenario (long issuance outage — the latest request is stranded and
+    crosses its 24h forecast window while still being the newest):
+
+        same asset, same hourly bucket, BOTH older than 24h (`time_length`):
+          - "Keeper"        : start_time = anchor + 5 min  (rn = 1, kept).
+          - "Stale latest"  : start_time = anchor + 40 min (rn = 2;
+                              is the latest_per_asset row, but its
+                              `start_time` is older than `now - time_length`,
+                              so the CTE filters it out → no protection
+                              → soft-deleted by the normal rn > 1 rule).
+    """
+    now = datetime.now()
+    # Pin to an hour boundary 26h ago so both requests fall in the same
+    # hourly bucket and are well past the 24h `time_length` cutoff.
+    anchor = (now - timedelta(hours=26)).replace(
+        minute=0, second=0, microsecond=0
+    )
+    keeper_start = anchor + timedelta(minutes=5)
+    stale_latest_start = anchor + timedelta(minutes=40)
+
+    with db_engine.connect() as connection:
+        with connection.begin():
+            miner = _insert_miner(connection, miner_uid=321)
+            keeper_id = _insert_prediction(
+                connection,
+                miner_id=miner,
+                asset="ETH",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=keeper_start,
+                created_at=keeper_start,
+                payload=[[{"price": 1.0}]],
+            )
+            stale_latest_id = _insert_prediction(
+                connection,
+                miner_id=miner,
+                asset="ETH",
+                time_length=LOW_TEST_CONFIG.time_length,
+                start_time=stale_latest_start,
+                created_at=stale_latest_start,
+                payload=[[{"price": 2.0}]],
+            )
+
+    MinerDataHandler(db_engine).density_tapering_predictions(LOW_TEST_CONFIG)
+
+    with db_engine.connect() as connection:
+        keeper_row = _fetch_prediction_state(connection, keeper_id)
+        stale_row = _fetch_prediction_state(connection, stale_latest_id)
+
+        assert keeper_row is not None
+        assert keeper_row.deleted_at is None
+        assert keeper_row.prediction == [[{"price": 1.0}]]
+
+        assert stale_row is not None
+        assert stale_row.deleted_at is not None, (
+            "A latest request older than `time_length` must NOT be "
+            "protected — otherwise it would stay alive into its scoring "
+            "window and create a duplicate scorable row in its bucket."
+        )
+        assert stale_row.prediction == {
+            "deleted": True,
+            "reason": "thinned",
+        }

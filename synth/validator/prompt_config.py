@@ -94,3 +94,20 @@ HIGH_FREQUENCY = PromptConfig(
     thin_after_minutes=10,
     thin_bucket_seconds=600,
 )
+
+
+def label_from_time_length(time_length: int) -> str:
+    """Return the prompt label ('low' or 'high') for a given time_length.
+
+    Raises ValueError on unknown values — Bigtable routes writes to one of
+    two tables based on this label, so a silent fallback could mis-shelve
+    a future third cycle.
+    """
+    if time_length == HIGH_FREQUENCY.time_length:
+        return HIGH_FREQUENCY.label
+    if time_length == LOW_FREQUENCY.time_length:
+        return LOW_FREQUENCY.label
+    raise ValueError(
+        f"label_from_time_length: unknown time_length {time_length} "
+        f"(known: {LOW_FREQUENCY.time_length}, {HIGH_FREQUENCY.time_length})"
+    )

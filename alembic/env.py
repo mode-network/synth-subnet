@@ -1,4 +1,5 @@
 from logging.config import fileConfig
+import urllib
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -26,7 +27,10 @@ else:
     print(
         f'using table {os.getenv("POSTGRES_DB")} on host {os.getenv("POSTGRES_HOST")}'
     )
-    db_url = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+    password = urllib.parse.quote_plus(
+        os.getenv("POSTGRES_PASSWORD") or ""
+    ).replace("%", "%%")
+    db_url = f"postgresql://{os.getenv('POSTGRES_USER')}:{password}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
 
 # Get database URL from environment variable
 config.set_main_option("sqlalchemy.url", db_url)
