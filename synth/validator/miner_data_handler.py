@@ -820,9 +820,20 @@ class MinerDataHandler:
         miner_prediction under the non-keeper requests by setting
         `deleted_at` and replacing `prediction` with a tombstone (same
         pattern as `cleanup_old_history`).
+
+        The most recent request per asset is additionally preserved (until
+        it is older than `time_length`, i.e. enters scoring range) so
+        low-latency downstream consumers always have the latest predictions
+        to read.
         """
         now = datetime.now()
         thin_cutoff = now - timedelta(minutes=prompt_config.thin_after_minutes)
+        # Protect the most recent request per asset so low-latency downstream
+        # consumers always see the latest predictions. Only while it is still
+        # newer than time_length (i.e. not yet eligible for scoring), so a
+        # stale "latest" left by an issuance gap can't become a second
+        # scorable row in its bucket.
+        scoring_cutoff = now - timedelta(seconds=prompt_config.time_length)
         thin_sql = text("""
             WITH old AS (
                 SELECT vr.id AS vr_id,
@@ -842,6 +853,17 @@ class MinerDataHandler:
                            ORDER BY vr_id ASC
                        ) AS rn
                   FROM old
+            ),
+            -- Freshest request per asset (the scoring bucket-keeper is
+            -- still preserved independently via rn = 1). Gated to start_time
+            -- newer than time_length so it is dropped once it enters
+            -- scoring range, preventing a second scorable row in its bucket.
+            latest_per_asset AS (
+                SELECT DISTINCT ON (asset) id AS vr_id
+                  FROM validator_requests
+                 WHERE time_length = :time_length
+                   AND start_time > :scoring_cutoff
+                 ORDER BY asset, start_time DESC
             )
             UPDATE miner_predictions
                SET deleted_at = :now,
@@ -850,6 +872,9 @@ class MinerDataHandler:
              WHERE deleted_at IS NULL
                AND validator_requests_id IN (
                    SELECT vr_id FROM ranked WHERE rn > 1
+               )
+               AND validator_requests_id NOT IN (
+                   SELECT vr_id FROM latest_per_asset
                )
             """)
         try:
@@ -863,6 +888,7 @@ class MinerDataHandler:
                             ),
                             "time_length": prompt_config.time_length,
                             "thin_cutoff": thin_cutoff,
+                            "scoring_cutoff": scoring_cutoff,
                             "now": now,
                         },
                     )
