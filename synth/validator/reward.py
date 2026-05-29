@@ -260,19 +260,16 @@ def get_rewards_multiprocess(
     Uses shared memory for real_prices to reduce memory duplication across worker processes.
 
     Args:
-    - query (int): The query sent to the miner.
-    - responses (List[float]): A list of responses from the miner.
+    - miner_data_handler (MinerDataHandler): The handler for miner data.
+    - price_data_provider (PriceDataProvider): The provider for price data.
+    - validator_request (ValidatorRequest): The validator request object.
+    - nprocs (int): Number of processes to use for parallel computation.
 
     Returns:
     - np.ndarray: An array of rewards for the given query and responses.
+    - list: Detailed information for each miner.
+    - list[dict]: The real prices used for calculation.
     """
-    miner_uids = miner_data_handler.get_miner_uid_of_prediction_request(
-        int(validator_request.id)
-    )
-
-    if miner_uids is None:
-        return None, [], []
-
     try:
         real_prices = price_data_provider.fetch_data(validator_request)
     except Exception as e:

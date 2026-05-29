@@ -331,39 +331,6 @@ class MinerDataHandler:
                 f"in set_miner_scores (got an exception): {e}"
             )
 
-    def get_miner_uid_of_prediction_request(
-        self, validator_request_id: int
-    ) -> typing.Optional[list[int]]:
-        """Retrieve the miner_uid of the given validator_request_id."""
-        try:
-            with self.engine.connect() as connection:
-                query = (
-                    select(
-                        Miner.miner_uid,
-                    )
-                    .select_from(MinerPrediction)
-                    .join(
-                        Miner,
-                        Miner.id == MinerPrediction.miner_id,
-                    )
-                    .where(
-                        MinerPrediction.validator_requests_id
-                        == validator_request_id
-                    )
-                )
-
-                data = connection.execute(query).fetchall()
-                result = []
-                for row in data:
-                    result.append(row.miner_uid)
-
-            return result
-        except Exception as e:
-            bt.logging.exception(
-                f"in get_miner_uid_of_prediction_request (got an exception): {e}"
-            )
-            return None
-
     def get_miner_prediction(
         self, miner_uid: int, validator_request_id: int
     ) -> typing.Optional[MinerPrediction]:
